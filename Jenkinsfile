@@ -120,11 +120,17 @@ for(b = 0; b < builderNodes.size(); b++) {
                     else {
                         bat script:"rmdir /S /Q genn", returnStatus:true;
                     }
-                    
+
                     dir("genn") {
                         // Checkout GeNN into it
                         // **NOTE** because we're using multi-branch project URL is substituted here
-                        checkout scm
+                        // **NOTE** for some reason without extensions, Jenkins leaves branch with detached head (https://stackoverflow.com/questions/44006070/jenkins-gitscm-finishes-the-clone-in-a-detached-head-state-how-can-i-make-sure)
+                        checkout([$class: "GitSCM",
+                            branches: scm.branches,
+                            doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                            extensions: scm.extensions + [[$class: "LocalBranch", localBranch: "**"]],
+                            userRemoteConfigs: scm.userRemoteConfigs
+                        ])
                     }
                     
                     // **NOTE** only try and set build status AFTER checkout
@@ -327,3 +333,31 @@ for(b = 0; b < builderNodes.size(); b++) {
 
 // Run builds in parallel
 parallel builders
+
+//--------------------------------------------------------------------------
+// Final generation of documentation on master
+//--------------------------------------------------------------------------
+node("master") {
+    buildStep("Building documentation") {
+        withEnv(["GENN_PATH=" + pwd() + "/genn"]) {
+            dir("genn") {
+                // Use credentials for git
+                withCredentials([usernamePassword(credentialsId: "genn-jenkins-ci", passwordVariable: "GIT_PASSWORD", usernameVariable: "GIT_USERNAME")]) {
+                    // Make documentation, add generated rst files to git and push
+                    script = """
+                    ./makedoc
+                    git add docs/source/*.rst
+                    git commit -m "automatic commit of doxyrest documentation"
+                    git pull
+                    git push --set-upstream https://${GIT_USERNAME}:${GIT_PASSWORD}@github.com/genn-team/genn.git ${scm.branches[0]}
+                    """
+
+                    def docStatusCode = sh script:script, returnStatus:true
+                    if(docStatusCode != 0) {
+                        setBuildStatus("Building documentation", "FAILURE");
+                    }
+                }
+            }
+        }
+    }
+}
