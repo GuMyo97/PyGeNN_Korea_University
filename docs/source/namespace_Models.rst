@@ -1,5 +1,5 @@
 .. index:: pair: namespace; Models
-.. _doxid-dd/d20/namespaceModels:
+.. _doxid-d1/d1e/namespace_models:
 
 namespace Models
 ================
@@ -27,13 +27,13 @@ Class used to bind together everything required to initialise a variable:
 
 	// classes
 
-	class :ref:`Base<doxid-d6/d97/classModels_1_1Base>`;
-	class :ref:`VarInit<doxid-d8/dee/classModels_1_1VarInit>`;
+	class :ref:`Base<doxid-dc/d39/class_models_1_1_base>`;
+	class :ref:`VarInit<doxid-de/d2a/class_models_1_1_var_init>`;
 
 	template <>
-	class :ref:`VarInitContainerBase<0><doxid-db/db0/classModels_1_1VarInitContainerBase_3_010_01_4>`;
+	class :ref:`VarInitContainerBase<0><doxid-d7/d53/class_models_1_1_var_init_container_base_3_010_01_4>`;
 
 	template <size_t NumVars>
-	class :ref:`VarInitContainerBase<doxid-d6/d24/classModels_1_1VarInitContainerBase>`;
+	class :ref:`VarInitContainerBase<doxid-d8/d31/class_models_1_1_var_init_container_base>`;
 
 	} // namespace Models

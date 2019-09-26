@@ -1,5 +1,5 @@
 .. index:: pair: namespace; CurrentSourceModels
-.. _doxid-d6/dd3/namespaceCurrentSourceModels:
+.. _doxid-dd/de4/namespace_current_source_models:
 
 namespace CurrentSourceModels
 =============================
@@ -22,8 +22,8 @@ namespace CurrentSourceModels
 
 	// classes
 
-	class :ref:`Base<doxid-d0/de0/classCurrentSourceModels_1_1Base>`;
-	class :ref:`DC<doxid-d7/da1/classCurrentSourceModels_1_1DC>`;
-	class :ref:`GaussianNoise<doxid-d0/d7d/classCurrentSourceModels_1_1GaussianNoise>`;
+	class :ref:`Base<doxid-d8/d1e/class_current_source_models_1_1_base>`;
+	class :ref:`DC<doxid-d3/d29/class_current_source_models_1_1_d_c>`;
+	class :ref:`GaussianNoise<doxid-d7/da8/class_current_source_models_1_1_gaussian_noise>`;
 
 	} // namespace CurrentSourceModels

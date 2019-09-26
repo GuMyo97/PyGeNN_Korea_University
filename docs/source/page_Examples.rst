@@ -1,5 +1,5 @@
 .. index:: pair: page; Examples
-.. _doxid-d9/d61/Examples:
+.. _doxid-d9/dd8/_examples:
 
 Examples
 ========
@@ -8,7 +8,7 @@ GeNN comes with a number of complete examples. At the moment, there are seven su
 
 
 
-.. _doxid-d9/d61/Examples_1Ex_OneComp:
+.. _doxid-d9/dd8/_examples_1Ex_OneComp:
 
 Single compartment Izhikevich neuron(s)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -82,7 +82,7 @@ Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITE
 
 
 
-.. _doxid-d9/d61/Examples_1ex_poissonizh:
+.. _doxid-d9/dd8/_examples_1ex_poissonizh:
 
 Izhikevich neurons driven by Poisson input spike trains:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,7 +160,7 @@ Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITE
 
 
 
-.. _doxid-d9/d61/Examples_1ex_izhnetwork:
+.. _doxid-d9/dd8/_examples_1ex_izhnetwork:
 
 Pulse-coupled Izhikevich network
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,7 +239,7 @@ Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITE
 
 
 
-.. _doxid-d9/d61/Examples_1ex_izhdelay:
+.. _doxid-d9/dd8/_examples_1ex_izhdelay:
 
 Izhikevich network with delayed synapses
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -292,7 +292,7 @@ Izhikevich neuron model: :ref:`izhikevich2003simple <doxid-d0/de3/citelist_1CITE
 
 
 
-.. _doxid-d9/d61/Examples_1ex_mbody:
+.. _doxid-d9/dd8/_examples_1ex_mbody:
 
 Insect olfaction model
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -408,7 +408,7 @@ Nowotny insect olfaction model: :ref:`nowotny2005self <doxid-d0/de3/citelist_1CI
 
 
 
-.. _doxid-d9/d61/Examples_1ex_Vclamp:
+.. _doxid-d9/dd8/_examples_1ex_Vclamp:
 
 Voltage clamp simulation to estimate Hodgkin-Huxley parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -485,7 +485,7 @@ Traub-Miles Hodgkin-Huxley neuron model: :ref:`Traub1991 <doxid-d0/de3/citelist_
 
 
 
-.. _doxid-d9/d61/Examples_1ex_Schmuker:
+.. _doxid-d9/dd8/_examples_1ex_Schmuker:
 
 A neuromorphic network for generic multivariate data classification
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -561,5 +561,5 @@ A neuromorphic network for generic multivariate data classification
 
 
 
-:ref:`Previous <doxid-d7/d98/Quickstart>` \| :ref:`Top <doxid-d9/d61/Examples>` \| :ref:`Next <doxid-d2/dba/SpineML>`
+:ref:`Previous <doxid-dc/dab/_quickstart>` \| :ref:`Top <doxid-d9/dd8/_examples>` \| :ref:`Next <doxid-df/dbf/_spine_m_l>`
 

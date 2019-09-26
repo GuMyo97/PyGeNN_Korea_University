@@ -24,8 +24,8 @@ Overview
 
 	// classes
 
-	class :ref:`ExtraGlobalVariable<doxid-d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable>`;
-	class :ref:`Variable<doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>`;
+	class :ref:`ExtraGlobalVariable<doxid-d1/d1e/classpygenn_1_1model__preprocessor_1_1_extra_global_variable>`;
+	class :ref:`Variable<doxid-dd/d5a/classpygenn_1_1model__preprocessor_1_1_variable>`;
 
 	// global variables
 
@@ -102,7 +102,7 @@ Prepare a model by checking its validity and extracting information about variab
 		  	
 		  	@return
 		  
-		  tuple consisting of (model instance, model type, model parameter names, model parameters, list of variable names, dict mapping names of variables to instances of class :ref:`Variable <doxid-d5/de5/classpygenn_1_1model__preprocessor_1_1Variable>`)
+		  tuple consisting of (model instance, model type, model parameter names, model parameters, list of variable names, dict mapping names of variables to instances of class :ref:`Variable <doxid-dd/d5a/classpygenn_1_1model__preprocessor_1_1_variable>`)
 
 .. index:: pair: function; prepare_snippet
 .. _doxid-d0/d17/namespacepygenn_1_1model__preprocessor_1af8787ed2b94336e2f15d1bb2a7525ca2:
@@ -165,7 +165,7 @@ Raises ValueError if model is not valid (i.e. is not custom and is not natively 
 	*
 		- model_family
 
-		- model family (:ref:`NeuronModels <doxid-da/dac/namespaceNeuronModels>`, :ref:`WeightUpdateModels <doxid-da/d80/namespaceWeightUpdateModels>` or :ref:`PostsynapticModels <doxid-db/dcb/namespacePostsynapticModels>`) to which model should belong to
+		- model family (:ref:`NeuronModels <doxid-d1/d5d/namespace_neuron_models>`, :ref:`WeightUpdateModels <doxid-dd/d76/namespace_weight_update_models>` or :ref:`PostsynapticModels <doxid-db/d7d/namespace_postsynaptic_models>`) to which model should belong to
 
 
 

@@ -1,5 +1,5 @@
 .. index:: pair: namespace; Snippet
-.. _doxid-df/daa/namespaceSnippet:
+.. _doxid-db/db2/namespace_snippet:
 
 namespace Snippet
 =================
@@ -23,15 +23,15 @@ Wrapper to ensure at compile time that correct number of values are used when sp
 
 	// classes
 
-	class :ref:`Base<doxid-db/d97/classSnippet_1_1Base>`;
+	class :ref:`Base<doxid-d6/df7/class_snippet_1_1_base>`;
 
 	template <typename SnippetBase>
-	class :ref:`Init<doxid-d8/df6/classSnippet_1_1Init>`;
+	class :ref:`Init<doxid-da/d6c/class_snippet_1_1_init>`;
 
 	template <>
-	class :ref:`ValueBase<0><doxid-dd/df2/classSnippet_1_1ValueBase_3_010_01_4>`;
+	class :ref:`ValueBase<0><doxid-db/dcb/class_snippet_1_1_value_base_3_010_01_4>`;
 
 	template <size_t NumVars>
-	class :ref:`ValueBase<doxid-da/d76/classSnippet_1_1ValueBase>`;
+	class :ref:`ValueBase<doxid-db/dd1/class_snippet_1_1_value_base>`;
 
 	} // namespace Snippet

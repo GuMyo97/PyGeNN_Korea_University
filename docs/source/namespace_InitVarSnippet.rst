@@ -1,5 +1,5 @@
 .. index:: pair: namespace; InitVarSnippet
-.. _doxid-d2/dfc/namespaceInitVarSnippet:
+.. _doxid-d7/dc6/namespace_init_var_snippet:
 
 namespace InitVarSnippet
 ========================
@@ -15,7 +15,7 @@ namespace InitVarSnippet
 	class_InitVarSnippet_Uniform.rst
 	class_InitVarSnippet_Uninitialised.rst
 
-:ref:`Base <doxid-d3/d9e/classInitVarSnippet_1_1Base>` class for all value initialisation snippets.
+:ref:`Base <doxid-da/df2/class_init_var_snippet_1_1_base>` class for all value initialisation snippets.
 
 
 .. ref-code-block:: cpp
@@ -26,12 +26,12 @@ namespace InitVarSnippet
 
 	// classes
 
-	class :ref:`Base<doxid-d3/d9e/classInitVarSnippet_1_1Base>`;
-	class :ref:`Constant<doxid-dd/dcb/classInitVarSnippet_1_1Constant>`;
-	class :ref:`Exponential<doxid-d8/d70/classInitVarSnippet_1_1Exponential>`;
-	class :ref:`Gamma<doxid-d0/d54/classInitVarSnippet_1_1Gamma>`;
-	class :ref:`Normal<doxid-d5/dc1/classInitVarSnippet_1_1Normal>`;
-	class :ref:`Uniform<doxid-dd/da0/classInitVarSnippet_1_1Uniform>`;
-	class :ref:`Uninitialised<doxid-d9/db6/classInitVarSnippet_1_1Uninitialised>`;
+	class :ref:`Base<doxid-da/df2/class_init_var_snippet_1_1_base>`;
+	class :ref:`Constant<doxid-d0/de2/class_init_var_snippet_1_1_constant>`;
+	class :ref:`Exponential<doxid-d2/d57/class_init_var_snippet_1_1_exponential>`;
+	class :ref:`Gamma<doxid-df/d94/class_init_var_snippet_1_1_gamma>`;
+	class :ref:`Normal<doxid-d1/d65/class_init_var_snippet_1_1_normal>`;
+	class :ref:`Uniform<doxid-d5/da5/class_init_var_snippet_1_1_uniform>`;
+	class :ref:`Uninitialised<doxid-db/db3/class_init_var_snippet_1_1_uninitialised>`;
 
 	} // namespace InitVarSnippet

@@ -1,10 +1,10 @@
 .. index:: pair: page; Python interface (PyGeNN)
-.. _doxid-d0/d81/PyGeNN:
+.. _doxid-dc/d30/_py_ge_n_n:
 
 Python interface (PyGeNN)
 =========================
 
-As well as being able to build GeNN models and user code directly from C++, you can also access all GeNN features from Python. The ``:ref:`pygenn.genn_model.GeNNModel <doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel>``` class provides a thin wrapper around ``:ref:`ModelSpec <doxid-da/dfd/classModelSpec>``` as well as providing support for loading and running simulations; and accessing their state. ``:ref:`SynapseGroup <doxid-dc/dfa/classSynapseGroup>```, ``:ref:`NeuronGroup <doxid-d7/d3b/classNeuronGroup>``` and ``:ref:`CurrentSource <doxid-d1/d48/classCurrentSource>``` are similarly wrapped by the ``:ref:`pygenn.genn_groups.SynapseGroup <doxid-d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup>```, ``:ref:`pygenn.genn_groups.NeuronGroup <doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup>``` and ``:ref:`pygenn.genn_groups.CurrentSource <doxid-da/d83/classpygenn_1_1genn__groups_1_1CurrentSource>``` classes respectively.
+As well as being able to build GeNN models and user code directly from C++, you can also access all GeNN features from Python. The ``:ref:`pygenn.genn_model.GeNNModel <doxid-db/da2/classpygenn_1_1genn__model_1_1_ge_n_n_model>``` class provides a thin wrapper around ``:ref:`ModelSpec <doxid-d1/de7/class_model_spec>``` as well as providing support for loading and running simulations; and accessing their state. ``:ref:`SynapseGroup <doxid-d2/d62/class_synapse_group>```, ``:ref:`NeuronGroup <doxid-df/dbc/class_neuron_group>``` and ``:ref:`CurrentSource <doxid-d4/d11/class_current_source>``` are similarly wrapped by the ``:ref:`pygenn.genn_groups.SynapseGroup <doxid-df/d4a/classpygenn_1_1genn__groups_1_1_synapse_group>```, ``:ref:`pygenn.genn_groups.NeuronGroup <doxid-d6/d59/classpygenn_1_1genn__groups_1_1_neuron_group>``` and ``:ref:`pygenn.genn_groups.CurrentSource <doxid-d9/def/classpygenn_1_1genn__groups_1_1_current_source>``` classes respectively.
 
 PyGeNN can be built from source on Windows, Mac and Linux following the instructions in the README file in the pygenn directory of the GeNN repository. However, if you have a relatively recent version of Python and CUDA, we recommend that you instead downloading a suitable 'wheel' from our releases page. These can then be installed using e.g. ``pip install cuda10-pygenn-0.2-cp27-cp27mu-linux_x86_64.whl`` for a Linux system with CUDA 10 and Python 2.7. On Windows we recommend using the Python 3 version of `Anaconda <https://www.anaconda.com/distribution/>`__.
 
@@ -62,5 +62,5 @@ The following example shows how PyGeNN can be easily interfaced with standard Py
 	# Show plot
 	plt.show()
 
-:ref:`Previous <doxid-d3/d0c/brian2genn>` \| :ref:`Top <doxid-d0/d81/PyGeNN>` \| :ref:`Next <doxid-df/ddb/ReleaseNotes>`
+:ref:`Previous <doxid-d3/d0c/brian2genn>` \| :ref:`Top <doxid-dc/d30/_py_ge_n_n>` \| :ref:`Next <doxid-dd/d5e/_release_notes>`
 

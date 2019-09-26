@@ -1,5 +1,5 @@
 .. index:: pair: namespace; CodeGenerator::CUDA
-.. _doxid-d1/df6/namespaceCodeGenerator_1_1CUDA:
+.. _doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a:
 
 namespace CodeGenerator::CUDA
 =============================
@@ -30,30 +30,30 @@ Overview
 
 	// namespaces
 
-	namespace :ref:`CodeGenerator::CUDA::Optimiser<doxid-d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser>`;
-	namespace :ref:`CodeGenerator::CUDA::PresynapticUpdateStrategy<doxid-da/d97/namespaceCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy>`;
-	namespace :ref:`CodeGenerator::CUDA::Utils<doxid-d0/dd2/namespaceCodeGenerator_1_1CUDA_1_1Utils>`;
+	namespace :ref:`CodeGenerator::CUDA::Optimiser<doxid-d7/dde/namespace_code_generator_1_1_c_u_d_a_1_1_optimiser>`;
+	namespace :ref:`CodeGenerator::CUDA::PresynapticUpdateStrategy<doxid-d0/df3/namespace_code_generator_1_1_c_u_d_a_1_1_presynaptic_update_strategy>`;
+	namespace :ref:`CodeGenerator::CUDA::Utils<doxid-d7/dcf/namespace_code_generator_1_1_c_u_d_a_1_1_utils>`;
 
 	// typedefs
 
-	typedef std::array<size_t, :ref:`KernelMax<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8>`> :ref:`KernelBlockSize<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a834e8ff4a9b37453a04e5bfa2743423b>`;
+	typedef std::array<size_t, :ref:`KernelMax<doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a_1a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8>`> :ref:`KernelBlockSize<doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a_1a834e8ff4a9b37453a04e5bfa2743423b>`;
 
 	// enums
 
-	enum :ref:`BlockSizeSelect<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a54abdd5e5351c160ba420cd758edb7ab>`;
-	enum :ref:`DeviceSelect<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a05cdf29b66af2e1899cbb1d9c702f9d0>`;
-	enum :ref:`Kernel<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a05381dc4178da4eb5cd21384a44dace4>`;
+	enum :ref:`BlockSizeSelect<doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a_1a54abdd5e5351c160ba420cd758edb7ab>`;
+	enum :ref:`DeviceSelect<doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a_1a05cdf29b66af2e1899cbb1d9c702f9d0>`;
+	enum :ref:`Kernel<doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a_1a05381dc4178da4eb5cd21384a44dace4>`;
 
 	// structs
 
-	struct :ref:`Preferences<doxid-da/dae/structCodeGenerator_1_1CUDA_1_1Preferences>`;
+	struct :ref:`Preferences<doxid-d5/d67/struct_code_generator_1_1_c_u_d_a_1_1_preferences>`;
 
 	// classes
 
-	class :ref:`Backend<doxid-d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend>`;
+	class :ref:`Backend<doxid-d9/dd6/class_code_generator_1_1_c_u_d_a_1_1_backend>`;
 
 	} // namespace CUDA
-.. _details-d1/df6/namespaceCodeGenerator_1_1CUDA:
+.. _details-d2/dab/namespace_code_generator_1_1_c_u_d_a:
 
 Detailed Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -64,12 +64,12 @@ Typedefs
 --------
 
 .. index:: pair: typedef; KernelBlockSize
-.. _doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a834e8ff4a9b37453a04e5bfa2743423b:
+.. _doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a_1a834e8ff4a9b37453a04e5bfa2743423b:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	typedef std::array<size_t, :ref:`KernelMax<doxid-d1/df6/namespaceCodeGenerator_1_1CUDA_1a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8>`> KernelBlockSize
+	typedef std::array<size_t, :ref:`KernelMax<doxid-d2/dab/namespace_code_generator_1_1_c_u_d_a_1a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8>`> KernelBlockSize
 
 Array of block sizes for each kernel.
 

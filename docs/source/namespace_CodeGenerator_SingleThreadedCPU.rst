@@ -1,5 +1,5 @@
 .. index:: pair: namespace; CodeGenerator::SingleThreadedCPU
-.. _doxid-db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU:
+.. _doxid-dd/d6e/namespace_code_generator_1_1_single_threaded_c_p_u:
 
 namespace CodeGenerator::SingleThreadedCPU
 ==========================================
@@ -22,14 +22,14 @@ namespace CodeGenerator::SingleThreadedCPU
 
 	// namespaces
 
-	namespace :ref:`CodeGenerator::SingleThreadedCPU::Optimiser<doxid-d0/de6/namespaceCodeGenerator_1_1SingleThreadedCPU_1_1Optimiser>`;
+	namespace :ref:`CodeGenerator::SingleThreadedCPU::Optimiser<doxid-d0/de5/namespace_code_generator_1_1_single_threaded_c_p_u_1_1_optimiser>`;
 
 	// structs
 
-	struct :ref:`Preferences<doxid-d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences>`;
+	struct :ref:`Preferences<doxid-db/d78/struct_code_generator_1_1_single_threaded_c_p_u_1_1_preferences>`;
 
 	// classes
 
-	class :ref:`Backend<doxid-d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend>`;
+	class :ref:`Backend<doxid-d5/d2c/class_code_generator_1_1_single_threaded_c_p_u_1_1_backend>`;
 
 	} // namespace SingleThreadedCPU

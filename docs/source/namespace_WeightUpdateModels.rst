@@ -1,5 +1,5 @@
 .. index:: pair: namespace; WeightUpdateModels
-.. _doxid-da/d80/namespaceWeightUpdateModels:
+.. _doxid-dd/d76/namespace_weight_update_models:
 
 namespace WeightUpdateModels
 ============================
@@ -24,10 +24,10 @@ namespace WeightUpdateModels
 
 	// classes
 
-	class :ref:`Base<doxid-d2/d05/classWeightUpdateModels_1_1Base>`;
-	class :ref:`PiecewiseSTDP<doxid-df/d86/classWeightUpdateModels_1_1PiecewiseSTDP>`;
-	class :ref:`StaticGraded<doxid-d6/d64/classWeightUpdateModels_1_1StaticGraded>`;
-	class :ref:`StaticPulse<doxid-d9/d74/classWeightUpdateModels_1_1StaticPulse>`;
-	class :ref:`StaticPulseDendriticDelay<doxid-d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay>`;
+	class :ref:`Base<doxid-d8/d90/class_weight_update_models_1_1_base>`;
+	class :ref:`PiecewiseSTDP<doxid-db/dae/class_weight_update_models_1_1_piecewise_s_t_d_p>`;
+	class :ref:`StaticGraded<doxid-d2/ddd/class_weight_update_models_1_1_static_graded>`;
+	class :ref:`StaticPulse<doxid-d7/d9c/class_weight_update_models_1_1_static_pulse>`;
+	class :ref:`StaticPulseDendriticDelay<doxid-d7/d58/class_weight_update_models_1_1_static_pulse_dendritic_delay>`;
 
 	} // namespace WeightUpdateModels

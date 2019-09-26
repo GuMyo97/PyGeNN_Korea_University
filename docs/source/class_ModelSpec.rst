@@ -1,5 +1,5 @@
 .. index:: pair: class; ModelSpec
-.. _doxid-da/dfd/classModelSpec:
+.. _doxid-d1/de7/class_model_spec:
 
 class ModelSpec
 ===============
@@ -10,7 +10,7 @@ class ModelSpec
 Overview
 ~~~~~~~~
 
-Object used for specifying a neuronal network model. :ref:`More...<details-da/dfd/classModelSpec>`
+Object used for specifying a neuronal network model. :ref:`More...<details-d1/de7/class_model_spec>`
 
 
 .. ref-code-block:: cpp
@@ -23,38 +23,38 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 	public:
 		// typedefs
 	
-		typedef std::map<std::string, :ref:`NeuronGroupInternal<doxid-dc/da3/classNeuronGroupInternal>`>::value_type :target:`NeuronGroupValueType<doxid-da/dfd/classModelSpec_1ac724c12166b5ee5fb4492277c1d8deb5>`;
-		typedef std::map<std::string, :ref:`SynapseGroupInternal<doxid-dd/d48/classSynapseGroupInternal>`>::value_type :target:`SynapseGroupValueType<doxid-da/dfd/classModelSpec_1a8af14d4e037788bb97854c4d0da801df>`;
+		typedef std::map<std::string, :ref:`NeuronGroupInternal<doxid-d1/dc9/class_neuron_group_internal>`>::value_type :target:`NeuronGroupValueType<doxid-d1/de7/class_model_spec_1ac724c12166b5ee5fb4492277c1d8deb5>`;
+		typedef std::map<std::string, :ref:`SynapseGroupInternal<doxid-d7/d53/class_synapse_group_internal>`>::value_type :target:`SynapseGroupValueType<doxid-d1/de7/class_model_spec_1a8af14d4e037788bb97854c4d0da801df>`;
 
 		// methods
 	
-		:target:`ModelSpec<doxid-da/dfd/classModelSpec_1a5f71e866bd0b2af2abf2b1e8dde7d6d4>`();
-		:target:`ModelSpec<doxid-da/dfd/classModelSpec_1ab5f3d20c830593a4452be5878e43bba8>`(const ModelSpec&);
-		ModelSpec& :target:`operator =<doxid-da/dfd/classModelSpec_1aaf415f0379159d74d57d18126cf2982e>` (const ModelSpec&);
-		:target:`~ModelSpec<doxid-da/dfd/classModelSpec_1a60ffaa6deb779cff61da6a7ea651613f>`();
-		void :ref:`setName<doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`(const std::string& name);
-		void :ref:`setPrecision<doxid-da/dfd/classModelSpec_1a7548f1bf634884c051e4fbac3cf6212c>`(:ref:`FloatType<doxid-dc/de1/modelSpec_8h_1aa039815ec6b74d0fe4cb016415781c08>` floattype);
-		void :ref:`setTimePrecision<doxid-da/dfd/classModelSpec_1a379793c6fcbe1f834ad18cf4c5789537>`(:ref:`TimePrecision<doxid-dc/de1/modelSpec_8h_1a71ece086a364ee04c7ffc3f626218b8f>` timePrecision);
-		void :ref:`setDT<doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(double dt);
-		void :ref:`setTiming<doxid-da/dfd/classModelSpec_1ae1678fdcd6c8381a402c58673064fa6a>`(bool timingEnabled);
-		void :ref:`setSeed<doxid-da/dfd/classModelSpec_1a1c6bc48d22a8f7b3fb70b46a4ca87646>`(unsigned int rngSeed);
-		void :ref:`setDefaultVarLocation<doxid-da/dfd/classModelSpec_1a55c87917355d34463a3c19fc6887e67a>`(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
-		void :ref:`setDefaultExtraGlobalParamLocation<doxid-da/dfd/classModelSpec_1aa0d462099083f12bc9f98b9b0fb86d64>`(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
-		void :ref:`setDefaultSparseConnectivityLocation<doxid-da/dfd/classModelSpec_1a9bc61e7c5dce757de3a9b7479852ca72>`(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
-		void :ref:`setMergePostsynapticModels<doxid-da/dfd/classModelSpec_1ac40ba51579f94af5ca7fa51c4f67fe8f>`(bool merge);
-		const std::string& :ref:`getName<doxid-da/dfd/classModelSpec_1a4a4fc34aa4a09b384bd0ea7134bd49fa>`() const;
-		const std::string& :ref:`getPrecision<doxid-da/dfd/classModelSpec_1aafede0edcd474eb000230b63b8c1562d>`() const;
-		std::string :ref:`getTimePrecision<doxid-da/dfd/classModelSpec_1aa02041a6c0e06ba384a2bbf5e8d925a6>`() const;
-		double :ref:`getDT<doxid-da/dfd/classModelSpec_1a79796e2faf44bc12bb716cb376603fc2>`() const;
-		unsigned int :ref:`getSeed<doxid-da/dfd/classModelSpec_1a4f032e3eb72f40ea3dcdafee8e0ad289>`() const;
-		bool :ref:`isTimingEnabled<doxid-da/dfd/classModelSpec_1a2ba95653dc8c75539a7e582e66999f2e>`() const;
-		unsigned int :ref:`getNumLocalNeurons<doxid-da/dfd/classModelSpec_1a46ab18306ec13a61d4aff75645b8646e>`() const;
-		unsigned int :ref:`getNumRemoteNeurons<doxid-da/dfd/classModelSpec_1aaf562353e81f02732b6bb49311f16dda>`() const;
-		unsigned int :ref:`getNumNeurons<doxid-da/dfd/classModelSpec_1a453b3a92fb74742103d48cbf81fa47bb>`() const;
-		:ref:`NeuronGroup<doxid-d7/d3b/classNeuronGroup>`* :ref:`findNeuronGroup<doxid-da/dfd/classModelSpec_1a7508ff35c5957bf8a4385168fed50e2c>`(const std::string& name);
+		:target:`ModelSpec<doxid-d1/de7/class_model_spec_1a5f71e866bd0b2af2abf2b1e8dde7d6d4>`();
+		:target:`ModelSpec<doxid-d1/de7/class_model_spec_1ab5f3d20c830593a4452be5878e43bba8>`(const ModelSpec&);
+		ModelSpec& :target:`operator =<doxid-d1/de7/class_model_spec_1aaf415f0379159d74d57d18126cf2982e>` (const ModelSpec&);
+		:target:`~ModelSpec<doxid-d1/de7/class_model_spec_1a60ffaa6deb779cff61da6a7ea651613f>`();
+		void :ref:`setName<doxid-d1/de7/class_model_spec_1ada1aff7a94eeb36dff721f09d5cf94b4>`(const std::string& name);
+		void :ref:`setPrecision<doxid-d1/de7/class_model_spec_1a7548f1bf634884c051e4fbac3cf6212c>`(:ref:`FloatType<doxid-db/dd1/model_spec_8h_1aa039815ec6b74d0fe4cb016415781c08>` floattype);
+		void :ref:`setTimePrecision<doxid-d1/de7/class_model_spec_1a379793c6fcbe1f834ad18cf4c5789537>`(:ref:`TimePrecision<doxid-db/dd1/model_spec_8h_1a71ece086a364ee04c7ffc3f626218b8f>` timePrecision);
+		void :ref:`setDT<doxid-d1/de7/class_model_spec_1a329236a3b07044b82bfda5b4f741d8e1>`(double dt);
+		void :ref:`setTiming<doxid-d1/de7/class_model_spec_1ae1678fdcd6c8381a402c58673064fa6a>`(bool timingEnabled);
+		void :ref:`setSeed<doxid-d1/de7/class_model_spec_1a1c6bc48d22a8f7b3fb70b46a4ca87646>`(unsigned int rngSeed);
+		void :ref:`setDefaultVarLocation<doxid-d1/de7/class_model_spec_1a55c87917355d34463a3c19fc6887e67a>`(:ref:`VarLocation<doxid-da/d08/variable_mode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
+		void :ref:`setDefaultExtraGlobalParamLocation<doxid-d1/de7/class_model_spec_1aa0d462099083f12bc9f98b9b0fb86d64>`(:ref:`VarLocation<doxid-da/d08/variable_mode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
+		void :ref:`setDefaultSparseConnectivityLocation<doxid-d1/de7/class_model_spec_1a9bc61e7c5dce757de3a9b7479852ca72>`(:ref:`VarLocation<doxid-da/d08/variable_mode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc);
+		void :ref:`setMergePostsynapticModels<doxid-d1/de7/class_model_spec_1ac40ba51579f94af5ca7fa51c4f67fe8f>`(bool merge);
+		const std::string& :ref:`getName<doxid-d1/de7/class_model_spec_1a4a4fc34aa4a09b384bd0ea7134bd49fa>`() const;
+		const std::string& :ref:`getPrecision<doxid-d1/de7/class_model_spec_1aafede0edcd474eb000230b63b8c1562d>`() const;
+		std::string :ref:`getTimePrecision<doxid-d1/de7/class_model_spec_1aa02041a6c0e06ba384a2bbf5e8d925a6>`() const;
+		double :ref:`getDT<doxid-d1/de7/class_model_spec_1a79796e2faf44bc12bb716cb376603fc2>`() const;
+		unsigned int :ref:`getSeed<doxid-d1/de7/class_model_spec_1a4f032e3eb72f40ea3dcdafee8e0ad289>`() const;
+		bool :ref:`isTimingEnabled<doxid-d1/de7/class_model_spec_1a2ba95653dc8c75539a7e582e66999f2e>`() const;
+		unsigned int :ref:`getNumLocalNeurons<doxid-d1/de7/class_model_spec_1a46ab18306ec13a61d4aff75645b8646e>`() const;
+		unsigned int :ref:`getNumRemoteNeurons<doxid-d1/de7/class_model_spec_1aaf562353e81f02732b6bb49311f16dda>`() const;
+		unsigned int :ref:`getNumNeurons<doxid-d1/de7/class_model_spec_1a453b3a92fb74742103d48cbf81fa47bb>`() const;
+		:ref:`NeuronGroup<doxid-df/dbc/class_neuron_group>`* :ref:`findNeuronGroup<doxid-d1/de7/class_model_spec_1a7508ff35c5957bf8a4385168fed50e2c>`(const std::string& name);
 	
 		template <typename NeuronModel>
-		:ref:`NeuronGroup<doxid-d7/d3b/classNeuronGroup>`* :ref:`addNeuronPopulation<doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`(
+		:ref:`NeuronGroup<doxid-df/dbc/class_neuron_group>`* :ref:`addNeuronPopulation<doxid-d1/de7/class_model_spec_1a0b765be273f3c6cec15092d7dbfdd52b>`(
 			const std::string& name,
 			unsigned int size,
 			const NeuronModel* model,
@@ -64,7 +64,7 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 			);
 	
 		template <typename NeuronModel>
-		:ref:`NeuronGroup<doxid-d7/d3b/classNeuronGroup>`* :ref:`addNeuronPopulation<doxid-da/dfd/classModelSpec_1a5eec26674996c3504f1c85b1e190f82f>`(
+		:ref:`NeuronGroup<doxid-df/dbc/class_neuron_group>`* :ref:`addNeuronPopulation<doxid-d1/de7/class_model_spec_1a5eec26674996c3504f1c85b1e190f82f>`(
 			const std::string& name,
 			unsigned int size,
 			const typename NeuronModel::ParamValues& paramValues,
@@ -72,12 +72,12 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 			int hostID = 0
 			);
 	
-		:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* :ref:`findSynapseGroup<doxid-da/dfd/classModelSpec_1ac61c646d1c4e5a56a8e1b5cf81de9088>`(const std::string& name);
+		:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* :ref:`findSynapseGroup<doxid-d1/de7/class_model_spec_1ac61c646d1c4e5a56a8e1b5cf81de9088>`(const std::string& name);
 	
 		template <typename WeightUpdateModel, typename PostsynapticModel>
-		:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* :ref:`addSynapsePopulation<doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>`(
+		:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* :ref:`addSynapsePopulation<doxid-d1/de7/class_model_spec_1abd4e9128a5d4f5f993907134218af0c2>`(
 			const std::string& name,
-			:ref:`SynapseMatrixType<doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
+			:ref:`SynapseMatrixType<doxid-db/d08/synapse_matrix_type_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
 			unsigned int delaySteps,
 			const std::string& src,
 			const std::string& trg,
@@ -89,13 +89,13 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 			const PostsynapticModel* psm,
 			const typename PostsynapticModel::ParamValues& postsynapticParamValues,
 			const typename PostsynapticModel::VarValues& postsynapticVarInitialisers,
-			const :ref:`InitSparseConnectivitySnippet::Init<doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-dc/de1/modelSpec_8h_1a367c112babcc14b58db730731b798073>`()
+			const :ref:`InitSparseConnectivitySnippet::Init<doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-db/dd1/model_spec_8h_1a367c112babcc14b58db730731b798073>`()
 			);
 	
 		template <typename WeightUpdateModel, typename PostsynapticModel>
-		:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* :ref:`addSynapsePopulation<doxid-da/dfd/classModelSpec_1a0bde9e959e2d306b6af799e5b9fb9eaa>`(
+		:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* :ref:`addSynapsePopulation<doxid-d1/de7/class_model_spec_1a0bde9e959e2d306b6af799e5b9fb9eaa>`(
 			const std::string& name,
-			:ref:`SynapseMatrixType<doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
+			:ref:`SynapseMatrixType<doxid-db/d08/synapse_matrix_type_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
 			unsigned int delaySteps,
 			const std::string& src,
 			const std::string& trg,
@@ -103,13 +103,13 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 			const typename WeightUpdateModel::VarValues& weightVarInitialisers,
 			const typename PostsynapticModel::ParamValues& postsynapticParamValues,
 			const typename PostsynapticModel::VarValues& postsynapticVarInitialisers,
-			const :ref:`InitSparseConnectivitySnippet::Init<doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-dc/de1/modelSpec_8h_1a367c112babcc14b58db730731b798073>`()
+			const :ref:`InitSparseConnectivitySnippet::Init<doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-db/dd1/model_spec_8h_1a367c112babcc14b58db730731b798073>`()
 			);
 	
 		template <typename WeightUpdateModel, typename PostsynapticModel>
-		:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* :ref:`addSynapsePopulation<doxid-da/dfd/classModelSpec_1a9c0d07277fbdedf094f06279d13f4d54>`(
+		:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* :ref:`addSynapsePopulation<doxid-d1/de7/class_model_spec_1a9c0d07277fbdedf094f06279d13f4d54>`(
 			const std::string& name,
-			:ref:`SynapseMatrixType<doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
+			:ref:`SynapseMatrixType<doxid-db/d08/synapse_matrix_type_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
 			unsigned int delaySteps,
 			const std::string& src,
 			const std::string& trg,
@@ -119,13 +119,13 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 			const typename WeightUpdateModel::PostVarValues& weightPostVarInitialisers,
 			const typename PostsynapticModel::ParamValues& postsynapticParamValues,
 			const typename PostsynapticModel::VarValues& postsynapticVarInitialisers,
-			const :ref:`InitSparseConnectivitySnippet::Init<doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-dc/de1/modelSpec_8h_1a367c112babcc14b58db730731b798073>`()
+			const :ref:`InitSparseConnectivitySnippet::Init<doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-db/dd1/model_spec_8h_1a367c112babcc14b58db730731b798073>`()
 			);
 	
-		:ref:`CurrentSource<doxid-d1/d48/classCurrentSource>`* :ref:`findCurrentSource<doxid-da/dfd/classModelSpec_1a1f9d972f4f93c65dd254a27992980600>`(const std::string& name);
+		:ref:`CurrentSource<doxid-d4/d11/class_current_source>`* :ref:`findCurrentSource<doxid-d1/de7/class_model_spec_1a1f9d972f4f93c65dd254a27992980600>`(const std::string& name);
 	
 		template <typename CurrentSourceModel>
-		:ref:`CurrentSource<doxid-d1/d48/classCurrentSource>`* :ref:`addCurrentSource<doxid-da/dfd/classModelSpec_1aaf260ae8ffd52473b61a27974867c3e3>`(
+		:ref:`CurrentSource<doxid-d4/d11/class_current_source>`* :ref:`addCurrentSource<doxid-d1/de7/class_model_spec_1aaf260ae8ffd52473b61a27974867c3e3>`(
 			const std::string& currentSourceName,
 			const CurrentSourceModel* model,
 			const std::string& targetNeuronGroupName,
@@ -134,7 +134,7 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 			);
 	
 		template <typename CurrentSourceModel>
-		:ref:`CurrentSource<doxid-d1/d48/classCurrentSource>`* :ref:`addCurrentSource<doxid-da/dfd/classModelSpec_1a54bfff6bcd9ae2bf4d3424177a68265c>`(
+		:ref:`CurrentSource<doxid-d4/d11/class_current_source>`* :ref:`addCurrentSource<doxid-d1/de7/class_model_spec_1a54bfff6bcd9ae2bf4d3424177a68265c>`(
 			const std::string& currentSourceName,
 			const std::string& targetNeuronGroupName,
 			const typename CurrentSourceModel::ParamValues& paramValues,
@@ -144,8 +144,8 @@ Object used for specifying a neuronal network model. :ref:`More...<details-da/df
 
 	// direct descendants
 
-	class :ref:`ModelSpecInternal<doxid-dc/dfa/classModelSpecInternal>`;
-.. _details-da/dfd/classModelSpec:
+	class :ref:`ModelSpecInternal<doxid-d7/dd5/class_model_spec_internal>`;
+.. _details-d1/de7/class_model_spec:
 
 Detailed Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -156,7 +156,7 @@ Methods
 -------
 
 .. index:: pair: function; setName
-.. _doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4:
+.. _doxid-d1/de7/class_model_spec_1ada1aff7a94eeb36dff721f09d5cf94b4:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -166,29 +166,29 @@ Methods
 Method to set the neuronal network model name.
 
 .. index:: pair: function; setPrecision
-.. _doxid-da/dfd/classModelSpec_1a7548f1bf634884c051e4fbac3cf6212c:
+.. _doxid-d1/de7/class_model_spec_1a7548f1bf634884c051e4fbac3cf6212c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	void setPrecision(:ref:`FloatType<doxid-dc/de1/modelSpec_8h_1aa039815ec6b74d0fe4cb016415781c08>` floattype)
+	void setPrecision(:ref:`FloatType<doxid-db/dd1/model_spec_8h_1aa039815ec6b74d0fe4cb016415781c08>` floattype)
 
 Set numerical precision for floating point.
 
 This function sets the numerical precision of floating type variables. By default, it is GENN_GENN_FLOAT.
 
 .. index:: pair: function; setTimePrecision
-.. _doxid-da/dfd/classModelSpec_1a379793c6fcbe1f834ad18cf4c5789537:
+.. _doxid-d1/de7/class_model_spec_1a379793c6fcbe1f834ad18cf4c5789537:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	void setTimePrecision(:ref:`TimePrecision<doxid-dc/de1/modelSpec_8h_1a71ece086a364ee04c7ffc3f626218b8f>` timePrecision)
+	void setTimePrecision(:ref:`TimePrecision<doxid-db/dd1/model_spec_8h_1a71ece086a364ee04c7ffc3f626218b8f>` timePrecision)
 
 Set numerical precision for time.
 
 .. index:: pair: function; setDT
-.. _doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1:
+.. _doxid-d1/de7/class_model_spec_1a329236a3b07044b82bfda5b4f741d8e1:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -198,7 +198,7 @@ Set numerical precision for time.
 Set the integration step size of the model.
 
 .. index:: pair: function; setTiming
-.. _doxid-da/dfd/classModelSpec_1ae1678fdcd6c8381a402c58673064fa6a:
+.. _doxid-d1/de7/class_model_spec_1ae1678fdcd6c8381a402c58673064fa6a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -208,7 +208,7 @@ Set the integration step size of the model.
 Set whether timers and timing commands are to be included.
 
 .. index:: pair: function; setSeed
-.. _doxid-da/dfd/classModelSpec_1a1c6bc48d22a8f7b3fb70b46a4ca87646:
+.. _doxid-d1/de7/class_model_spec_1a1c6bc48d22a8f7b3fb70b46a4ca87646:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -218,43 +218,43 @@ Set whether timers and timing commands are to be included.
 Set the random seed (disables automatic seeding if argument not 0).
 
 .. index:: pair: function; setDefaultVarLocation
-.. _doxid-da/dfd/classModelSpec_1a55c87917355d34463a3c19fc6887e67a:
+.. _doxid-d1/de7/class_model_spec_1a55c87917355d34463a3c19fc6887e67a:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	void setDefaultVarLocation(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc)
+	void setDefaultVarLocation(:ref:`VarLocation<doxid-da/d08/variable_mode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc)
 
 What is the default location for model state variables?
 
 Historically, everything was allocated on both the host AND device
 
 .. index:: pair: function; setDefaultExtraGlobalParamLocation
-.. _doxid-da/dfd/classModelSpec_1aa0d462099083f12bc9f98b9b0fb86d64:
+.. _doxid-d1/de7/class_model_spec_1aa0d462099083f12bc9f98b9b0fb86d64:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	void setDefaultExtraGlobalParamLocation(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc)
+	void setDefaultExtraGlobalParamLocation(:ref:`VarLocation<doxid-da/d08/variable_mode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc)
 
 What is the default location for model extra global parameters?
 
 Historically, this was just left up to the user to handle
 
 .. index:: pair: function; setDefaultSparseConnectivityLocation
-.. _doxid-da/dfd/classModelSpec_1a9bc61e7c5dce757de3a9b7479852ca72:
+.. _doxid-d1/de7/class_model_spec_1a9bc61e7c5dce757de3a9b7479852ca72:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	void setDefaultSparseConnectivityLocation(:ref:`VarLocation<doxid-d6/d8f/variableMode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc)
+	void setDefaultSparseConnectivityLocation(:ref:`VarLocation<doxid-da/d08/variable_mode_8h_1a2807180f6261d89020cf7d7d498fb087>` loc)
 
 What is the default location for sparse synaptic connectivity?
 
 Historically, everything was allocated on both the host AND device
 
 .. index:: pair: function; setMergePostsynapticModels
-.. _doxid-da/dfd/classModelSpec_1ac40ba51579f94af5ca7fa51c4f67fe8f:
+.. _doxid-d1/de7/class_model_spec_1ac40ba51579f94af5ca7fa51c4f67fe8f:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -266,7 +266,7 @@ Should compatible postsynaptic models and dendritic delay buffers be merged?
 This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved
 
 .. index:: pair: function; getName
-.. _doxid-da/dfd/classModelSpec_1a4a4fc34aa4a09b384bd0ea7134bd49fa:
+.. _doxid-d1/de7/class_model_spec_1a4a4fc34aa4a09b384bd0ea7134bd49fa:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -276,7 +276,7 @@ This can significantly reduce the cost of updating neuron population but means t
 Gets the name of the neuronal network model.
 
 .. index:: pair: function; getPrecision
-.. _doxid-da/dfd/classModelSpec_1aafede0edcd474eb000230b63b8c1562d:
+.. _doxid-d1/de7/class_model_spec_1aafede0edcd474eb000230b63b8c1562d:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -286,7 +286,7 @@ Gets the name of the neuronal network model.
 Gets the floating point numerical precision.
 
 .. index:: pair: function; getTimePrecision
-.. _doxid-da/dfd/classModelSpec_1aa02041a6c0e06ba384a2bbf5e8d925a6:
+.. _doxid-d1/de7/class_model_spec_1aa02041a6c0e06ba384a2bbf5e8d925a6:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -296,7 +296,7 @@ Gets the floating point numerical precision.
 Gets the floating point numerical precision used to represent time.
 
 .. index:: pair: function; getDT
-.. _doxid-da/dfd/classModelSpec_1a79796e2faf44bc12bb716cb376603fc2:
+.. _doxid-d1/de7/class_model_spec_1a79796e2faf44bc12bb716cb376603fc2:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -306,7 +306,7 @@ Gets the floating point numerical precision used to represent time.
 Gets the model integration step size.
 
 .. index:: pair: function; getSeed
-.. _doxid-da/dfd/classModelSpec_1a4f032e3eb72f40ea3dcdafee8e0ad289:
+.. _doxid-d1/de7/class_model_spec_1a4f032e3eb72f40ea3dcdafee8e0ad289:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -316,7 +316,7 @@ Gets the model integration step size.
 Get the random seed.
 
 .. index:: pair: function; isTimingEnabled
-.. _doxid-da/dfd/classModelSpec_1a2ba95653dc8c75539a7e582e66999f2e:
+.. _doxid-d1/de7/class_model_spec_1a2ba95653dc8c75539a7e582e66999f2e:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -326,7 +326,7 @@ Get the random seed.
 Are timers and timing commands enabled.
 
 .. index:: pair: function; getNumLocalNeurons
-.. _doxid-da/dfd/classModelSpec_1a46ab18306ec13a61d4aff75645b8646e:
+.. _doxid-d1/de7/class_model_spec_1a46ab18306ec13a61d4aff75645b8646e:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -336,7 +336,7 @@ Are timers and timing commands enabled.
 How many neurons are simulated locally in this model.
 
 .. index:: pair: function; getNumRemoteNeurons
-.. _doxid-da/dfd/classModelSpec_1aaf562353e81f02732b6bb49311f16dda:
+.. _doxid-d1/de7/class_model_spec_1aaf562353e81f02732b6bb49311f16dda:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -346,7 +346,7 @@ How many neurons are simulated locally in this model.
 How many neurons are simulated remotely in this model.
 
 .. index:: pair: function; getNumNeurons
-.. _doxid-da/dfd/classModelSpec_1a453b3a92fb74742103d48cbf81fa47bb:
+.. _doxid-d1/de7/class_model_spec_1a453b3a92fb74742103d48cbf81fa47bb:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
@@ -356,23 +356,23 @@ How many neurons are simulated remotely in this model.
 How many neurons make up the entire model.
 
 .. index:: pair: function; findNeuronGroup
-.. _doxid-da/dfd/classModelSpec_1a7508ff35c5957bf8a4385168fed50e2c:
+.. _doxid-d1/de7/class_model_spec_1a7508ff35c5957bf8a4385168fed50e2c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	:ref:`NeuronGroup<doxid-d7/d3b/classNeuronGroup>`* findNeuronGroup(const std::string& name)
+	:ref:`NeuronGroup<doxid-df/dbc/class_neuron_group>`* findNeuronGroup(const std::string& name)
 
 Find a neuron group by name.
 
 .. index:: pair: function; addNeuronPopulation
-.. _doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b:
+.. _doxid-d1/de7/class_model_spec_1a0b765be273f3c6cec15092d7dbfdd52b:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
 	template <typename NeuronModel>
-	:ref:`NeuronGroup<doxid-d7/d3b/classNeuronGroup>`* addNeuronPopulation(
+	:ref:`NeuronGroup<doxid-df/dbc/class_neuron_group>`* addNeuronPopulation(
 		const std::string& name,
 		unsigned int size,
 		const NeuronModel* model,
@@ -393,7 +393,7 @@ Adds a new neuron group to the model using a neuron model managed by the user.
 	*
 		- NeuronModel
 
-		- type of neuron model (derived from :ref:`NeuronModels::Base <doxid-d7/dad/classNeuronModels_1_1Base>`).
+		- type of neuron model (derived from :ref:`NeuronModels::Base <doxid-df/d1b/class_neuron_models_1_1_base>`).
 
 	*
 		- name
@@ -429,16 +429,16 @@ Adds a new neuron group to the model using a neuron model managed by the user.
 
 .. rubric:: Returns:
 
-pointer to newly created :ref:`NeuronGroup <doxid-d7/d3b/classNeuronGroup>`
+pointer to newly created :ref:`NeuronGroup <doxid-df/dbc/class_neuron_group>`
 
 .. index:: pair: function; addNeuronPopulation
-.. _doxid-da/dfd/classModelSpec_1a5eec26674996c3504f1c85b1e190f82f:
+.. _doxid-d1/de7/class_model_spec_1a5eec26674996c3504f1c85b1e190f82f:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
 	template <typename NeuronModel>
-	:ref:`NeuronGroup<doxid-d7/d3b/classNeuronGroup>`* addNeuronPopulation(
+	:ref:`NeuronGroup<doxid-df/dbc/class_neuron_group>`* addNeuronPopulation(
 		const std::string& name,
 		unsigned int size,
 		const typename NeuronModel::ParamValues& paramValues,
@@ -458,7 +458,7 @@ Adds a new neuron group to the model using a singleton neuron model created usin
 	*
 		- NeuronModel
 
-		- type of neuron model (derived from :ref:`NeuronModels::Base <doxid-d7/dad/classNeuronModels_1_1Base>`).
+		- type of neuron model (derived from :ref:`NeuronModels::Base <doxid-df/d1b/class_neuron_models_1_1_base>`).
 
 	*
 		- name
@@ -489,28 +489,28 @@ Adds a new neuron group to the model using a singleton neuron model created usin
 
 .. rubric:: Returns:
 
-pointer to newly created :ref:`NeuronGroup <doxid-d7/d3b/classNeuronGroup>`
+pointer to newly created :ref:`NeuronGroup <doxid-df/dbc/class_neuron_group>`
 
 .. index:: pair: function; findSynapseGroup
-.. _doxid-da/dfd/classModelSpec_1ac61c646d1c4e5a56a8e1b5cf81de9088:
+.. _doxid-d1/de7/class_model_spec_1ac61c646d1c4e5a56a8e1b5cf81de9088:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* findSynapseGroup(const std::string& name)
+	:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* findSynapseGroup(const std::string& name)
 
 Find a synapse group by name.
 
 .. index:: pair: function; addSynapsePopulation
-.. _doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2:
+.. _doxid-d1/de7/class_model_spec_1abd4e9128a5d4f5f993907134218af0c2:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
 	template <typename WeightUpdateModel, typename PostsynapticModel>
-	:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* addSynapsePopulation(
+	:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* addSynapsePopulation(
 		const std::string& name,
-		:ref:`SynapseMatrixType<doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
+		:ref:`SynapseMatrixType<doxid-db/d08/synapse_matrix_type_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
 		unsigned int delaySteps,
 		const std::string& src,
 		const std::string& trg,
@@ -522,7 +522,7 @@ Find a synapse group by name.
 		const PostsynapticModel* psm,
 		const typename PostsynapticModel::ParamValues& postsynapticParamValues,
 		const typename PostsynapticModel::VarValues& postsynapticVarInitialisers,
-		const :ref:`InitSparseConnectivitySnippet::Init<doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-dc/de1/modelSpec_8h_1a367c112babcc14b58db730731b798073>`()
+		const :ref:`InitSparseConnectivitySnippet::Init<doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-db/dd1/model_spec_8h_1a367c112babcc14b58db730731b798073>`()
 		)
 
 Adds a synapse population to the model using weight update and postsynaptic models managed by the user.
@@ -537,12 +537,12 @@ Adds a synapse population to the model using weight update and postsynaptic mode
 	*
 		- WeightUpdateModel
 
-		- type of weight update model (derived from :ref:`WeightUpdateModels::Base <doxid-d2/d05/classWeightUpdateModels_1_1Base>`).
+		- type of weight update model (derived from :ref:`WeightUpdateModels::Base <doxid-d8/d90/class_weight_update_models_1_1_base>`).
 
 	*
 		- PostsynapticModel
 
-		- type of postsynaptic model (derived from :ref:`PostsynapticModels::Base <doxid-d1/d3a/classPostsynapticModels_1_1Base>`).
+		- type of postsynaptic model (derived from :ref:`PostsynapticModels::Base <doxid-d3/d2d/class_postsynaptic_models_1_1_base>`).
 
 	*
 		- name
@@ -612,24 +612,24 @@ Adds a synapse population to the model using weight update and postsynaptic mode
 	*
 		- connectivityInitialiser
 
-		- sparse connectivity initialisation snippet used to initialise connectivity for :ref:`SynapseMatrixConnectivity::SPARSE <doxid-dd/dd5/synapseMatrixType_8h_1aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e>` or :ref:`SynapseMatrixConnectivity::BITMASK <doxid-dd/dd5/synapseMatrixType_8h_1aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699>`. Typically wrapped with it's parameters using ``initConnectivity`` function
+		- sparse connectivity initialisation snippet used to initialise connectivity for :ref:`SynapseMatrixConnectivity::SPARSE <doxid-db/d08/synapse_matrix_type_8h_1aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e>` or :ref:`SynapseMatrixConnectivity::BITMASK <doxid-db/d08/synapse_matrix_type_8h_1aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699>`. Typically wrapped with it's parameters using ``initConnectivity`` function
 
 
 
 .. rubric:: Returns:
 
-pointer to newly created :ref:`SynapseGroup <doxid-dc/dfa/classSynapseGroup>`
+pointer to newly created :ref:`SynapseGroup <doxid-d2/d62/class_synapse_group>`
 
 .. index:: pair: function; addSynapsePopulation
-.. _doxid-da/dfd/classModelSpec_1a0bde9e959e2d306b6af799e5b9fb9eaa:
+.. _doxid-d1/de7/class_model_spec_1a0bde9e959e2d306b6af799e5b9fb9eaa:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
 	template <typename WeightUpdateModel, typename PostsynapticModel>
-	:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* addSynapsePopulation(
+	:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* addSynapsePopulation(
 		const std::string& name,
-		:ref:`SynapseMatrixType<doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
+		:ref:`SynapseMatrixType<doxid-db/d08/synapse_matrix_type_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
 		unsigned int delaySteps,
 		const std::string& src,
 		const std::string& trg,
@@ -637,7 +637,7 @@ pointer to newly created :ref:`SynapseGroup <doxid-dc/dfa/classSynapseGroup>`
 		const typename WeightUpdateModel::VarValues& weightVarInitialisers,
 		const typename PostsynapticModel::ParamValues& postsynapticParamValues,
 		const typename PostsynapticModel::VarValues& postsynapticVarInitialisers,
-		const :ref:`InitSparseConnectivitySnippet::Init<doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-dc/de1/modelSpec_8h_1a367c112babcc14b58db730731b798073>`()
+		const :ref:`InitSparseConnectivitySnippet::Init<doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-db/dd1/model_spec_8h_1a367c112babcc14b58db730731b798073>`()
 		)
 
 Adds a synapse population to the model using singleton weight update and postsynaptic models created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros.
@@ -652,12 +652,12 @@ Adds a synapse population to the model using singleton weight update and postsyn
 	*
 		- WeightUpdateModel
 
-		- type of weight update model (derived from :ref:`WeightUpdateModels::Base <doxid-d2/d05/classWeightUpdateModels_1_1Base>`).
+		- type of weight update model (derived from :ref:`WeightUpdateModels::Base <doxid-d8/d90/class_weight_update_models_1_1_base>`).
 
 	*
 		- PostsynapticModel
 
-		- type of postsynaptic model (derived from :ref:`PostsynapticModels::Base <doxid-d1/d3a/classPostsynapticModels_1_1Base>`).
+		- type of postsynaptic model (derived from :ref:`PostsynapticModels::Base <doxid-d3/d2d/class_postsynaptic_models_1_1_base>`).
 
 	*
 		- name
@@ -707,24 +707,24 @@ Adds a synapse population to the model using singleton weight update and postsyn
 	*
 		- connectivityInitialiser
 
-		- sparse connectivity initialisation snippet used to initialise connectivity for :ref:`SynapseMatrixConnectivity::SPARSE <doxid-dd/dd5/synapseMatrixType_8h_1aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e>` or :ref:`SynapseMatrixConnectivity::BITMASK <doxid-dd/dd5/synapseMatrixType_8h_1aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699>`. Typically wrapped with it's parameters using ``initConnectivity`` function
+		- sparse connectivity initialisation snippet used to initialise connectivity for :ref:`SynapseMatrixConnectivity::SPARSE <doxid-db/d08/synapse_matrix_type_8h_1aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e>` or :ref:`SynapseMatrixConnectivity::BITMASK <doxid-db/d08/synapse_matrix_type_8h_1aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699>`. Typically wrapped with it's parameters using ``initConnectivity`` function
 
 
 
 .. rubric:: Returns:
 
-pointer to newly created :ref:`SynapseGroup <doxid-dc/dfa/classSynapseGroup>`
+pointer to newly created :ref:`SynapseGroup <doxid-d2/d62/class_synapse_group>`
 
 .. index:: pair: function; addSynapsePopulation
-.. _doxid-da/dfd/classModelSpec_1a9c0d07277fbdedf094f06279d13f4d54:
+.. _doxid-d1/de7/class_model_spec_1a9c0d07277fbdedf094f06279d13f4d54:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
 	template <typename WeightUpdateModel, typename PostsynapticModel>
-	:ref:`SynapseGroup<doxid-dc/dfa/classSynapseGroup>`* addSynapsePopulation(
+	:ref:`SynapseGroup<doxid-d2/d62/class_synapse_group>`* addSynapsePopulation(
 		const std::string& name,
-		:ref:`SynapseMatrixType<doxid-dd/dd5/synapseMatrixType_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
+		:ref:`SynapseMatrixType<doxid-db/d08/synapse_matrix_type_8h_1a24a045033b9a7e987843a67ff5ddec9c>` mtype,
 		unsigned int delaySteps,
 		const std::string& src,
 		const std::string& trg,
@@ -734,7 +734,7 @@ pointer to newly created :ref:`SynapseGroup <doxid-dc/dfa/classSynapseGroup>`
 		const typename WeightUpdateModel::PostVarValues& weightPostVarInitialisers,
 		const typename PostsynapticModel::ParamValues& postsynapticParamValues,
 		const typename PostsynapticModel::VarValues& postsynapticVarInitialisers,
-		const :ref:`InitSparseConnectivitySnippet::Init<doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-dc/de1/modelSpec_8h_1a367c112babcc14b58db730731b798073>`()
+		const :ref:`InitSparseConnectivitySnippet::Init<doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>`& connectivityInitialiser = :ref:`uninitialisedConnectivity<doxid-db/dd1/model_spec_8h_1a367c112babcc14b58db730731b798073>`()
 		)
 
 Adds a synapse population to the model using singleton weight update and postsynaptic models created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros.
@@ -749,12 +749,12 @@ Adds a synapse population to the model using singleton weight update and postsyn
 	*
 		- WeightUpdateModel
 
-		- type of weight update model (derived from :ref:`WeightUpdateModels::Base <doxid-d2/d05/classWeightUpdateModels_1_1Base>`).
+		- type of weight update model (derived from :ref:`WeightUpdateModels::Base <doxid-d8/d90/class_weight_update_models_1_1_base>`).
 
 	*
 		- PostsynapticModel
 
-		- type of postsynaptic model (derived from :ref:`PostsynapticModels::Base <doxid-d1/d3a/classPostsynapticModels_1_1Base>`).
+		- type of postsynaptic model (derived from :ref:`PostsynapticModels::Base <doxid-d3/d2d/class_postsynaptic_models_1_1_base>`).
 
 	*
 		- name
@@ -814,34 +814,34 @@ Adds a synapse population to the model using singleton weight update and postsyn
 	*
 		- connectivityInitialiser
 
-		- sparse connectivity initialisation snippet used to initialise connectivity for :ref:`SynapseMatrixConnectivity::SPARSE <doxid-dd/dd5/synapseMatrixType_8h_1aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e>` or :ref:`SynapseMatrixConnectivity::BITMASK <doxid-dd/dd5/synapseMatrixType_8h_1aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699>`. Typically wrapped with it's parameters using ``initConnectivity`` function
+		- sparse connectivity initialisation snippet used to initialise connectivity for :ref:`SynapseMatrixConnectivity::SPARSE <doxid-db/d08/synapse_matrix_type_8h_1aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e>` or :ref:`SynapseMatrixConnectivity::BITMASK <doxid-db/d08/synapse_matrix_type_8h_1aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699>`. Typically wrapped with it's parameters using ``initConnectivity`` function
 
 
 
 .. rubric:: Returns:
 
-pointer to newly created :ref:`SynapseGroup <doxid-dc/dfa/classSynapseGroup>`
+pointer to newly created :ref:`SynapseGroup <doxid-d2/d62/class_synapse_group>`
 
 .. index:: pair: function; findCurrentSource
-.. _doxid-da/dfd/classModelSpec_1a1f9d972f4f93c65dd254a27992980600:
+.. _doxid-d1/de7/class_model_spec_1a1f9d972f4f93c65dd254a27992980600:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
-	:ref:`CurrentSource<doxid-d1/d48/classCurrentSource>`* findCurrentSource(const std::string& name)
+	:ref:`CurrentSource<doxid-d4/d11/class_current_source>`* findCurrentSource(const std::string& name)
 
 Find a current source by name.
 
 This function attempts to find an existing current source.
 
 .. index:: pair: function; addCurrentSource
-.. _doxid-da/dfd/classModelSpec_1aaf260ae8ffd52473b61a27974867c3e3:
+.. _doxid-d1/de7/class_model_spec_1aaf260ae8ffd52473b61a27974867c3e3:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
 	template <typename CurrentSourceModel>
-	:ref:`CurrentSource<doxid-d1/d48/classCurrentSource>`* addCurrentSource(
+	:ref:`CurrentSource<doxid-d4/d11/class_current_source>`* addCurrentSource(
 		const std::string& currentSourceName,
 		const CurrentSourceModel* model,
 		const std::string& targetNeuronGroupName,
@@ -861,7 +861,7 @@ Adds a new current source to the model using a current source model managed by t
 	*
 		- CurrentSourceModel
 
-		- type of current source model (derived from :ref:`CurrentSourceModels::Base <doxid-d0/de0/classCurrentSourceModels_1_1Base>`).
+		- type of current source model (derived from :ref:`CurrentSourceModels::Base <doxid-d8/d1e/class_current_source_models_1_1_base>`).
 
 	*
 		- currentSourceName
@@ -892,16 +892,16 @@ Adds a new current source to the model using a current source model managed by t
 
 .. rubric:: Returns:
 
-pointer to newly created :ref:`CurrentSource <doxid-d1/d48/classCurrentSource>`
+pointer to newly created :ref:`CurrentSource <doxid-d4/d11/class_current_source>`
 
 .. index:: pair: function; addCurrentSource
-.. _doxid-da/dfd/classModelSpec_1a54bfff6bcd9ae2bf4d3424177a68265c:
+.. _doxid-d1/de7/class_model_spec_1a54bfff6bcd9ae2bf4d3424177a68265c:
 
 .. ref-code-block:: cpp
 	:class: doxyrest-title-code-block
 
 	template <typename CurrentSourceModel>
-	:ref:`CurrentSource<doxid-d1/d48/classCurrentSource>`* addCurrentSource(
+	:ref:`CurrentSource<doxid-d4/d11/class_current_source>`* addCurrentSource(
 		const std::string& currentSourceName,
 		const std::string& targetNeuronGroupName,
 		const typename CurrentSourceModel::ParamValues& paramValues,
@@ -946,5 +946,5 @@ Adds a new current source to the model using a singleton current source model cr
 
 .. rubric:: Returns:
 
-pointer to newly created :ref:`CurrentSource <doxid-d1/d48/classCurrentSource>`
+pointer to newly created :ref:`CurrentSource <doxid-d4/d11/class_current_source>`
 

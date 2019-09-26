@@ -1,5 +1,5 @@
 .. index:: pair: page; Credits
-.. _doxid-dd/d51/Credits:
+.. _doxid-db/d83/_credits:
 
 Credits
 =======
@@ -22,5 +22,5 @@ Example projects were provided by Alan Diamond, James Turner, Esin Yavuz and Tho
 
 MPI support was largely developed by Mengchi Zhang.
 
-:ref:`Previous <doxid-d0/da6/UserGuide_1ListOfVariables>`
+:ref:`Previous <doxid-d0/d88/_user_guide_1ListOfVariables>`
 

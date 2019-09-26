@@ -23,7 +23,7 @@ Overview
 
 	// classes
 
-	class :ref:`GeNNModel<doxid-db/d57/classpygenn_1_1genn__model_1_1GeNNModel>`;
+	class :ref:`GeNNModel<doxid-db/da2/classpygenn_1_1genn__model_1_1_ge_n_n_model>`;
 
 	// global variables
 
@@ -75,12 +75,12 @@ This helper function creates a VarInit object to easily initialise a variable us
 	*
 		- init_var_snippet
 
-		- type of the :ref:`InitVarSnippet <doxid-d2/dfc/namespaceInitVarSnippet>` class as string or instance of class derived from InitVarSnippet::Custom class.
+		- type of the :ref:`InitVarSnippet <doxid-d7/dc6/namespace_init_var_snippet>` class as string or instance of class derived from InitVarSnippet::Custom class.
 
 	*
 		- param_space
 
-		- dict with param values for the :ref:`InitVarSnippet <doxid-d2/dfc/namespaceInitVarSnippet>` class
+		- dict with param values for the :ref:`InitVarSnippet <doxid-d7/dc6/namespace_init_var_snippet>` class
 
 .. index:: pair: function; init_connectivity
 .. _doxid-de/d6e/namespacepygenn_1_1genn__model_1aa7165e8d9a7156dc8685fff376d51270:
@@ -90,7 +90,7 @@ This helper function creates a VarInit object to easily initialise a variable us
 
 	def init_connectivity()
 
-This helper function creates a :ref:`InitSparseConnectivitySnippet::Init <doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>` object to easily initialise connectivity using a snippet.
+This helper function creates a :ref:`InitSparseConnectivitySnippet::Init <doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>` object to easily initialise connectivity using a snippet.
 
 
 
@@ -102,12 +102,12 @@ This helper function creates a :ref:`InitSparseConnectivitySnippet::Init <doxid-
 	*
 		- init_sparse_connect_snippet
 
-		- type of the :ref:`InitSparseConnectivitySnippet <doxid-dc/ddd/namespaceInitSparseConnectivitySnippet>` class as string or instance of class derived from InitSparseConnectivitySnippet::Custom.
+		- type of the :ref:`InitSparseConnectivitySnippet <doxid-d6/d5b/namespace_init_sparse_connectivity_snippet>` class as string or instance of class derived from InitSparseConnectivitySnippet::Custom.
 
 	*
 		- param_space
 
-		- dict with param values for the :ref:`InitSparseConnectivitySnippet <doxid-dc/ddd/namespaceInitSparseConnectivitySnippet>` class
+		- dict with param values for the :ref:`InitSparseConnectivitySnippet <doxid-d6/d5b/namespace_init_sparse_connectivity_snippet>` class
 
 .. index:: pair: function; create_custom_neuron_class
 .. _doxid-de/d6e/namespacepygenn_1_1genn__model_1a9a853b9227af2ed40a4b81b7c891452b:
@@ -567,7 +567,7 @@ Helper function to create function class for calculating sizes of matrices initi
 
 	def create_custom_init_var_snippet_class()
 
-This helper function creates a custom :ref:`InitVarSnippet <doxid-d2/dfc/namespaceInitVarSnippet>` class.
+This helper function creates a custom :ref:`InitVarSnippet <doxid-d7/dc6/namespace_init_var_snippet>` class.
 
 
 
@@ -623,7 +623,7 @@ This helper function creates a custom :ref:`InitVarSnippet <doxid-d2/dfc/namespa
 
 	def create_custom_sparse_connect_init_snippet_class()
 
-This helper function creates a custom :ref:`InitSparseConnectivitySnippet <doxid-dc/ddd/namespaceInitSparseConnectivitySnippet>` class.
+This helper function creates a custom :ref:`InitSparseConnectivitySnippet <doxid-d6/d5b/namespace_init_sparse_connectivity_snippet>` class.
 
 
 

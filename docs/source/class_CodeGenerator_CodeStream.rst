@@ -1,5 +1,5 @@
 .. index:: pair: class; CodeGenerator::CodeStream
-.. _doxid-d9/df8/classCodeGenerator_1_1CodeStream:
+.. _doxid-d3/d26/class_code_generator_1_1_code_stream:
 
 class CodeGenerator::CodeStream
 ===============================
@@ -25,17 +25,17 @@ class CodeGenerator::CodeStream
 	public:
 		// structs
 	
-		struct :ref:`CB<doxid-d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB>`;
-		struct :ref:`OB<doxid-d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB>`;
+		struct :ref:`CB<doxid-d0/d56/struct_code_generator_1_1_code_stream_1_1_c_b>`;
+		struct :ref:`OB<doxid-de/d03/struct_code_generator_1_1_code_stream_1_1_o_b>`;
 
 		// classes
 	
-		class :ref:`IndentBuffer<doxid-d7/db2/classCodeGenerator_1_1CodeStream_1_1IndentBuffer>`;
-		class :ref:`Scope<doxid-d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope>`;
+		class :ref:`IndentBuffer<doxid-d7/d00/class_code_generator_1_1_code_stream_1_1_indent_buffer>`;
+		class :ref:`Scope<doxid-da/d96/class_code_generator_1_1_code_stream_1_1_scope>`;
 
 		// methods
 	
-		:target:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream_1a04a5a264774068dd66b7cd84d2e7a816>`();
-		:target:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream_1aa16ba20eb1d2da8dc23045ed8ca74d59>`(std::ostream& stream);
-		void :target:`setSink<doxid-d9/df8/classCodeGenerator_1_1CodeStream_1abe44259e6c0aa0bedd34b99e641e2d87>`(std::ostream& stream);
+		:target:`CodeStream<doxid-d3/d26/class_code_generator_1_1_code_stream_1a04a5a264774068dd66b7cd84d2e7a816>`();
+		:target:`CodeStream<doxid-d3/d26/class_code_generator_1_1_code_stream_1aa16ba20eb1d2da8dc23045ed8ca74d59>`(std::ostream& stream);
+		void :target:`setSink<doxid-d3/d26/class_code_generator_1_1_code_stream_1abe44259e6c0aa0bedd34b99e641e2d87>`(std::ostream& stream);
 	};

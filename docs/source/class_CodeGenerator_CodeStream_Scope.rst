@@ -1,5 +1,5 @@
 .. index:: pair: class; CodeGenerator::CodeStream::Scope
-.. _doxid-d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope:
+.. _doxid-da/d96/class_code_generator_1_1_code_stream_1_1_scope:
 
 class CodeGenerator::CodeStream::Scope
 ======================================
@@ -20,6 +20,6 @@ class CodeGenerator::CodeStream::Scope
 	public:
 		// methods
 	
-		:target:`Scope<doxid-d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope_1a8b284ec359407bbf5b1ce7344674ee21>`(:ref:`CodeStream<doxid-d9/df8/classCodeGenerator_1_1CodeStream>`& codeStream);
-		:target:`~Scope<doxid-d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope_1a4da3a97bb1b6ae60e5b04651ec840ab5>`();
+		:target:`Scope<doxid-da/d96/class_code_generator_1_1_code_stream_1_1_scope_1a8b284ec359407bbf5b1ce7344674ee21>`(:ref:`CodeStream<doxid-d3/d26/class_code_generator_1_1_code_stream>`& codeStream);
+		:target:`~Scope<doxid-da/d96/class_code_generator_1_1_code_stream_1_1_scope_1a4da3a97bb1b6ae60e5b04651ec840ab5>`();
 	};

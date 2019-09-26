@@ -1,5 +1,5 @@
 .. index:: pair: class; CodeGenerator::TeeStream
-.. _doxid-d7/d71/classCodeGenerator_1_1TeeStream:
+.. _doxid-df/d6a/class_code_generator_1_1_tee_stream:
 
 class CodeGenerator::TeeStream
 ==============================
@@ -21,5 +21,5 @@ class CodeGenerator::TeeStream
 		// methods
 	
 		template <typename... T>
-		:target:`TeeStream<doxid-d7/d71/classCodeGenerator_1_1TeeStream_1ad1eb122320a649987fa90b0e39bb7c3b>`(T&&... streamBufs);
+		:target:`TeeStream<doxid-df/d6a/class_code_generator_1_1_tee_stream_1ad1eb122320a649987fa90b0e39bb7c3b>`(T&&... streamBufs);
 	};

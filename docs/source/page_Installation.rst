@@ -1,5 +1,5 @@
 .. index:: pair: page; Installation
-.. _doxid-d8/d99/Installation:
+.. _doxid-d5/dff/_installation:
 
 Installation
 ============
@@ -8,18 +8,18 @@ You can download GeNN either as a zip file of a stable release or a snapshot of 
 
 
 
-.. _doxid-d8/d99/Installation_1Downloading:
+.. _doxid-d5/dff/_installation_1Downloading:
 
 Downloading a release
 ~~~~~~~~~~~~~~~~~~~~~
 
-Point your browser to `https://github.com/genn-team/genn/releases <https://github.com/genn-team/genn/releases>`__ and download a release from the list by clicking the relevant source code button. Note that GeNN is only distributed in the form of source code due to its code generation design. Binary distributions would not make sense in this framework and are not provided. After downloading continue to install GeNN as described in the :ref:`Installing GeNN <doxid-d8/d99/Installation_1installing>` section below.
+Point your browser to `https://github.com/genn-team/genn/releases <https://github.com/genn-team/genn/releases>`__ and download a release from the list by clicking the relevant source code button. Note that GeNN is only distributed in the form of source code due to its code generation design. Binary distributions would not make sense in this framework and are not provided. After downloading continue to install GeNN as described in the :ref:`Installing GeNN <doxid-d5/dff/_installation_1installing>` section below.
 
 
 
 
 
-.. _doxid-d8/d99/Installation_1GitSnapshot:
+.. _doxid-d5/dff/_installation_1GitSnapshot:
 
 Obtaining a Git snapshot
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -40,7 +40,7 @@ As an alternative to using git you can also download the full content of GeNN so
 
 
 
-.. _doxid-d8/d99/Installation_1installing:
+.. _doxid-d5/dff/_installation_1installing:
 
 Installing GeNN
 ~~~~~~~~~~~~~~~
@@ -83,5 +83,5 @@ This normally completes the installation. Windows useres must close and reopen t
 
 If you are using GeNN in Windows, the Visual Studio development environment must be set up within every instance of the CMD.EXE command window used. One can open an instance of CMD.EXE with the development environment already set up by navigating to Start - All Programs - Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may wish to create a shortcut for this tool on the desktop, for convenience.
 
-:ref:`Top <doxid-d8/d99/Installation>` \| :ref:`Next <doxid-d7/d98/Quickstart>`
+:ref:`Top <doxid-d5/dff/_installation>` \| :ref:`Next <doxid-dc/dab/_quickstart>`
 

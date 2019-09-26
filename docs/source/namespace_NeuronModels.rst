@@ -1,5 +1,5 @@
 .. index:: pair: namespace; NeuronModels
-.. _doxid-da/dac/namespaceNeuronModels:
+.. _doxid-d1/d5d/namespace_neuron_models:
 
 namespace NeuronModels
 ======================
@@ -32,18 +32,18 @@ namespace NeuronModels
 
 	// classes
 
-	class :ref:`Base<doxid-d7/dad/classNeuronModels_1_1Base>`;
-	class :ref:`Izhikevich<doxid-d7/d0a/classNeuronModels_1_1Izhikevich>`;
-	class :ref:`IzhikevichVariable<doxid-dc/d87/classNeuronModels_1_1IzhikevichVariable>`;
-	class :ref:`LIF<doxid-d0/d6d/classNeuronModels_1_1LIF>`;
-	class :ref:`Poisson<doxid-de/d1d/classNeuronModels_1_1Poisson>`;
-	class :ref:`PoissonNew<doxid-dc/dc0/classNeuronModels_1_1PoissonNew>`;
-	class :ref:`RulkovMap<doxid-db/d23/classNeuronModels_1_1RulkovMap>`;
-	class :ref:`SpikeSource<doxid-d5/d1f/classNeuronModels_1_1SpikeSource>`;
-	class :ref:`SpikeSourceArray<doxid-db/d38/classNeuronModels_1_1SpikeSourceArray>`;
-	class :ref:`TraubMiles<doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`;
-	class :ref:`TraubMilesAlt<doxid-d0/df2/classNeuronModels_1_1TraubMilesAlt>`;
-	class :ref:`TraubMilesFast<doxid-dc/d4c/classNeuronModels_1_1TraubMilesFast>`;
-	class :ref:`TraubMilesNStep<doxid-d6/d08/classNeuronModels_1_1TraubMilesNStep>`;
+	class :ref:`Base<doxid-df/d1b/class_neuron_models_1_1_base>`;
+	class :ref:`Izhikevich<doxid-d8/dab/class_neuron_models_1_1_izhikevich>`;
+	class :ref:`IzhikevichVariable<doxid-d8/d6a/class_neuron_models_1_1_izhikevich_variable>`;
+	class :ref:`LIF<doxid-d2/d49/class_neuron_models_1_1_l_i_f>`;
+	class :ref:`Poisson<doxid-d1/d6c/class_neuron_models_1_1_poisson>`;
+	class :ref:`PoissonNew<doxid-d1/d41/class_neuron_models_1_1_poisson_new>`;
+	class :ref:`RulkovMap<doxid-d3/da8/class_neuron_models_1_1_rulkov_map>`;
+	class :ref:`SpikeSource<doxid-d3/d90/class_neuron_models_1_1_spike_source>`;
+	class :ref:`SpikeSourceArray<doxid-dc/d9e/class_neuron_models_1_1_spike_source_array>`;
+	class :ref:`TraubMiles<doxid-d6/d4a/class_neuron_models_1_1_traub_miles>`;
+	class :ref:`TraubMilesAlt<doxid-da/da2/class_neuron_models_1_1_traub_miles_alt>`;
+	class :ref:`TraubMilesFast<doxid-d2/dfb/class_neuron_models_1_1_traub_miles_fast>`;
+	class :ref:`TraubMilesNStep<doxid-db/dfd/class_neuron_models_1_1_traub_miles_n_step>`;
 
 	} // namespace NeuronModels

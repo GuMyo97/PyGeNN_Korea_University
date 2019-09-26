@@ -1,5 +1,5 @@
 .. index:: pair: namespace; InitSparseConnectivitySnippet
-.. _doxid-dc/ddd/namespaceInitSparseConnectivitySnippet:
+.. _doxid-d6/d5b/namespace_init_sparse_connectivity_snippet:
 
 namespace InitSparseConnectivitySnippet
 =======================================
@@ -15,7 +15,7 @@ namespace InitSparseConnectivitySnippet
 	class_InitSparseConnectivitySnippet_OneToOne.rst
 	class_InitSparseConnectivitySnippet_Uninitialised.rst
 
-:ref:`Base <doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>` class for all sparse connectivity initialisation snippets.
+:ref:`Base <doxid-d8/d82/class_init_sparse_connectivity_snippet_1_1_base>` class for all sparse connectivity initialisation snippets.
 
 
 .. ref-code-block:: cpp
@@ -26,12 +26,12 @@ namespace InitSparseConnectivitySnippet
 
 	// classes
 
-	class :ref:`Base<doxid-d5/d9f/classInitSparseConnectivitySnippet_1_1Base>`;
-	class :ref:`FixedProbability<doxid-df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability>`;
-	class :ref:`FixedProbabilityBase<doxid-db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase>`;
-	class :ref:`FixedProbabilityNoAutapse<doxid-d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse>`;
-	class :ref:`Init<doxid-d2/d7f/classInitSparseConnectivitySnippet_1_1Init>`;
-	class :ref:`OneToOne<doxid-d5/dd3/classInitSparseConnectivitySnippet_1_1OneToOne>`;
-	class :ref:`Uninitialised<doxid-d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised>`;
+	class :ref:`Base<doxid-d8/d82/class_init_sparse_connectivity_snippet_1_1_base>`;
+	class :ref:`FixedProbability<doxid-dd/d83/class_init_sparse_connectivity_snippet_1_1_fixed_probability>`;
+	class :ref:`FixedProbabilityBase<doxid-d1/d15/class_init_sparse_connectivity_snippet_1_1_fixed_probability_base>`;
+	class :ref:`FixedProbabilityNoAutapse<doxid-d2/d20/class_init_sparse_connectivity_snippet_1_1_fixed_probability_no_autapse>`;
+	class :ref:`Init<doxid-dc/d49/class_init_sparse_connectivity_snippet_1_1_init>`;
+	class :ref:`OneToOne<doxid-dc/d5c/class_init_sparse_connectivity_snippet_1_1_one_to_one>`;
+	class :ref:`Uninitialised<doxid-d6/d2a/class_init_sparse_connectivity_snippet_1_1_uninitialised>`;
 
 	} // namespace InitSparseConnectivitySnippet

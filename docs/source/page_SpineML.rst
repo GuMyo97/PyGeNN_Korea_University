@@ -1,10 +1,10 @@
 .. index:: pair: page; SpineML and SpineCreator
-.. _doxid-d2/dba/SpineML:
+.. _doxid-df/dbf/_spine_m_l:
 
 SpineML and SpineCreator
 ========================
 
-GeNN now supports simulating models built using `SpineML <http://spineml.github.io/>`__ and includes scripts to fully integrate it with the `SpineCreator <http://spineml.github.io/spinecreator/>`__ graphical editor on Linux, Mac and Windows. After installing GeNN using the instructions in :ref:`Installation <doxid-d8/d99/Installation>`, `build SpineCreator for your platform <http://spineml.github.io/spinecreator/>`__.
+GeNN now supports simulating models built using `SpineML <http://spineml.github.io/>`__ and includes scripts to fully integrate it with the `SpineCreator <http://spineml.github.io/spinecreator/>`__ graphical editor on Linux, Mac and Windows. After installing GeNN using the instructions in :ref:`Installation <doxid-d5/dff/_installation>`, `build SpineCreator for your platform <http://spineml.github.io/spinecreator/>`__.
 
 From SpineCreator, select Edit->Settings->Simulators and add a new simulator using the following settings (replacing "/home/j/jk/jk421/genn" with the GeNN installation directory on your own system):
 
@@ -26,5 +26,5 @@ The best way to get started using SpineML with GeNN is to experiment with some e
 .. image:: spinecreator_experiment_screenshot.png
 	:alt: width=5cm
 
-Now click "Run experiment" and, after a short time, the results of your GeNN simulation will be available for plotting by clicking the "Graphs" option in the menu on the left hand side of SpineCreator. :ref:`Previous <doxid-d9/d61/Examples>` \| :ref:`Top <doxid-d2/dba/SpineML>` \| :ref:`Next <doxid-d3/d0c/brian2genn>`
+Now click "Run experiment" and, after a short time, the results of your GeNN simulation will be available for plotting by clicking the "Graphs" option in the menu on the left hand side of SpineCreator. :ref:`Previous <doxid-d9/dd8/_examples>` \| :ref:`Top <doxid-df/dbf/_spine_m_l>` \| :ref:`Next <doxid-d3/d0c/brian2genn>`
 

@@ -1,5 +1,5 @@
 .. index:: pair: namespace; PostsynapticModels
-.. _doxid-db/dcb/namespacePostsynapticModels:
+.. _doxid-db/d7d/namespace_postsynaptic_models:
 
 namespace PostsynapticModels
 ============================
@@ -23,9 +23,9 @@ namespace PostsynapticModels
 
 	// classes
 
-	class :ref:`Base<doxid-d1/d3a/classPostsynapticModels_1_1Base>`;
-	class :ref:`DeltaCurr<doxid-de/da9/classPostsynapticModels_1_1DeltaCurr>`;
-	class :ref:`ExpCond<doxid-d5/d27/classPostsynapticModels_1_1ExpCond>`;
-	class :ref:`ExpCurr<doxid-d5/d1e/classPostsynapticModels_1_1ExpCurr>`;
+	class :ref:`Base<doxid-d3/d2d/class_postsynaptic_models_1_1_base>`;
+	class :ref:`DeltaCurr<doxid-d5/da3/class_postsynaptic_models_1_1_delta_curr>`;
+	class :ref:`ExpCond<doxid-de/d6d/class_postsynaptic_models_1_1_exp_cond>`;
+	class :ref:`ExpCurr<doxid-d1/d8d/class_postsynaptic_models_1_1_exp_curr>`;
 
 	} // namespace PostsynapticModels

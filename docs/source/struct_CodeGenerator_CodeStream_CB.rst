@@ -1,5 +1,5 @@
 .. index:: pair: struct; CodeGenerator::CodeStream::CB
-.. _doxid-d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB:
+.. _doxid-d0/d56/struct_code_generator_1_1_code_stream_1_1_c_b:
 
 struct CodeGenerator::CodeStream::CB
 ====================================
@@ -10,7 +10,7 @@ struct CodeGenerator::CodeStream::CB
 Overview
 ~~~~~~~~
 
-A close bracket marker. :ref:`More...<details-d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB>`
+A close bracket marker. :ref:`More...<details-d0/d56/struct_code_generator_1_1_code_stream_1_1_c_b>`
 
 
 .. ref-code-block:: cpp
@@ -22,13 +22,13 @@ A close bracket marker. :ref:`More...<details-d4/d3d/structCodeGenerator_1_1Code
 	{
 		// fields
 	
-		const unsigned int :target:`Level<doxid-d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB_1a34c7eaa2f7502df3ddc7a138ee2e4d1b>`;
+		const unsigned int :target:`Level<doxid-d0/d56/struct_code_generator_1_1_code_stream_1_1_c_b_1a34c7eaa2f7502df3ddc7a138ee2e4d1b>`;
 
 		// methods
 	
-		:target:`CB<doxid-d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB_1a1bdb3de24897472fac38d36a60783347>`(unsigned int level);
+		:target:`CB<doxid-d0/d56/struct_code_generator_1_1_code_stream_1_1_c_b_1a1bdb3de24897472fac38d36a60783347>`(unsigned int level);
 	};
-.. _details-d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB:
+.. _details-d0/d56/struct_code_generator_1_1_code_stream_1_1_c_b:
 
 Detailed Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -39,5 +39,5 @@ Write to code stream ``os`` using:
 
 .. ref-code-block:: cpp
 
-	os << :ref:`CB <doxid-d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB_1a1bdb3de24897472fac38d36a60783347>`(16);
+	os << :ref:`CB <doxid-d0/d56/struct_code_generator_1_1_code_stream_1_1_c_b_1a1bdb3de24897472fac38d36a60783347>`(16);
 

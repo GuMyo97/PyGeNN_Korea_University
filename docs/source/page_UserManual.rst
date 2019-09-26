@@ -1,5 +1,5 @@
 .. index:: pair: page; User Manual
-.. _doxid-dc/d05/UserManual:
+.. _doxid-d6/de1/_user_manual:
 
 User Manual
 ===========
@@ -8,34 +8,34 @@ User Manual
 
 
 
-.. _doxid-dc/d05/UserManual_1Contents:
+.. _doxid-d6/de1/_user_manual_1Contents:
 
 Contents
 ~~~~~~~~
 
-* :ref:`Introduction <doxid-dc/d05/UserManual_1sIntro>`
+* :ref:`Introduction <doxid-d6/de1/_user_manual_1sIntro>`
 
-* :ref:`Defining a network model <doxid-df/dc3/sectDefiningNetwork>`
+* :ref:`Defining a network model <doxid-de/d42/sect_defining_network>`
 
-* :ref:`Neuron models <doxid-de/ded/sectNeuronModels>`
+* :ref:`Neuron models <doxid-da/ddf/sect_neuron_models>`
 
-* :ref:`Weight update models <doxid-d5/d24/sectSynapseModels>`
+* :ref:`Weight update models <doxid-db/d11/sect_synapse_models>`
 
 * :ref:`Postsynaptic integration methods <doxid-dd/de4/sect_postsyn>`
 
-* :ref:`Current source models <doxid-d0/d1e/sectCurrentSourceModels>`
+* :ref:`Current source models <doxid-dc/dee/sect_current_source_models>`
 
 * :ref:`Synaptic matrix types <doxid-d5/d39/subsect34>`
 
-* :ref:`Variable initialisation <doxid-d4/dc6/sectVariableInitialisation>`
+* :ref:`Variable initialisation <doxid-da/dc0/sect_variable_initialisation>`
 
-* :ref:`Sparse connectivity initialisation <doxid-d5/dd4/sectSparseConnectivityInitialisation>`
-
-
+* :ref:`Sparse connectivity initialisation <doxid-dc/df6/sect_sparse_connectivity_initialisation>`
 
 
 
-.. _doxid-dc/d05/UserManual_1sIntro:
+
+
+.. _doxid-d6/de1/_user_manual_1sIntro:
 
 Introduction
 ~~~~~~~~~~~~
@@ -48,7 +48,7 @@ GeNN is a software library for facilitating the simulation of neuronal network m
 
 This manual gives an overview of how to use GeNN for a novice user and tries to lead the user to more expert use later on. With that we jump right in.
 
-:ref:`Previous <doxid-df/ddb/ReleaseNotes>` \| :ref:`Top <doxid-dc/d05/UserManual>` \| :ref:`Next <doxid-df/dc3/sectDefiningNetwork>`
+:ref:`Previous <doxid-dd/d5e/_release_notes>` \| :ref:`Top <doxid-d6/de1/_user_manual>` \| :ref:`Next <doxid-de/d42/sect_defining_network>`
 
 .. toctree::
 	:hidden:

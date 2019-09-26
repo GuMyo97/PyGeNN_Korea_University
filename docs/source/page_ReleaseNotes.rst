@@ -1,5 +1,5 @@
 .. index:: pair: page; Release Notes
-.. _doxid-df/ddb/ReleaseNotes:
+.. _doxid-dd/d5e/_release_notes:
 
 Release Notes
 =============
@@ -49,7 +49,7 @@ User Side Changes
 
 #. Totally new build system - ``make install`` can be used to install GeNN to a system location on Linux and Mac and Windows projects work much better in the Visual Studio IDE.
 
-#. Python interface now supports Windows and can be installed using binary 'wheels' (see :ref:`Python interface (PyGeNN) <doxid-d0/d81/PyGeNN>` for more details).
+#. Python interface now supports Windows and can be installed using binary 'wheels' (see :ref:`Python interface (PyGeNN) <doxid-dc/d30/_py_ge_n_n>` for more details).
 
 #. No need to call ``initGeNN()`` at start and ``model.finalize()`` at end of all models.
 
@@ -59,17 +59,17 @@ User Side Changes
 
 #. State variables can now be pushed and pulled individually using the ``pull<var name><neuron or synapse name>FromDevice()`` and ``push<var name><neuron or synapse name>ToDevice()`` functions.
 
-#. Management of extra global parameter arrays has been somewhat automated (see :ref:`Extra Global Parameters <doxid-d0/da6/UserGuide_1extraGlobalParamSim>` for more details).
+#. Management of extra global parameter arrays has been somewhat automated (see :ref:`Extra Global Parameters <doxid-d0/d88/_user_guide_1extraGlobalParamSim>` for more details).
 
 #. ``GENN_PREFERENCES`` is no longer a namespace - it's a global struct so members need to be accessed with . rather than ::.
 
-#. ``:ref:`NeuronGroup <doxid-d7/d3b/classNeuronGroup>```, ``:ref:`SynapseGroup <doxid-dc/dfa/classSynapseGroup>```, ``:ref:`CurrentSource <doxid-d1/d48/classCurrentSource>``` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't *supposed* to call but could. These have now all been made protected and are exposed to GeNN internals using derived classes (``:ref:`NeuronGroupInternal <doxid-dc/da3/classNeuronGroupInternal>```, ``:ref:`SynapseGroupInternal <doxid-dd/d48/classSynapseGroupInternal>```, ``:ref:`CurrentSourceInternal <doxid-d6/de6/classCurrentSourceInternal>```, ``:ref:`ModelSpecInternal <doxid-dc/dfa/classModelSpecInternal>```) that make them public using ``using`` directives.
+#. ``:ref:`NeuronGroup <doxid-df/dbc/class_neuron_group>```, ``:ref:`SynapseGroup <doxid-d2/d62/class_synapse_group>```, ``:ref:`CurrentSource <doxid-d4/d11/class_current_source>``` and ``NNmodel`` all previously exposed a lot of methods that the user wasn't *supposed* to call but could. These have now all been made protected and are exposed to GeNN internals using derived classes (``:ref:`NeuronGroupInternal <doxid-d1/dc9/class_neuron_group_internal>```, ``:ref:`SynapseGroupInternal <doxid-d7/d53/class_synapse_group_internal>```, ``:ref:`CurrentSourceInternal <doxid-d5/de7/class_current_source_internal>```, ``:ref:`ModelSpecInternal <doxid-d7/dd5/class_model_spec_internal>```) that make them public using ``using`` directives.
 
 #. Auto-refractory behaviour was controlled using ``GENN_PREFERENCES::autoRefractory``, this is now controlled on a per-neuron-model basis using the ``SET_NEEDS_AUTO_REFRACTORY`` macro.
 
 #. The functions used for pushing and pulling have been unified somewhat this means that ``copyStateToDevice`` and ``copyStateFromDevice`` functions no longer copy spikes and ``pus<neuron or synapse name>SpikesToDevice`` and ``pull<neuron or synapse name>SpikesFromDevice`` no longer copy spike times or spike-like events.
 
-#. Standard models of leaky-integrate-and-fire neuron (``:ref:`NeuronModels::LIF <doxid-d0/d6d/classNeuronModels_1_1LIF>```) and of exponentially shaped postsynaptic current (``:ref:`PostsynapticModels::ExpCurr <doxid-d5/d1e/classPostsynapticModels_1_1ExpCurr>```) have been added.
+#. Standard models of leaky-integrate-and-fire neuron (``:ref:`NeuronModels::LIF <doxid-d2/d49/class_neuron_models_1_1_l_i_f>```) and of exponentially shaped postsynaptic current (``:ref:`PostsynapticModels::ExpCurr <doxid-d1/d8d/class_postsynaptic_models_1_1_exp_curr>```) have been added.
 
 #. When a model is built using the CUDA backend, the device it was built for is stored using it's PCI bus ID so it will always use the same device.
 
@@ -92,9 +92,9 @@ User Side Changes
 
 #. Postsynaptic models can now have Extra Global Parameters.
 
-#. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``:ref:`InitVarSnippet::Gamma <doxid-d0/d54/classInitVarSnippet_1_1Gamma>```.
+#. Gamma distribution can now be sampled using ``$(gennrand_gamma, a)``. This can be used to initialise variables using ``:ref:`InitVarSnippet::Gamma <doxid-df/d94/class_init_var_snippet_1_1_gamma>```.
 
-#. Experimental Python interface - All features of GeNN are now exposed to Python through the ``:ref:`pygenn <doxid-da/d6d/namespacepygenn>``` module (see :ref:`Python interface (PyGeNN) <doxid-d0/d81/PyGeNN>` for more details).
+#. Experimental Python interface - All features of GeNN are now exposed to Python through the ``:ref:`pygenn <doxid-da/d6d/namespacepygenn>``` module (see :ref:`Python interface (PyGeNN) <doxid-dc/d30/_py_ge_n_n>` for more details).
 
 Bug fixes:
 ~~~~~~~~~~
@@ -113,21 +113,21 @@ This release extends the initialisation system introduced in 3.1.0 to support th
 User Side Changes
 ~~~~~~~~~~~~~~~~~
 
-#. Sparse synaptic connectivity can now be initialised using small *snippets* of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models. See :ref:`Sparse connectivity initialisation <doxid-d5/dd4/sectSparseConnectivityInitialisation>` for more details.
+#. Sparse synaptic connectivity can now be initialised using small *snippets* of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models. See :ref:`Sparse connectivity initialisation <doxid-dc/df6/sect_sparse_connectivity_initialisation>` for more details.
 
 #. New 'ragged matrix' data structure for representing sparse synaptic connections supports initialisation using new sparse synaptic connecivity initialisation system and enables future optimisations. See :ref:`Synaptic matrix types <doxid-d5/d39/subsect34>` for more details.
 
-#. Added support for pre and postsynaptic state variables for weight update models to allow more efficient implementatation of trace based STDP rules. See :ref:`Defining a new weight update model <doxid-d5/d24/sectSynapseModels_1sect34>` for more details.
+#. Added support for pre and postsynaptic state variables for weight update models to allow more efficient implementatation of trace based STDP rules. See :ref:`Defining a new weight update model <doxid-db/d11/sect_synapse_models_1sect34>` for more details.
 
 #. Added support for devices with Compute Capability 7.0 (Volta) to block-size optimizer.
 
-#. Added support for a new class of 'current source' model which allows non-synaptic input to be efficiently injected into neurons. See :ref:`Current source models <doxid-d0/d1e/sectCurrentSourceModels>` for more details.
+#. Added support for a new class of 'current source' model which allows non-synaptic input to be efficiently injected into neurons. See :ref:`Current source models <doxid-dc/dee/sect_current_source_models>` for more details.
 
-#. Added support for heterogeneous dendritic delays. See :ref:`Defining a new weight update model <doxid-d5/d24/sectSynapseModels_1sect34>` for more details.
+#. Added support for heterogeneous dendritic delays. See :ref:`Defining a new weight update model <doxid-db/d11/sect_synapse_models_1sect34>` for more details.
 
-#. Added support for (homogeneous) synaptic back propagation delays using ``:ref:`SynapseGroup::setBackPropDelaySteps <doxid-dc/dfa/classSynapseGroup_1ac080d0115f8d3aa274e9f95898b1a443>```.
+#. Added support for (homogeneous) synaptic back propagation delays using ``:ref:`SynapseGroup::setBackPropDelaySteps <doxid-d2/d62/class_synapse_group_1ac080d0115f8d3aa274e9f95898b1a443>```.
 
-#. For long simulations, using single precision to represent simulation time does not work well. Added ``:ref:`NNmodel::setTimePrecision <doxid-da/dfd/classModelSpec_1a379793c6fcbe1f834ad18cf4c5789537>``` to allow data type used to represent time to be set independently.
+#. For long simulations, using single precision to represent simulation time does not work well. Added ``:ref:`NNmodel::setTimePrecision <doxid-d1/de7/class_model_spec_1a379793c6fcbe1f834ad18cf4c5789537>``` to allow data type used to represent time to be set independently.
 
 Optimisations
 ~~~~~~~~~~~~~
@@ -174,13 +174,13 @@ This release builds on the changes made in 3.0.0 to further streamline the proce
 User Side Changes
 ~~~~~~~~~~~~~~~~~
 
-#. Support for simulating models described using the `SpineML <http://spineml.github.io/>`__ model description language with GeNN (see :ref:`SpineML and SpineCreator <doxid-d2/dba/SpineML>` for more details).
+#. Support for simulating models described using the `SpineML <http://spineml.github.io/>`__ model description language with GeNN (see :ref:`SpineML and SpineCreator <doxid-df/dbf/_spine_m_l>` for more details).
 
-#. Neuron models can now sample from uniform, normal, exponential or log-normal distributions - these calls are translated to `cuRAND <http://docs.nvidia.com/cuda/curand/index.html>`__ when run on GPUs and calls to the C++11 ``<random>`` library when run on CPU. See :ref:`Defining your own neuron type <doxid-de/ded/sectNeuronModels_1sect_own>` for more details.
+#. Neuron models can now sample from uniform, normal, exponential or log-normal distributions - these calls are translated to `cuRAND <http://docs.nvidia.com/cuda/curand/index.html>`__ when run on GPUs and calls to the C++11 ``<random>`` library when run on CPU. See :ref:`Defining your own neuron type <doxid-da/ddf/sect_neuron_models_1sect_own>` for more details.
 
-#. Model state variables can now be initialised using small *snippets* of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models. See :ref:`Defining a new variable initialisation snippet <doxid-d4/dc6/sectVariableInitialisation_1sect_new_var_init>` for more details.
+#. Model state variables can now be initialised using small *snippets* of code run either on GPU or CPU. This can save significant amounts of initialisation time for large models. See :ref:`Defining a new variable initialisation snippet <doxid-da/dc0/sect_variable_initialisation_1sect_new_var_init>` for more details.
 
-#. New `MSBuild <https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-reference>`__ build system for Windows - makes developing user code from within Visual Studio much more streamlined. See :ref:`Debugging suggestions <doxid-d0/da6/UserGuide_1Debugging>` for more details.
+#. New `MSBuild <https://docs.microsoft.com/en-us/visualstudio/msbuild/msbuild-reference>`__ build system for Windows - makes developing user code from within Visual Studio much more streamlined. See :ref:`Debugging suggestions <doxid-d0/d88/_user_guide_1Debugging>` for more details.
 
 Bug fixes:
 ~~~~~~~~~~
@@ -371,7 +371,7 @@ User Side Changes
 
 #. The convenience function convertProbabilityToRandomNumberThreshold(float \*, uint64_t \*, int) was changed so that it actually converts firing probability/timestep into a threshold value for the GeNN random number generator (as its name always suggested). The previous functionality of converting a *rate* in kHz into a firing threshold number for the GeNN random number generator is now provided with the name convertRateToRandomNumberThreshold(float \*, uint64_t \*, int)
 
-#. Every model definition function ``modelDefinition()`` now needs to end with calling ``:ref:`NNmodel::finalize() <doxid-da/dfd/classModelSpec_1ad5166bfbc1a19f2d829be2ed1d8973cc>``` for the defined network model. This will lock down the model and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the ``finalize()`` function is not called, GeNN will issue an error and exit before code generation.
+#. Every model definition function ``modelDefinition()`` now needs to end with calling ``:ref:`NNmodel::finalize() <doxid-d1/de7/class_model_spec_1ad5166bfbc1a19f2d829be2ed1d8973cc>``` for the defined network model. This will lock down the model and prevent any further changes to it by the supported methods. It also triggers necessary analysis of the model structure that should only be performed once. If the ``finalize()`` function is not called, GeNN will issue an error and exit before code generation.
 
 #. To be more consistent in function naming the ``pull\<SYNAPSENAME\>FromDevice`` and ``push\<SYNAPSENAME\>ToDevice`` have been renamed to ``pull\<SYNAPSENAME\>StateFromDevice`` and ``push\<SYNAPSENAME\>StateToDevice``. The old versions are still supported through macro definitions to make the transition easier.
 
@@ -474,7 +474,7 @@ User Side Changes
    	float y= sdkGetTimerValue(&synapse_timer);
    	float z= sdkGetTimerValue(&learning_timer);
    
-   The :ref:`Insect olfaction model <doxid-d9/d61/Examples_1ex_mbody>` example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN:
+   The :ref:`Insect olfaction model <doxid-d9/dd8/_examples_1ex_mbody>` example shows how these can be used in the user-side code. To enable timing profiling in this example, simply enable it for GeNN:
    
    .. ref-code-block:: cpp
    
@@ -499,5 +499,5 @@ Developer Side Changes
 
 Please refer to the `full documentation <http://genn-team.github.io/genn/documentation/html/index.html>`__ for further details, tutorials and complete code documentation.
 
-:ref:`Previous <doxid-d0/d81/PyGeNN>` \| :ref:`Top <doxid-df/ddb/ReleaseNotes>` \| :ref:`Next <doxid-dc/d05/UserManual>`
+:ref:`Previous <doxid-dc/d30/_py_ge_n_n>` \| :ref:`Top <doxid-dd/d5e/_release_notes>` \| :ref:`Next <doxid-d6/de1/_user_manual>`
 

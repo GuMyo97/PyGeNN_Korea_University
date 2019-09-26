@@ -26,10 +26,10 @@ Overview
 
 	// classes
 
-	class :ref:`CurrentSource<doxid-da/d83/classpygenn_1_1genn__groups_1_1CurrentSource>`;
-	class :ref:`Group<doxid-d1/db3/classpygenn_1_1genn__groups_1_1Group>`;
-	class :ref:`NeuronGroup<doxid-dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup>`;
-	class :ref:`SynapseGroup<doxid-d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup>`;
+	class :ref:`CurrentSource<doxid-d9/def/classpygenn_1_1genn__groups_1_1_current_source>`;
+	class :ref:`Group<doxid-dd/df3/classpygenn_1_1genn__groups_1_1_group>`;
+	class :ref:`NeuronGroup<doxid-d6/d59/classpygenn_1_1genn__groups_1_1_neuron_group>`;
+	class :ref:`SynapseGroup<doxid-df/d4a/classpygenn_1_1genn__groups_1_1_synapse_group>`;
 
 	// global variables
 

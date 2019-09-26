@@ -1,5 +1,5 @@
 .. index:: pair: page; Tutorial 1
-.. _doxid-d5/dbb/Tutorial1:
+.. _doxid-dc/df2/_tutorial1:
 
 Tutorial 1
 ==========
@@ -8,12 +8,12 @@ In this tutorial we will go through step by step instructions how to create and 
 
 
 
-.. _doxid-d5/dbb/Tutorial1_1ModelDefinition:
+.. _doxid-dc/df2/_tutorial1_1ModelDefinition:
 
 The Model Definition
 ~~~~~~~~~~~~~~~~~~~~
 
-In this tutorial we will use a pre-defined Hodgkin-Huxley neuron model (:ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`) and create a simulation consisting of ten such neurons without any synaptic connections. We will run this simulation on a GPU and save the results - firstly to stdout and then to file.
+In this tutorial we will use a pre-defined Hodgkin-Huxley neuron model (:ref:`NeuronModels::TraubMiles <doxid-d6/d4a/class_neuron_models_1_1_traub_miles>`) and create a simulation consisting of ten such neurons without any synaptic connections. We will run this simulation on a GPU and save the results - firstly to stdout and then to file.
 
 The first step is to write a model definition function in a model definition file. Create a new directory and, within that, create a new empty file called ``tenHHModel.cc`` using your favourite text editor, e.g.
 
@@ -23,7 +23,7 @@ The first step is to write a model definition function in a model definition fil
 
 The ">>" in the example code snippets refers to a shell prompt in a unix shell, do not enter them as part of your shell commands.
 
-The model definition file contains the definition of the network model we want to simulate. First, we need to include the GeNN model specification code ``modelSpec.h``. Then the model definition takes the form of a function named ``modelDefinition`` that takes one argument, passed by reference, of type ``:ref:`ModelSpec <doxid-da/dfd/classModelSpec>```. Type in your ``tenHHModel.cc`` file:
+The model definition file contains the definition of the network model we want to simulate. First, we need to include the GeNN model specification code ``modelSpec.h``. Then the model definition takes the form of a function named ``modelDefinition`` that takes one argument, passed by reference, of type ``:ref:`ModelSpec <doxid-d1/de7/class_model_spec>```. Type in your ``tenHHModel.cc`` file:
 
 .. ref-code-block:: cpp
 
@@ -31,7 +31,7 @@ The model definition file contains the definition of the network model we want t
 	
 	#include "modelSpec.h"
 	
-	void modelDefinition(:ref:`ModelSpec <doxid-da/dfd/classModelSpec>` &model)
+	void modelDefinition(:ref:`ModelSpec <doxid-d1/de7/class_model_spec>` &model)
 	{
 	    // definition of tenHHModel
 	}
@@ -40,12 +40,12 @@ Two standard elements to the `modelDefinition function are setting the simulatio
 
 .. ref-code-block:: cpp
 
-	model.:ref:`setDT <doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
-	model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHModel");
+	model.:ref:`setDT <doxid-d1/de7/class_model_spec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
+	model.:ref:`setName <doxid-d1/de7/class_model_spec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHModel");
 
 With this we have fixed the integration time step to ``0.1`` in the usual time units. The typical units in GeNN are ``ms``, ``mV``, ``nF``, and ``S``. Therefore, this defines ``DT= 0.1 ms``.
 
-Making the actual model definition makes use of the :ref:`ModelSpec::addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>` and :ref:`ModelSpec::addSynapsePopulation <doxid-da/dfd/classModelSpec_1abd4e9128a5d4f5f993907134218af0c2>` member functions of the :ref:`ModelSpec <doxid-da/dfd/classModelSpec>` object. The arguments to a call to :ref:`ModelSpec::addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>` are
+Making the actual model definition makes use of the :ref:`ModelSpec::addNeuronPopulation <doxid-d1/de7/class_model_spec_1a0b765be273f3c6cec15092d7dbfdd52b>` and :ref:`ModelSpec::addSynapsePopulation <doxid-d1/de7/class_model_spec_1abd4e9128a5d4f5f993907134218af0c2>` member functions of the :ref:`ModelSpec <doxid-d1/de7/class_model_spec>` object. The arguments to a call to :ref:`ModelSpec::addNeuronPopulation <doxid-d1/de7/class_model_spec_1a0b765be273f3c6cec15092d7dbfdd52b>` are
 
 * ``NeuronModel`` : template parameter specifying the neuron model class to use
 
@@ -62,7 +62,7 @@ We first create the parameter and initial variable arrays,
 .. ref-code-block:: cpp
 
 	// definition of tenHHModel
-	:ref:`NeuronModels::TraubMiles::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` p(
+	:ref:`NeuronModels::TraubMiles::ParamValues <doxid-db/dd1/class_snippet_1_1_value_base>` p(
 	    7.15,       // 0 - gNa: Na conductance in muS
 	    50.0,       // 1 - ENa: Na equi potential in mV
 	    1.43,       // 2 - gK: K conductance in muS
@@ -71,7 +71,7 @@ We first create the parameter and initial variable arrays,
 	    -63.563,    // 5 - El: leak equi potential in mV
 	    0.143);     // 6 - Cmem: membr. capacity density in nF
 	
-	:ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
+	:ref:`NeuronModels::TraubMiles::VarValues <doxid-d8/d31/class_models_1_1_var_init_container_base>` ini(
 	    -60.0,      // 0 - membrane potential V
 	    0.0529324,  // 1 - prob. for Na channel activation m
 	    0.3176767,  // 2 - prob. for not Na channel blocking h
@@ -83,7 +83,7 @@ Having defined the parameter values and initial values we can now create the neu
 
 .. ref-code-block:: cpp
 
-	model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`>("Pop1", 10, p, ini);
+	model.:ref:`addNeuronPopulation <doxid-d1/de7/class_model_spec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d6/d4a/class_neuron_models_1_1_traub_miles>`>("Pop1", 10, p, ini);
 
 This completes the model definition in this example. The complete ``tenHHModel.cc`` file now should look like this:
 
@@ -93,13 +93,13 @@ This completes the model definition in this example. The complete ``tenHHModel.c
 	
 	#include "modelSpec.h"
 	
-	void modelDefinition(:ref:`ModelSpec <doxid-da/dfd/classModelSpec>` &model)
+	void modelDefinition(:ref:`ModelSpec <doxid-d1/de7/class_model_spec>` &model)
 	{
 	    // definition of tenHHModel
-	    model.:ref:`setDT <doxid-da/dfd/classModelSpec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
-	    model.:ref:`setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHModel");
+	    model.:ref:`setDT <doxid-d1/de7/class_model_spec_1a329236a3b07044b82bfda5b4f741d8e1>`(0.1);
+	    model.:ref:`setName <doxid-d1/de7/class_model_spec_1ada1aff7a94eeb36dff721f09d5cf94b4>`("tenHHModel");
 	
-	    :ref:`NeuronModels::TraubMiles::ParamValues <doxid-da/d76/classSnippet_1_1ValueBase>` p(
+	    :ref:`NeuronModels::TraubMiles::ParamValues <doxid-db/dd1/class_snippet_1_1_value_base>` p(
 	        7.15,       // 0 - gNa: Na conductance in muS
 	        50.0,       // 1 - ENa: Na equi potential in mV
 	        1.43,       // 2 - gK: K conductance in muS
@@ -108,13 +108,13 @@ This completes the model definition in this example. The complete ``tenHHModel.c
 	        -63.563,    // 5 - El: leak equi potential in mV
 	        0.143);     // 6 - Cmem: membr. capacity density in nF
 	
-	    :ref:`NeuronModels::TraubMiles::VarValues <doxid-d6/d24/classModels_1_1VarInitContainerBase>` ini(
+	    :ref:`NeuronModels::TraubMiles::VarValues <doxid-d8/d31/class_models_1_1_var_init_container_base>` ini(
 	        -60.0,      // 0 - membrane potential V
 	        0.0529324,  // 1 - prob. for Na channel activation m
 	        0.3176767,  // 2 - prob. for not Na channel blocking h
 	        0.5961207); // 3 - prob. for K channel activation n
 	
-	    model.:ref:`addNeuronPopulation <doxid-da/dfd/classModelSpec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>`>("Pop1", 10, p, ini);
+	    model.:ref:`addNeuronPopulation <doxid-d1/de7/class_model_spec_1a0b765be273f3c6cec15092d7dbfdd52b>`<:ref:`NeuronModels::TraubMiles <doxid-d6/d4a/class_neuron_models_1_1_traub_miles>`>("Pop1", 10, p, ini);
 	}
 
 This model definition suffices to generate code for simulating the ten Hodgkin-Huxley neurons on the a GPU or CPU. The second part of a GeNN simulation is the user code that sets up the simulation, does the data handling for input and output and generally defines the numerical experiment to be run.
@@ -123,7 +123,7 @@ This model definition suffices to generate code for simulating the ten Hodgkin-H
 
 
 
-.. _doxid-d5/dbb/Tutorial1_1buildModel:
+.. _doxid-dc/df2/_tutorial1_1buildModel:
 
 Building the model
 ~~~~~~~~~~~~~~~~~~
@@ -158,7 +158,7 @@ If GeNN has been added to your path and ``CUDA_PATH`` is correctly configured, y
 
 
 
-.. _doxid-d5/dbb/Tutorial1_1userCode:
+.. _doxid-dc/df2/_tutorial1_1userCode:
 
 User Code
 ~~~~~~~~~
@@ -177,7 +177,7 @@ GeNN will now have generated the code to simulate the model for one timestep usi
 	    return 0;
 	}
 
-This boiler plate code includes the header file for the generated code ``definitions.h`` in the subdirectory ``tenHHModel_CODE`` where GeNN deposits all generated code (this corresponds to the name passed to the ``:ref:`ModelSpec::setName <doxid-da/dfd/classModelSpec_1ada1aff7a94eeb36dff721f09d5cf94b4>``` function). Calling ``allocateMem()`` allocates the memory structures for all neuron variables and ``initialize()`` launches a GPU kernel which initialise all state variables to their initial values. Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms. To do so, we add after ``initialize();`` The ``t`` variable is provided by GeNN to keep track of the current simulation time in milliseconds.
+This boiler plate code includes the header file for the generated code ``definitions.h`` in the subdirectory ``tenHHModel_CODE`` where GeNN deposits all generated code (this corresponds to the name passed to the ``:ref:`ModelSpec::setName <doxid-d1/de7/class_model_spec_1ada1aff7a94eeb36dff721f09d5cf94b4>``` function). Calling ``allocateMem()`` allocates the memory structures for all neuron variables and ``initialize()`` launches a GPU kernel which initialise all state variables to their initial values. Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms. To do so, we add after ``initialize();`` The ``t`` variable is provided by GeNN to keep track of the current simulation time in milliseconds.
 
 
 
@@ -231,7 +231,7 @@ This completes the user code. The complete ``tenHHSimulation.cc`` file should no
 
 
 
-.. _doxid-d5/dbb/Tutorial1_1BuildingSimUnix:
+.. _doxid-dc/df2/_tutorial1_1BuildingSimUnix:
 
 Building the simulator (Linux or Mac)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,12 +252,12 @@ This defines that the model is named tennHHModel and the simulation code is give
 
 
 
-.. _doxid-d5/dbb/Tutorial1_1BuildingSimWindows:
+.. _doxid-dc/df2/_tutorial1_1BuildingSimWindows:
 
 Building the simulator (Windows)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-So that projects can be easily debugged within the Visual Studio IDE (see section :ref:`Debugging suggestions <doxid-d0/da6/UserGuide_1Debugging>` for more details), Windows projects are built using an MSBuild script typically with the same title as the final executable. A suitable solution and project can be generated automatically with the following command:
+So that projects can be easily debugged within the Visual Studio IDE (see section :ref:`Debugging suggestions <doxid-d0/d88/_user_guide_1Debugging>` for more details), Windows projects are built using an MSBuild script typically with the same title as the final executable. A suitable solution and project can be generated automatically with the following command:
 
 .. ref-code-block:: cpp
 
@@ -273,7 +273,7 @@ his defines that the model is named tennHHModel and the simulation code is given
 
 
 
-.. _doxid-d5/dbb/Tutorial1_1RunningSim:
+.. _doxid-dc/df2/_tutorial1_1RunningSim:
 
 Running the Simulation
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -309,7 +309,7 @@ The output you obtain should look like
 
 
 
-.. _doxid-d5/dbb/Tutorial1_1Input:
+.. _doxid-dc/df2/_tutorial1_1Input:
 
 Reading
 ~~~~~~~
@@ -351,7 +351,7 @@ to the top of tenHHSimulation.cc. After building the model; and building and run
 .. image:: tenHHexample.png
 	:alt: width=10cm
 
-However so far, the neurons are not connected and do not receive input. As the :ref:`NeuronModels::TraubMiles <doxid-d2/dc3/classNeuronModels_1_1TraubMiles>` model is silent in such conditions, the membrane voltages of the 10 neurons will simply drift from the -60mV they were initialised at to their resting potential.
+However so far, the neurons are not connected and do not receive input. As the :ref:`NeuronModels::TraubMiles <doxid-d6/d4a/class_neuron_models_1_1_traub_miles>` model is silent in such conditions, the membrane voltages of the 10 neurons will simply drift from the -60mV they were initialised at to their resting potential.
 
-:ref:`Previous <doxid-d5/d24/sectSynapseModels>` \| :ref:`Top <doxid-d5/dbb/Tutorial1>` \| :ref:`Next <doxid-dc/d7e/Tutorial2>`
+:ref:`Previous <doxid-db/d11/sect_synapse_models>` \| :ref:`Top <doxid-dc/df2/_tutorial1>` \| :ref:`Next <doxid-d4/d51/_tutorial2>`
 

@@ -1,5 +1,5 @@
 .. index:: pair: class; CodeGenerator::TeeBuf
-.. _doxid-d8/d5e/classCodeGenerator_1_1TeeBuf:
+.. _doxid-d9/d31/class_code_generator_1_1_tee_buf:
 
 class CodeGenerator::TeeBuf
 ===========================
@@ -21,5 +21,5 @@ class CodeGenerator::TeeBuf
 		// methods
 	
 		template <typename... T>
-		:target:`TeeBuf<doxid-d8/d5e/classCodeGenerator_1_1TeeBuf_1abb5b5abc4fd9e3b7fbf0ce03b5f22511>`(T&&... streamBufs);
+		:target:`TeeBuf<doxid-d9/d31/class_code_generator_1_1_tee_buf_1abb5b5abc4fd9e3b7fbf0ce03b5f22511>`(T&&... streamBufs);
 	};
