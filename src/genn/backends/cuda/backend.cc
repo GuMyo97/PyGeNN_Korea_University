@@ -1279,6 +1279,104 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
+std::string Backend::getVectorType(const std::string &scalarType, unsigned int vectorWidth, const ModelSpecInternal &model) const
+{
+    // Assert that vector width isn't zero
+    assert(vectorWidth != 0);
+
+    // CUDA only has vector types with up to 4 elements
+    if(vectorWidth > 4) {
+        return "";
+    }
+
+    // Check platform obeys some degree of sanity
+    static_assert(std::is_same<short, int16_t>::value, "GeNN expects short to be 16-bit");
+    static_assert(std::is_same<int, int32_t>::value, "GeNN expects int to be 32-bit");
+    static_assert(sizeof(long long) == sizeof(int64_t), "GeNN expects long long to be 64-bit");
+
+    // Single-precision float
+    const std::string vectorWidthString = std::to_string(vectorWidth);
+    if(scalarType == "float" || (scalarType == "scalar" && model.getPrecision() == "float"))
+    {
+        return "float" + vectorWidthString;
+    }
+    // Double-precision float
+    else if(scalarType == "double" || (scalarType == "scalar" && model.getPrecision() == "double"))
+    {
+        return "double" + vectorWidthString;
+    }
+    // Half-precision float
+    else if(scalarType == "half")
+    {
+        return "half" + vectorWidthString;
+    }
+    // 8-bit signed integer
+    if(scalarType == "signed char" || scalarType == "int8_t"
+       || (std::is_signed<char>::value && scalarType == "char"))
+    {
+        return "char" + vectorWidthString;
+    }
+    // 8-bit unsigned integer
+    else if(scalarType == "unsigned char" || scalarType == "uint8_t"
+            || (!std::is_signed<char>::value && scalarType == "char"))
+    {
+        return "uchar" + vectorWidthString;
+    }
+    // 16-bit signed integer
+    else if(scalarType == "short" || scalarType == "short int" || scalarType == "signed short"
+            || scalarType == "signed short int" || scalarType == "int16_t")
+    {
+        return "short" + vectorWidthString;
+    }
+    // 16-bit unsigned integer
+    else if(scalarType == "unsigned short" || scalarType == "unsigned short int" || scalarType == "uint16_t")
+    {
+        return "ushort" + vectorWidthString;
+    }
+    // 32-bit signed integer
+    else if(scalarType == "int" || scalarType == "signed" || scalarType == "signed int" || scalarType == "int32_t")
+    {
+        return "int" + vectorWidth;
+    }
+    // 32-bit unsigned integer
+    else if(scalarType == "unsigned" || scalarType == "unsigned int" || scalarType == "uint32_t")
+    {
+        return "uint" + vectorWidth;
+    }
+    // Long
+    else if(scalarType == "long" || scalarType == "long int" || scalarType == "signed long" || scalarType == "signed long int"
+            || (sizeof(long) == sizeof(int64_t) && scalarType == "int64_t")
+            || (sizeof(long) == sizeof(int32_t) && scalarType == "int32_t"))
+    {
+        return "long" + vectorWidth;
+    }
+    // Unsigned long
+    else if(scalarType == "unsigned long" || scalarType == "unsigned long int"
+            || (sizeof(unsigned long) == sizeof(uint64_t) && scalarType == "uint64_t")
+            || (sizeof(unsigned long) == sizeof(uint32_t) && scalarType == "uint32_t"))
+    {
+        return "ulong" + vectorWidth;
+    }
+    // Long long
+    else if(scalarType == "long long" || scalarType == "long long int" || scalarType == "signed long long"
+            || scalarType == "signed long long int" || scalarType == "int64_t")
+    {
+        return "longlong" + vectorWidth;
+    }
+    // Unsigned long long
+    else if(scalarType == "unsigned long long" || scalarType == "unsigned long long int" || scalarType == "uint64_t")
+    {
+        return "ulonglong" + vectorWidth;
+    }
+
+    return "";
+}
+//--------------------------------------------------------------------------
+unsigned int Backend::getPresynapticUpdateVectorWidth(const SynapseGroupInternal &sg) const
+{
+    return 1;
+}
+//--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os) const
 {
     os << "// Standard C++ includes" << std::endl;

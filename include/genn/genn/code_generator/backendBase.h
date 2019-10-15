@@ -159,6 +159,12 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
+    //! Gets the type this backend uses to represent vectors of these scalars - if it doesn't exist returns ""
+    virtual std::string getVectorType(const std::string &scalarType, unsigned int vectorWidth, const ModelSpecInternal &model) const = 0;
+
+    // Gets the vector width presynaptic updates of this synapse group should be vectorized with
+    virtual unsigned int getPresynapticUpdateVectorWidth(const SynapseGroupInternal &sg) const = 0;
+
     //! Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers*/
     virtual void genDefinitionsPreamble(CodeStream &os) const = 0;

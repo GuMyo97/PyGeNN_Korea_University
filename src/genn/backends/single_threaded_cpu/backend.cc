@@ -532,6 +532,17 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
+std::string Backend::getVectorType(const std::string &, unsigned int, const ModelSpecInternal &) const
+{
+    // No vector types
+    return "";
+}
+//--------------------------------------------------------------------------
+unsigned int Backend::getPresynapticUpdateVectorWidth(const SynapseGroupInternal &) const
+{
+    return 1;
+}
+//--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os) const
 {
     os << "// Standard C++ includes" << std::endl;
