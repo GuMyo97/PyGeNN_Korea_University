@@ -38,6 +38,9 @@ public:
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const = 0;
 
+    //! What vector width should this update strategy operate on?
+    virtual size_t getVectorWidth(const SynapseGroupInternal &sg) const = 0;
+
     //! Are input currents emitted by this presynaptic update accumulated into a register?
     virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
 
@@ -65,6 +68,9 @@ public:
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const override;
 
+    //! What vector width should this update strategy operate on?
+    virtual size_t getVectorWidth(const SynapseGroupInternal &sg) const override;
+
     //! Are input currents emitted by this presynaptic update accumulated into a register?
     virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
 
@@ -88,6 +94,9 @@ public:
     //------------------------------------------------------------------------
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+
+    //! What vector width should this update strategy operate on?
+    virtual size_t getVectorWidth(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const override;
@@ -115,6 +124,9 @@ public:
     //------------------------------------------------------------------------
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+
+    //! What vector width should this update strategy operate on?
+    virtual size_t getVectorWidth(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const override;

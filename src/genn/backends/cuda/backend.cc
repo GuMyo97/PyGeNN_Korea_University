@@ -141,6 +141,7 @@ const char *Backend::KernelNames[KernelMax] = {
 std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategy::PreSpan,
     new PresynapticUpdateStrategy::PostSpan,
+    new PresynapticUpdateStrategy::VectorPostSpan,
 };
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
@@ -1374,7 +1375,7 @@ std::string Backend::getVectorType(const std::string &scalarType, unsigned int v
 //--------------------------------------------------------------------------
 unsigned int Backend::getPresynapticUpdateVectorWidth(const SynapseGroupInternal &sg) const
 {
-    return 1;
+    return getPresynapticUpdateStrategy(sg)->getVectorWidth(sg);
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os) const

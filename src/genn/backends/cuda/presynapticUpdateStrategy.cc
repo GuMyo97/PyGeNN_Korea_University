@@ -29,6 +29,11 @@ size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
     return sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
+size_t PreSpan::getVectorWidth(const SynapseGroupInternal &) const
+{
+    return 1;
+}
+//----------------------------------------------------------------------------
 bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
@@ -177,6 +182,11 @@ size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
     else {
         return sg.getTrgNeuronGroup()->getNumNeurons();
     }
+}
+//----------------------------------------------------------------------------
+size_t PostSpan::getVectorWidth(const SynapseGroupInternal &) const
+{
+    return 1;
 }
 //----------------------------------------------------------------------------
 bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &) const
@@ -354,18 +364,42 @@ size_t VectorPostSpan::getNumThreads(const SynapseGroupInternal &sg) const
     }
 }
 //----------------------------------------------------------------------------
+size_t VectorPostSpan::getVectorWidth(const SynapseGroupInternal &) const
+{
+    return 2;
+}
+//----------------------------------------------------------------------------
 bool VectorPostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps) const
 {
-    // Postsynatic parallelism can be used when synapse groups request it
-    return (sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC);
+    // If postsynaptic parallelism is selected and matrix is either sparse or dense
+    // **TODO** for now also if no event threshold test is required
+    if(sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC && !sg.isEventThresholdReTestRequired()
+        && ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)))
+    {
+        // If this is a device which has double half-precision throughput (rather than extremely slow)
+        if((deviceProps.major == 5 && deviceProps.minor == 3)       // Jetson TX1
+            || (deviceProps.major == 6 && deviceProps.minor == 0)   // Tesla P100
+            || (deviceProps.major == 6 && deviceProps.minor == 2)   // Jetson TX2
+            || (deviceProps.major >= 7))                            // Turing or later
+        {
+            // If synapse group's sparse indices are implemented as 16-bit integers and all the variables are half precision
+            const auto &vars = sg.getWUModel()->getVars();
+            if(sg.getSparseIndType() == "uint16_t"
+                && std::all_of(vars.cbegin(), vars.cend(), [](const Models::Base::Var &v){ return v.type == "half"; }))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 //----------------------------------------------------------------------------
 bool VectorPostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &) const
 {
-    // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield
+    // We should accumulate each postsynaptic neuron's input in a register if matrix is dense
     // (where each thread represents an individual neuron)
-    return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-            || (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK));
+    return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE);
 }
 //----------------------------------------------------------------------------
 bool VectorPostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
@@ -383,7 +417,7 @@ bool VectorPostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &
 }
 //----------------------------------------------------------------------------
 void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                             BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
+                             BackendBase::SynapseGroupHandler, BackendBase::SynapseGroupHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -425,38 +459,8 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
             os << "if (" << popSubs["id"] << " < " << sg.getMaxConnections() << ")";
             {
                 CodeStream::Scope b(os);
-                if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    const size_t maxSynapses = (size_t)sg.getTrgNeuronGroup()->getNumNeurons() * (size_t)sg.getSrcNeuronGroup()->getNumNeurons();
-                    if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                        os << "const uint64_t gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << "ull + " << popSubs["id"] << ");" << std::endl;
-                    }
-                    else {
-                        os << "const unsigned int gid = (shSpk" << eventSuffix << "[j] * " << sg.getTrgNeuronGroup()->getNumNeurons() << " + " << popSubs["id"] << ");" << std::endl;
-                    }
-                }
-
                 if (!wu->getSimSupportCode().empty()) {
                     os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
-                }
-                if (!trueSpike && sg.isEventThresholdReTestRequired()) {
-                    os << "if(";
-                    if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        // Note: we will just access global mem. For compute >= 1.2 simultaneous access to same global mem in the (half-)warp will be coalesced - no worries
-                        os << "(B(dd_gp" << sg.getName() << "[gid / 32], gid & 31)) && ";
-                    }
-
-                    Substitutions threshSubs(&popSubs);
-                    threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
-
-                    // Generate weight update threshold condition
-                    wumThreshHandler(os, sg, threshSubs);
-
-                    // end code substitutions ----
-                    os << ")";
-                    os << CodeStream::OB(130);
-                }
-                else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "if (B(dd_gp" << sg.getName() << "[gid / 32], gid & 31))" << CodeStream::OB(135);
                 }
 
                 Substitutions synSubs(&popSubs);
@@ -502,13 +506,6 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
 
                 if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(140); // end if (id < npost)
-                }
-
-                if (!trueSpike && sg.isEventThresholdReTestRequired()) {
-                    os << CodeStream::CB(130); // end if (eCode)
-                }
-                else if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << CodeStream::CB(135); // end if (B(dd_gp" << sg.getName() << "[gid / 32], gid
                 }
             }
         }
