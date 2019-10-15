@@ -130,6 +130,9 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
     //! Gets the type this backend uses to represent vectors of these scalars - if it doesn't exist returns ""
     virtual std::string getVectorType(const std::string &scalarType, unsigned int vectorWidth, const ModelSpecInternal &model) const override;
 
@@ -298,6 +301,9 @@ private:
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
+
+    //! Get the stride used for accessing synapses, taking into account vectorization etc
+    size_t getMatrixRowStride(const SynapseGroupInternal &sg) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);

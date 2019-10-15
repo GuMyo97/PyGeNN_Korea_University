@@ -159,6 +159,9 @@ public:
                          SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler, 
                          SynapseGroupHandler sgSparseInitHandler) const = 0;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
+
     //! Gets the type this backend uses to represent vectors of these scalars - if it doesn't exist returns ""
     virtual std::string getVectorType(const std::string &scalarType, unsigned int vectorWidth, const ModelSpecInternal &model) const = 0;
 
