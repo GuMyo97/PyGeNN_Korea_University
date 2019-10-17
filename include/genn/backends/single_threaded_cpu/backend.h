@@ -54,7 +54,7 @@ public:
                          SynapseGroupHandler sgSparseInitHandler) const override;
 
     //! Gets the type this backend uses to represent vectors of these scalars - if it doesn't exist returns ""
-    virtual std::string getVectorType(const std::string &scalarType, unsigned int vectorWidth, const ModelSpecInternal &model) const override;
+    virtual std::string getVectorType(const std::string &scalarType, unsigned int vectorWidth, const std::string &ftype) const override;
 
     // Gets the vector width presynaptic updates of this synapse group should be vectorized with
     virtual unsigned int getPresynapticUpdateVectorWidth(const SynapseGroupInternal &sg) const override;

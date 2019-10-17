@@ -532,7 +532,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
     }
 }
 //--------------------------------------------------------------------------
-std::string Backend::getVectorType(const std::string &, unsigned int, const ModelSpecInternal &) const
+std::string Backend::getVectorType(const std::string &, unsigned int, const std::string &ftype) const
 {
     // No vector types
     return "";

@@ -163,7 +163,7 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
 
     //! Gets the type this backend uses to represent vectors of these scalars - if it doesn't exist returns ""
-    virtual std::string getVectorType(const std::string &scalarType, unsigned int vectorWidth, const ModelSpecInternal &model) const = 0;
+    virtual std::string getVectorType(const std::string &scalarType, unsigned int vectorWidth, const std::string &ftype) const = 0;
 
     // Gets the vector width presynaptic updates of this synapse group should be vectorized with
     virtual unsigned int getPresynapticUpdateVectorWidth(const SynapseGroupInternal &sg) const = 0;

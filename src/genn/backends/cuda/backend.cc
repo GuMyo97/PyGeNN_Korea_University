@@ -1290,10 +1290,11 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     }
 }
 //--------------------------------------------------------------------------
-std::string Backend::getVectorType(const std::string &scalarType, unsigned int vectorWidth, const ModelSpecInternal &model) const
+std::string Backend::getVectorType(const std::string &scalarType, unsigned int vectorWidth, const std::string &ftype) const
 {
-    // Assert that vector width isn't zero
-    assert(vectorWidth != 0);
+    // Assert that vector width is greater than 1
+    // **NOTE** we COULD use float1 etc but it seems a bit pointless
+    assert(vectorWidth > 1);
 
     // CUDA only has vector types with up to 4 elements
     if(vectorWidth > 4) {
@@ -1307,12 +1308,12 @@ std::string Backend::getVectorType(const std::string &scalarType, unsigned int v
 
     // Single-precision float
     const std::string vectorWidthString = std::to_string(vectorWidth);
-    if(scalarType == "float" || (scalarType == "scalar" && model.getPrecision() == "float"))
+    if(scalarType == "float" || (scalarType == "scalar" && ftype == "float"))
     {
         return "float" + vectorWidthString;
     }
     // Double-precision float
-    else if(scalarType == "double" || (scalarType == "scalar" && model.getPrecision() == "double"))
+    else if(scalarType == "double" || (scalarType == "scalar" && ftype == "double"))
     {
         return "double" + vectorWidthString;
     }
