@@ -486,7 +486,7 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
                     // Calculate synapse address
                     os << "const unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ") + rowAddress;" << std::endl;
 
-                    // Read pair of 16-bit indices into vector
+                    // Read pair of 16-bit ivectorAddndices into vector
                     os << "const ushort2 idPost = *(ushort2*)&dd_ind" << sg.getName() << "[synAddress];" << std::endl;
                 }
                 // Otherwise, create vector containing postsynaptic indices
@@ -503,8 +503,9 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.isDendriticDelayRequired()) {
-                    assert(false);
-                    synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
+                    const std::string vectorAdd = backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + "idPost.x], $(0)); "
+                                                  + "if((rowAddress + 1) < npost) " + backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(3)") + "idPost.y], $(2))";
+                    synSubs.addFuncSubstitution("addToInSynDelayVec", 4, vectorAdd);
                 }
                 // Otherwise
                 else {
