@@ -408,9 +408,8 @@ bool VectorPostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDevi
 //----------------------------------------------------------------------------
 bool VectorPostSpan::shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &) const
 {
-    // We should accumulate each postsynaptic neuron's input in a register if matrix is dense
-    // (where each thread represents an individual neuron)
-    return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE);
+    // **TODO** for now we shouldn't do this as register is not a vector
+    return false;
 }
 //----------------------------------------------------------------------------
 bool VectorPostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const
@@ -474,105 +473,67 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
                     os << "using namespace " << sg.getName() << "_weightupdate_simCode;" << std::endl;
                 }
 
+                // Calculate index in row of first synapse
+                os << "const unsigned int rowAddress = " + popSubs["id"] + " * 2;" << std::endl;
 
-                // Calculate synapse address of first synapse
-                os << "unsigned int rowAddress = " + popSubs["id"] + " * 2;" << std::endl;
-                os << "unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ") + rowAddress;" << std::endl;
-
-                // Get row length
+                // If matrix is sparse
                 if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    os << "const ushort2 ind = *(ushort2*)&dd_ind" << sg.getName() << "[synAddress];" << std::endl;
                     os << "const unsigned int npost = shRowLength[j];" << std::endl;
+
+                    // If either of our vector lanes will be within row
+                    os << "if (rowAddress < npost)" << CodeStream::OB(140);
+
+                    // Calculate synapse address
+                    os << "const unsigned int synAddress = (shSpk" << eventSuffix << "[j] * " << std::to_string(backend.getSynapticMatrixRowStride(sg)) << ") + rowAddress;" << std::endl;
+
+                    // Read pair of 16-bit indices into vector
+                    os << "const ushort2 idPost = *(ushort2*)&dd_ind" << sg.getName() << "[synAddress];" << std::endl;
+                }
+                // Otherwise, create vector containing postsynaptic indices
+                else {
+                    os << "const ushort2 idPost{rowAddress, rowAddress + 1};" << std::endl;
                 }
 
                 Substitutions preSubs(&popSubs);
                 preSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
                 preSubs.addVarSubstitution("id_syn", "synAddress");
 
-                {
-                    CodeStream::Scope b(os);
+                Substitutions synSubs(&preSubs);
+                synSubs.addVarSubstitution("id_post", "idPost");
 
-                    Substitutions synSubs(&preSubs);
-                    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << "if (rowAddress < npost)" << CodeStream::OB(140);
-                        synSubs.addVarSubstitution("id_post", "ind.x");
-                    }
-                    else {
-                        synSubs.addVarSubstitution("id_post", "rowAddress");
-                    }
-
-                    // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-                    if(sg.isDendriticDelayRequired()) {
-                        synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
-                    }
-                    // Otherwise
-                    else {
-                        if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-                            // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-                            if (shouldAccumulateInSharedMemory(sg, backend)) {
-                                synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs["id_post"] + "] += $(0)");
-                            }
-                            else {
-                                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
-                            }
+                // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                if(sg.isDendriticDelayRequired()) {
+                    assert(false);
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
+                }
+                // Otherwise
+                else {
+                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                        // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
+                        // **TODO** make sure remainder is zeroed
+                        if (shouldAccumulateInSharedMemory(sg, backend)) {
+                            assert(false);
+                            synSubs.addFuncSubstitution("addToInSyn", 1, "dd_inSyn[idPost.x] += $(0)");
                         }
                         else {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, "linSyn += $(0)");
+                            const std::string vectorAdd = backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[idPost.x], $(0)); "
+                                                          + "if((rowAddress + 1) < npost) " + backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[idPost.y], $(1))";
+                            synSubs.addFuncSubstitution("addToInSynVec", 2, vectorAdd);
                         }
-                    }
-
-                    wumSimHandler(os, sg, synSubs);
-
-                    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << CodeStream::CB(140); // end if (id < npost)
-                    }
-
-                }
-
-                // Go onto second synapse
-                os << "rowAddress++;" << std::endl;
-                os << "synAddress++;" << std::endl;
-
-                {
-                    CodeStream::Scope b(os);
-
-                    Substitutions synSubs(&preSubs);
-                    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << "if (rowAddress < npost)" << CodeStream::OB(140);
-                        synSubs.addVarSubstitution("id_post", "ind.y");
                     }
                     else {
-                        synSubs.addVarSubstitution("id_post", "rowAddress");
+                        assert(false);
+                        // Add directly to global memory
+                        // **TODO** make sure remainder is zeroed
+                        synSubs.addFuncSubstitution("addToInSyn", 1, "*(float2*)&dd_inSyn" + sg.getPSModelTargetName() + "[rowAddress] += __half22float2($(0))");
                     }
-
-                    // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-                    if(sg.isDendriticDelayRequired()) {
-                        synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_denDelay" + sg.getPSModelTargetName() + "[" + sg.getDendriticDelayOffset("dd_", "$(1)") + synSubs["id_post"] + "], $(0))");
-                    }
-                    // Otherwise
-                    else {
-                        if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
-                            // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
-                            if (shouldAccumulateInSharedMemory(sg, backend)) {
-                                synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + synSubs["id_post"] + "] += $(0)");
-                            }
-                            else {
-                                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getFloatAtomicAdd(model.getPrecision()) + "(&dd_inSyn" + sg.getPSModelTargetName() + "[" + synSubs["id_post"] + "], $(0))");
-                            }
-                        }
-                        else {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, "linSyn += $(0)");
-                        }
-                    }
-
-                    wumSimHandler(os, sg, synSubs);
-
-                    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << CodeStream::CB(140); // end if (id < npost)
-                    }
-
                 }
 
+                wumSimHandler(os, sg, synSubs);
+
+                if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    os << CodeStream::CB(140); // end if (id < npost)
+                }
             }
         }
     }
