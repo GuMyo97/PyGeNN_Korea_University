@@ -41,11 +41,22 @@ public:
     //--------------------------------------------------------------------------
     template<typename T>
     void addVarNameSubstitution(const std::vector<T> &variables, const std::string &sourceSuffix = "",
-                                const std::string &destPrefix = "", const std::string &destSuffix = "")
+                                const std::string &destPrefix = "", const std::string &destSuffix = "",
+                                unsigned int vectorWidth = 1)
     {
         for(const auto &v : variables) {
             addVarSubstitution(v.name + sourceSuffix,
                                destPrefix + v.name + destSuffix);
+
+            // If variable is a vector, also add .x, .y, .z for accessing individual lanes
+            // **TODO** does this box us into a corner wrt platforms where you might access vector types with x[0]?
+            if(vectorWidth > 1) {
+                for(unsigned int i = 0; i < vectorWidth; i++) {
+                    const char fieldName = 'x' + i;
+                    addVarSubstitution(v.name + sourceSuffix + "." + fieldName,
+                                       destPrefix + v.name + destSuffix + "." + fieldName);
+                }
+            }
         }
     }
 
@@ -60,7 +71,7 @@ public:
 
     template<typename T>
     void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
-                                 const std::string &sourceSuffix = "")
+                                 const std::string &sourceSuffix = "", unsigned int vectorWidth = 1)
     {
         if(variables.size() != values.size()) {
             throw std::runtime_error("Number of variables does not match number of values");
@@ -73,6 +84,16 @@ public:
             writePreciseString(stream, *val);
             addVarSubstitution(var->name + sourceSuffix,
                                "(" + stream.str() + ")");
+
+            // If variable is a vector, also add .x, .y, .z for accessing individual lanes
+            // **TODO** does this box us into a corner wrt platforms where you might access vector types with x[0]?
+            if(vectorWidth > 1) {
+                for(unsigned int i = 0; i < vectorWidth; i++) {
+                    const char fieldName = 'x' + i;
+                    addVarSubstitution(var->name + sourceSuffix + "." + fieldName,
+                                       "(" + stream.str() + ")");
+                }
+            }
         }
     }
 
