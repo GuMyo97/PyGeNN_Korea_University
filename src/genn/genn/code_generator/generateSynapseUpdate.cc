@@ -44,10 +44,10 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
                                        sg.getName() + "[" + delayedPostIdx + "]");
 
     if (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-        synapseSubs.addVarNameSubstitution(wum->getVars(), "", "l");
+        synapseSubs.addVarNameSubstitution(wum->getVars(), "", "l", "", vectorWidth);
     }
     else {
-        synapseSubs.addVarValueSubstitution(wum->getVars(), sg.getWUConstInitVals());
+        synapseSubs.addVarValueSubstitution(wum->getVars(), sg.getWUConstInitVals(), "", vectorWidth);
     }
 
     neuronSubstitutionsInSynapticCode(synapseSubs, sg, synapseSubs["id_pre"],
