@@ -1600,6 +1600,23 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os) const
         }
     }
     os << std::endl;
+
+    // Define some helpful operators for CUDA vector types
+    os << "inline __host__ __device__ void operator+=(float2 &a, float2 b)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "a.x += b.x;" << std::endl;
+        os << "a.y += b.y;" << std::endl;
+    }
+    os << std::endl;
+
+    os << "inline __host__ __device__ void operator+=(double2 &a, double2 b)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "a.x += b.x;" << std::endl;
+        os << "a.y += b.y;" << std::endl;
+    }
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &os) const
@@ -1861,12 +1878,8 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, VarLocation, const Synap
     assert(kernelSubs.hasVarSubstitution("id_post"));
 
     Substitutions varSubs(&kernelSubs);
-    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getMaxConnections()) + ") + " + kernelSubs["id"]);
-    }
-    else {
-        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()) + ") + " + kernelSubs["id"]);
-    }
+    varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * " + std::to_string(getSynapticMatrixRowStride(sg)) + ") + " + kernelSubs["id"]);
+
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
