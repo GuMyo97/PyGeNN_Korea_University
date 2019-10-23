@@ -261,9 +261,9 @@ public:
         "$(V) = $(Vreset);\n"
         "$(RefracTime) = $(TauRefrac);\n");
 
-    SET_DERIVED_PARAMS({
-        {"ExpTC", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
-        {"Rmembrane", [](const std::vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+    SET_DERIVED_PARAMS_NAMED({
+        {"ExpTC", [](const std::map<std::string, double> &vars, double dt){ return std::exp(-dt / vars.at("TauM")); }},
+        {"Rmembrane", [](const std::map<std::string, double> &vars, double){ return vars.at("TauM") / vars.at("C"); }}});
 
     SET_VARS({{"V",             "scalar",   VarAccess::READ_WRITE},
               {"RefracTime",    "scalar",   VarAccess::READ_WRITE},

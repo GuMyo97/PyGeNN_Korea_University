@@ -254,19 +254,40 @@ void NeuronGroup::initDerivedParams(double dt)
 {
     auto paramNames = getNeuronModel()->getParamNames();
     auto derivedParams = getNeuronModel()->getDerivedParams();
+    auto derivedParamsNamed = getNeuronModel()->getDerivedParamsNamed();
+    auto combinedVars =  getNeuronModel()->getCombinedVars();
 
     // Reserve vector to hold derived parameters
-    m_DerivedParams.reserve(derivedParams.size());
+    m_DerivedParams.reserve(derivedParams.size() + derivedParamsNamed.size());
 
-    // **HACK** better solution required
-    std::vector<double> parValues;
-    parValues.reserve(paramNames.size());
-    std::transform(paramNames.cbegin(), paramNames.cend(), m_VarInitialisers.cbegin(), std::back_inserter(parValues),
-                   [](const std::string&, const Models::VarInit &v){ return v.getConstantValue(); });
+    // If there are any legacy parameter names
+    if(!paramNames.empty()) {
+        // Constructor should have added them to beginning of var initialisers
+        std::vector<double> parValues;
+        parValues.reserve(paramNames.size());
+        std::transform(paramNames.cbegin(), paramNames.cend(), m_VarInitialisers.cbegin(), std::back_inserter(parValues),
+                    [](const std::string&, const Models::VarInit &v){ return v.getConstantValue(); });
 
-    // Loop through derived parameters
-    for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.func(parValues, dt));
+        // Loop through derived parameters
+        for(const auto &d : derivedParams) {
+            m_DerivedParams.push_back(d.func(parValues, dt));
+        }
+    }
+
+    // Loop through variables and their initializers and build dictionary of the
+    // constant value associated with variables implemented as GLOBAL
+    std::map<std::string, double> varValues;
+    auto var = combinedVars.cbegin();
+    auto varInit = m_VarInitialisers.cbegin();
+    auto varImpl = m_VarImplementation.cbegin();
+    for(; var != combinedVars.cend(); var++, varInit++, varImpl++) {
+        if(*varImpl == VarImplementation::GLOBAL) {
+            varValues.emplace(var->name, varInit->getConstantValue());
+        }
+    }
+
+    for(const auto &d : derivedParamsNamed) {
+        m_DerivedParams.push_back(d.func(varValues, dt));
     }
 
     // Initialise derived parameters for variable initialisers

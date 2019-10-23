@@ -28,7 +28,7 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
     const NeuronModels::Base *nm = ng.getNeuronModel();
     substitution.addVarSubstitution(nm->getCombinedVars(), ng.getVarInitialisers(), ng.getVarImplementation(),
                                     sourceSuffix, "l", destSuffix);
-    substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams());
+    substitution.addParamValueSubstitution(nm->getCombinedDerivedParamNames(), ng.getDerivedParams());
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "", ng.getName());
     substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
 }
@@ -75,12 +75,14 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
             // Generate code to copy neuron state into local variable
             for(const auto &v : nm->getVars()) {
-                os << v.type << " l" << v.name << " = ";
-                os << backend.getVarPrefix() << v.name << ng.getName() << "[";
-                if (ng.isVarQueueRequired(v.name) && ng.isDelayRequired()) {
-                    os << "readDelayOffset + ";
+                if(ng.getVarImplementation(v.name) == VarImplementation::INDIVIDUAL) {
+                    os << v.type << " l" << v.name << " = ";
+                    os << backend.getVarPrefix() << v.name << ng.getName() << "[";
+                    if (ng.isVarQueueRequired(v.name) && ng.isDelayRequired()) {
+                        os << "readDelayOffset + ";
+                    }
+                    os << popSubs["id"] << "];" << std::endl;
                 }
-                os << popSubs["id"] << "];" << std::endl;
             }
     
             // Also read spike time into local variable
@@ -345,8 +347,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 // If state variables is read/writes - meaning that it may have been updated - or it is delayed -
                 // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
                 // back to global state variables dd_V etc  
+                const bool individual = (ng.getVarImplementation(v.name) == VarImplementation::INDIVIDUAL);
                 const bool delayed = (ng.isVarQueueRequired(v.name) && ng.isDelayRequired());
-                if((v.access == VarAccess::READ_WRITE) || delayed) {
+                if(individual && ((v.access == VarAccess::READ_WRITE) || delayed)) {
                     os << backend.getVarPrefix() << v.name << ng.getName() << "[";
 
                     if (delayed) {

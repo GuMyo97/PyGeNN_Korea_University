@@ -207,7 +207,7 @@ public:
         return getNamedVecIndex(paramName, getExtraGlobalParams());
     }
 
-    //! Method that, for backward compatibility,
+    //! Method that, for backward compatibility, combines parameters and variables into a single vector
     VarVec getCombinedVars() const
     {
         // Get parameters and variables

@@ -173,7 +173,7 @@ void neuronSubstitutionsInSynapticCode(
                                          varPrefix + devPrefix + v.name + ng->getName() + "[" + varIdx + "]" + varSuffix);
     }
     //substitutions.addParamValueSubstitution(neuronModel->getParamNames(), ng->getParams(), sourceSuffix);
-    substitutions.addVarValueSubstitution(neuronModel->getDerivedParams(), ng->getDerivedParams(), sourceSuffix);
+    substitutions.addParamValueSubstitution(neuronModel->getCombinedDerivedParamNames(), ng->getDerivedParams(), sourceSuffix);
     substitutions.addVarNameSubstitution(neuronModel->getExtraGlobalParams(), sourceSuffix, "", ng->getName());
 }
 
