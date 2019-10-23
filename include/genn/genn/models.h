@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,22 @@ public:
     VarInit(double constant)
         : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
     {
+    }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    bool isConstant() const{ return (getConstantSnippet() != nullptr); }
+    double getConstantValue() const
+    {
+        assert(isConstant());
+        return this->getParams()[0];
+    }
+
+private:
+    const InitVarSnippet::Constant *getConstantSnippet() const
+    {
+        return dynamic_cast<const InitVarSnippet::Constant*>(this->getSnippet());
     }
 };
 
@@ -188,6 +205,25 @@ public:
     size_t getExtraGlobalParamIndex(const std::string &paramName) const
     {
         return getNamedVecIndex(paramName, getExtraGlobalParams());
+    }
+
+    //! Method that, for backward compatibility,
+    VarVec getCombinedVars() const
+    {
+        // Get parameters and variables
+        const auto paramNames = getParamNames();
+        const auto vars = getVars();
+
+        VarVec combinedVars;
+        combinedVars.reserve(paramNames.size() + vars.size());
+
+        // Add parameters as read-only variables
+        std::transform(paramNames.cbegin(), paramNames.cend(), std::back_inserter(combinedVars),
+                       [](const std::string &n){ return Var(n, "scalar", VarAccess::READ_ONLY); });
+
+        // Copy vars
+        std::copy(vars.cbegin(), vars.cend(), std::back_inserter(combinedVars));
+        return combinedVars;
     }
 };
 } // Models

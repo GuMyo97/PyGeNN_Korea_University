@@ -11,6 +11,10 @@
 // Standard C includes
 #include <cassert>
 
+// GeNN includes
+#include "models.h"
+#include "variableImplementation.h"
+
 // GeNN code generator includes
 #include "codeGenUtils.h"
 
@@ -73,6 +77,35 @@ public:
             writePreciseString(stream, *val);
             addVarSubstitution(var->name + sourceSuffix,
                                "(" + stream.str() + ")");
+        }
+    }
+
+    template<typename T>
+    void addVarSubstitution(const std::vector<T> &variables, const std::vector<Models::VarInit> &initialisers, const std::vector<VarImplementation> &implementation,
+                            const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
+    {
+        if(variables.size() != initialisers.size()) {
+            throw std::runtime_error("Number of variables does not match number of initialisers");
+        }
+        if(variables.size() != implementation.size()) {
+            throw std::runtime_error("Number of variables does not match number of implementations");
+        }
+
+        auto var = variables.cbegin();
+        auto varInit = initialisers.cbegin();
+        auto varImpl = implementation.cbegin();
+        for (;var != variables.cend(); var++, varInit++, varImpl++) {
+            if(*varImpl == VarImplementation::GLOBAL) {
+                std::stringstream stream;
+                writePreciseString(stream, varInit->getConstantValue());
+                addVarSubstitution(var->name + sourceSuffix,
+                                "(" + stream.str() + ")");
+            }
+            else {
+                addVarSubstitution(var->name + sourceSuffix,
+                                   destPrefix + var->name + destSuffix);
+            }
+
         }
     }
 

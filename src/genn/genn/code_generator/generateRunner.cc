@@ -590,37 +590,40 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // Neuron state variables
         const auto neuronModel = n.second.getNeuronModel();
-        const auto vars = neuronModel->getVars();
+        const auto vars = neuronModel->getCombinedVars();
         std::vector<std::string> neuronStatePushPullFunctions;
         for(size_t i = 0; i < vars.size(); i++) {
-            const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-            const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
-            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                               runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + n.first,
-                               n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
+            // If this variable should be implemented individually
+            if(n.second.getVarImplementation(i) == VarImplementation::INDIVIDUAL) {
+                const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+                const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
+                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + n.first,
+                                n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
 
-            // Current variable push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
-                                "Current" + vars[i].name + n.first,
-                [&]()
-                {
-                    backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
-                                                       vars[i].name, n.second.getVarLocation(i));
-                });
+                // Current variable push and pull functions
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
+                                    "Current" + vars[i].name + n.first,
+                    [&]()
+                    {
+                        backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
+                                                        vars[i].name, n.second.getVarLocation(i));
+                    });
 
-            // Write getter to get access to correct pointer
-            const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
-            genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
-                              "Current" + vars[i].name + n.first, vars[i].type + "*",
-                [&]()
-                {
-                    if(delayRequired) {
-                        runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ");" << std::endl;
-                    }
-                    else {
-                        runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
-                    }
-                });
+                // Write getter to get access to correct pointer
+                const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
+                genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
+                                "Current" + vars[i].name + n.first, vars[i].type + "*",
+                    [&]()
+                    {
+                        if(delayRequired) {
+                            runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ");" << std::endl;
+                        }
+                        else {
+                            runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
+                        }
+                    });
+            }
         }
 
         // Add helper function to push and pull entire neuron state

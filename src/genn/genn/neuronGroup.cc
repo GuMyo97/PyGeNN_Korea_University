@@ -21,6 +21,11 @@ void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
     m_VarLocation[getNeuronModel()->getVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
+void NeuronGroup::setVarImplementation(const std::string &varName, VarImplementation impl)
+{
+    m_VarImplementation[getNeuronModel()->getVarIndex(varName)] = impl;
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = getNeuronModel()->getExtraGlobalParamIndex(paramName);
@@ -33,6 +38,11 @@ void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarL
 VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
 {
     return m_VarLocation[getNeuronModel()->getVarIndex(varName)];
+}
+//----------------------------------------------------------------------------
+VarImplementation NeuronGroup::getVarImplementation(const std::string &varName) const
+{
+    return m_VarImplementation[getNeuronModel()->getVarIndex(varName)];
 }
 //----------------------------------------------------------------------------
 VarLocation NeuronGroup::getExtraGlobalParamLocation(const std::string &paramName) const
@@ -160,6 +170,64 @@ bool NeuronGroup::hasOutputToHost(int targetHostID) const
 
 }
 //----------------------------------------------------------------------------
+NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
+                         const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, int hostID)
+:   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel),
+    m_NumDelaySlots(1), m_VarQueueRequired(params.size() + varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+    m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(params.size() + varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_HostID(hostID)
+{
+    // Reserve var implementations and initializers to be large enough for COMBINED vars
+    m_VarInitialisers.reserve(params.size() + varInitialisers.size());
+    m_VarImplementation.reserve(params.size() + varInitialisers.size());
+
+    // Transform parameter values into constant var initialisers
+    std::transform(params.cbegin(), params.cend(), std::back_inserter(m_VarInitialisers),
+                   [](double v){ return Models::VarInit(v); });
+
+    // Copy variable initialisers after
+    m_VarInitialisers.insert(m_VarInitialisers.end(), varInitialisers.cbegin(), varInitialisers.cend());
+
+    // Implement all parameters as GLOBAL
+    m_VarImplementation.insert(m_VarImplementation.end(), params.size(), VarImplementation::GLOBAL);
+
+    // Implement all variables as INDIVIDUAL
+    m_VarImplementation.insert(m_VarImplementation.end(), varInitialisers.size(), VarImplementation::INDIVIDUAL);
+}
+//----------------------------------------------------------------------------
+NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
+                         const std::vector<Models::VarInit> &varInitialisers,
+                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation, int hostID)
+:   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_VarInitialisers(varInitialisers),
+    m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
+    m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_HostID(hostID)
+{
+    if(!neuronModel->getParamNames().empty()) {
+        throw std::runtime_error("Populations using Neuron models with legacy 'parameters' cannot be added with this functions");
+    }
+
+    const auto vars = neuronModel->getVars();
+
+    // Reserve implementations vector
+    m_VarImplementation.reserve(varInitialisers.size()),
+
+    // Implement varaibles that are read only and constant as GLOBAL and others as individual
+    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), vars.cbegin(), std::back_inserter(m_VarImplementation),
+                   [](const Models::VarInit &varInit, const Models::Base::Var &var)
+                   {
+                       if(var.access == VarAccess::READ_ONLY && varInit.isConstant()) {
+                           LOGD << "Defaulting variable '" << var.name << "' to GLOBAL implementation";
+                           return VarImplementation::GLOBAL;
+                       }
+                       else {
+                           LOGD << "Defaulting variable '" << var.name << "' to INDIVIDUAL implementation";
+                           return VarImplementation::INDIVIDUAL;
+                       }
+                   });
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 {
     m_CurrentSources.push_back(src);
@@ -167,8 +235,7 @@ void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 //----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 {
-    if (requiredDelay >= getNumDelaySlots())
-    {
+    if (requiredDelay >= getNumDelaySlots()) {
         m_NumDelaySlots = requiredDelay + 1;
     }
 }
@@ -185,14 +252,21 @@ void NeuronGroup::updatePostVarQueues(const std::string &code)
 //----------------------------------------------------------------------------
 void NeuronGroup::initDerivedParams(double dt)
 {
+    auto paramNames = getNeuronModel()->getParamNames();
     auto derivedParams = getNeuronModel()->getDerivedParams();
 
     // Reserve vector to hold derived parameters
     m_DerivedParams.reserve(derivedParams.size());
 
+    // **HACK** better solution required
+    std::vector<double> parValues;
+    parValues.reserve(paramNames.size());
+    std::transform(paramNames.cbegin(), paramNames.cend(), m_VarInitialisers.cbegin(), std::back_inserter(parValues),
+                   [](const std::string&, const Models::VarInit &v){ return v.getConstantValue(); });
+
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.func(m_Params, dt));
+        m_DerivedParams.push_back(d.func(parValues, dt));
     }
 
     // Initialise derived parameters for variable initialisers

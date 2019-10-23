@@ -240,6 +240,47 @@ public:
         }
     }
 
+    //! Adds a new neuron group to the model using a neuron model managed by the user
+    /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
+        \param name string containing unique name of neuron population.
+        \param size integer specifying how many neurons are in the population.
+        \param model neuron model to use for neuron group.
+        \param varInitialisers variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param hostID if using MPI, the ID of the node to simulate this population on.
+        \return pointer to newly created NeuronGroup */
+    template<typename NeuronModel>
+    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModel *model,
+                                     const typename NeuronModel::VarValues &varInitialisers,
+                                     int hostID = 0)
+    {
+#ifdef MPI_ENABLE
+        // Determine the host ID
+        int mpiHostID = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+        // Pick map to add group to appropriately
+        auto &groupMap = (hostID == mpiHostID) ? m_LocalNeuronGroups : m_RemoteNeuronGroups;
+#else
+        // If MPI is disabled always add to local neuron groups and zero host id
+        auto &groupMap = m_LocalNeuronGroups;
+        hostID = 0;
+#endif
+
+        // Add neuron group to map
+        auto result = groupMap.emplace(std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, size, model,
+                                  varInitialisers.getInitialisers(),
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, hostID));
+
+        if(!result.second) {
+            throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
+        }
+        else {
+            return &result.first->second;
+        }
+    }
+
     //! Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
         \param name string containing unique name of neuron population.
@@ -254,6 +295,21 @@ public:
                                      int hostID = 0)
     {
         return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers, hostID);
+    }
+
+    //! Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
+    /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
+        \param name string containing unique name of neuron population.
+        \param size integer specifying how many neurons are in the population.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param hostID if using MPI, the ID of the node to simulate this population on.
+        \return pointer to newly created NeuronGroup */
+    template<typename NeuronModel>
+    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size,
+                                     const typename NeuronModel::VarValues &varInitialisers,
+                                     int hostID = 0)
+    {
+        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), varInitialisers, hostID);
     }
 
     // PUBLIC SYNAPSE FUNCTIONS

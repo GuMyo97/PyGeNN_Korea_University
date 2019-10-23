@@ -25,7 +25,7 @@ std::vector<double> getConstInitVals(const std::vector<Models::VarInit> &varInit
                    [](const Models::VarInit &v)
                    {
                        // Check
-                       if(dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr) {
+                       if(!v.isConstant()) {
                            throw std::runtime_error("Only 'Constant' variable initialisation snippets can be used to initialise state variables of synapse groups using GLOBALG");
                        }
 

@@ -238,6 +238,47 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// NeuronModels::LIFAuto
+//----------------------------------------------------------------------------
+class LIFAuto : public Base
+{
+public:
+    DECLARE_MODEL(LIFAuto, 0, 9);
+
+    SET_SIM_CODE(
+        "if ($(RefracTime) <= 0.0) {\n"
+        "  scalar alpha = (($(Isyn) + $(Ioffset)) * $(Rmembrane)) + $(Vrest);\n"
+        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "}\n"
+        "else {\n"
+        "  $(RefracTime) -= DT;\n"
+        "}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+
+    SET_RESET_CODE(
+        "$(V) = $(Vreset);\n"
+        "$(RefracTime) = $(TauRefrac);\n");
+
+    SET_DERIVED_PARAMS({
+        {"ExpTC", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
+        {"Rmembrane", [](const std::vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+
+    SET_VARS({{"V",             "scalar",   VarAccess::READ_WRITE},
+              {"RefracTime",    "scalar",   VarAccess::READ_WRITE},
+              {"C",             "scalar",   VarAccess::READ_ONLY},      // Membrane capacitance
+              {"TauM",          "scalar",   VarAccess::READ_ONLY},      // Membrane time constant [ms]
+              {"Vrest",         "scalar",   VarAccess::READ_ONLY},      // Resting membrane potential [mV]
+              {"Vreset",        "scalar",   VarAccess::READ_ONLY},      // Reset voltage [mV]
+              {"Vthresh",       "scalar",   VarAccess::READ_ONLY},      // Spiking threshold [mV]
+              {"Ioffset",       "scalar",   VarAccess::READ_ONLY},      // Offset current
+              {"TauRefrac",     "scalar",   VarAccess::READ_ONLY}});    // Refractory time [ms]
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
+};
+
+//----------------------------------------------------------------------------
 // NeuronModels::SpikeSource
 //----------------------------------------------------------------------------
 //! Empty neuron which allows setting spikes from external sources

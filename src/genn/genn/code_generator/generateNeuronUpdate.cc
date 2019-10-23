@@ -26,8 +26,8 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, con
                                  const std::string &sourceSuffix = "", const std::string &destSuffix = "")
 {
     const NeuronModels::Base *nm = ng.getNeuronModel();
-    substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
-    substitution.addParamValueSubstitution(nm->getParamNames(), ng.getParams());
+    substitution.addVarSubstitution(nm->getCombinedVars(), ng.getVarInitialisers(), ng.getVarImplementation(),
+                                    sourceSuffix, "l", destSuffix);
     substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getDerivedParams());
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), "", "", ng.getName());
     substitution.addVarNameSubstitution(nm->getAdditionalInputVars());
