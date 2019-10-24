@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <algorithm>
 
+// PLOG includes
+#include <plog/Log.h>
+
 namespace
 {
 //--------------------------------------------------------------------------
@@ -63,6 +66,27 @@ bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
                        {
                            return isRNGRequired(varInit.getSnippet()->getCode());
                        });
+}
+//--------------------------------------------------------------------------
+void autoDetermineImplementation(const std::vector<Models::VarInit> &initialisers, const Models::Base::VarVec &vars,
+                                 std::vector<VarImplementation> &implementations)
+{
+    // Reserve implementations vector
+    implementations.reserve(initialisers.size()),
+
+    // Implement varaibles that are read only and constant as GLOBAL and others as individual
+    std::transform(initialisers.cbegin(), initialisers.cend(), vars.cbegin(), std::back_inserter(implementations),
+                   [](const Models::VarInit &varInit, const Models::Base::Var &var)
+                   {
+                       if(var.access == VarAccess::READ_ONLY && varInit.isConstant()) {
+                           LOGD << "Defaulting variable '" << var.name << "' to GLOBAL implementation";
+                           return VarImplementation::GLOBAL;
+                       }
+                       else {
+                           LOGD << "Defaulting variable '" << var.name << "' to INDIVIDUAL implementation";
+                           return VarImplementation::INDIVIDUAL;
+                       }
+                   });
 }
 //--------------------------------------------------------------------------
 bool isTypePointer(const std::string &type)

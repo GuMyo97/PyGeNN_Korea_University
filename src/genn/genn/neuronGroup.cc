@@ -208,24 +208,8 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
         throw std::runtime_error("Populations using Neuron models with legacy 'parameters' cannot be added with this functions");
     }
 
-    const auto vars = neuronModel->getVars();
-
-    // Reserve implementations vector
-    m_VarImplementation.reserve(varInitialisers.size()),
-
-    // Implement varaibles that are read only and constant as GLOBAL and others as individual
-    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), vars.cbegin(), std::back_inserter(m_VarImplementation),
-                   [](const Models::VarInit &varInit, const Models::Base::Var &var)
-                   {
-                       if(var.access == VarAccess::READ_ONLY && varInit.isConstant()) {
-                           LOGD << "Defaulting variable '" << var.name << "' to GLOBAL implementation";
-                           return VarImplementation::GLOBAL;
-                       }
-                       else {
-                           LOGD << "Defaulting variable '" << var.name << "' to INDIVIDUAL implementation";
-                           return VarImplementation::INDIVIDUAL;
-                       }
-                   });
+    // Automatically determine default implementation for variables
+    Utils::autoDetermineImplementation(varInitialisers, neuronModel->getVars(), m_VarImplementation);
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)

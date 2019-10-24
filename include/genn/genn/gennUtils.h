@@ -7,6 +7,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "models.h"
+#include "variableImplementation.h"
 
 //--------------------------------------------------------------------------
 // Utils
@@ -22,6 +23,10 @@ GENN_EXPORT bool isRNGRequired(const std::string &code);
 //! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
 //--------------------------------------------------------------------------
 GENN_EXPORT bool isInitRNGRequired(const std::vector<Models::VarInit> &varInitialisers);
+
+//! Automatically determine the default implementation for this vector of variables
+GENN_EXPORT void autoDetermineImplementation(const std::vector<Models::VarInit> &initialisers, const Models::Base::VarVec &vars,
+                                             std::vector<VarImplementation> &implementations);
 
 //--------------------------------------------------------------------------
 //! \brief Function to determine whether a string containing a type is a pointer
