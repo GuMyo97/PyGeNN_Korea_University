@@ -142,7 +142,7 @@ void SynapseGroup::setBackPropDelaySteps(unsigned int timesteps)
 //----------------------------------------------------------------------------
 void SynapseGroup::setNarrowSparseIndEnabled(bool enabled)
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if (getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) {
         m_NarrowSparseIndEnabled = enabled;
     }
     else {
@@ -314,7 +314,7 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
 :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
-    m_MaxDendriticDelayTimesteps(1), m_MatrixConnectivity(getSynapseMatrixConnectivity(matrixType), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
+    m_MaxDendriticDelayTimesteps(1), m_MatrixConnectivity(getSynapseMatrixConnectivity(matrixType)), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
     m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), m_EventThresholdReTestRequired(false),
     m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
     m_WUModel(wu), m_WUVarLocation(wuParams.size() + wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
