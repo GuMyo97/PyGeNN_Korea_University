@@ -178,22 +178,8 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
     m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(params.size() + varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_HostID(hostID)
 {
-    // Reserve var implementations and initializers to be large enough for COMBINED vars
-    m_VarInitialisers.reserve(params.size() + varInitialisers.size());
-    m_VarImplementation.reserve(params.size() + varInitialisers.size());
-
-    // Transform parameter values into constant var initialisers
-    std::transform(params.cbegin(), params.cend(), std::back_inserter(m_VarInitialisers),
-                   [](double v){ return Models::VarInit(v); });
-
-    // Copy variable initialisers after
-    m_VarInitialisers.insert(m_VarInitialisers.end(), varInitialisers.cbegin(), varInitialisers.cend());
-
-    // Implement all parameters as GLOBAL
-    m_VarImplementation.insert(m_VarImplementation.end(), params.size(), VarImplementation::GLOBAL);
-
-    // Implement all variables as INDIVIDUAL
-    m_VarImplementation.insert(m_VarImplementation.end(), varInitialisers.size(), VarImplementation::INDIVIDUAL);
+    // Populate combied variable initialisers and implementations from legacy parameters and initialisers
+    Utils::initialiseLegacyImplementation(params, varInitialisers, m_VarInitialisers, m_VarImplementation);
 }
 //----------------------------------------------------------------------------
 NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
@@ -236,43 +222,8 @@ void NeuronGroup::updatePostVarQueues(const std::string &code)
 //----------------------------------------------------------------------------
 void NeuronGroup::initDerivedParams(double dt)
 {
-    auto paramNames = getNeuronModel()->getParamNames();
-    auto derivedParams = getNeuronModel()->getDerivedParams();
-    auto derivedParamsNamed = getNeuronModel()->getDerivedParamsNamed();
-    auto combinedVars =  getNeuronModel()->getCombinedVars();
-
-    // Reserve vector to hold derived parameters
-    m_DerivedParams.reserve(derivedParams.size() + derivedParamsNamed.size());
-
-    // If there are any legacy parameter names
-    if(!paramNames.empty()) {
-        // Constructor should have added them to beginning of var initialisers
-        std::vector<double> parValues;
-        parValues.reserve(paramNames.size());
-        std::transform(paramNames.cbegin(), paramNames.cend(), m_VarInitialisers.cbegin(), std::back_inserter(parValues),
-                    [](const std::string&, const Models::VarInit &v){ return v.getConstantValue(); });
-
-        // Loop through derived parameters
-        for(const auto &d : derivedParams) {
-            m_DerivedParams.push_back(d.func(parValues, dt));
-        }
-    }
-
-    // Loop through variables and their initializers and build dictionary of the
-    // constant value associated with variables implemented as GLOBAL
-    std::map<std::string, double> varValues;
-    auto var = combinedVars.cbegin();
-    auto varInit = m_VarInitialisers.cbegin();
-    auto varImpl = m_VarImplementation.cbegin();
-    for(; var != combinedVars.cend(); var++, varInit++, varImpl++) {
-        if(*varImpl == VarImplementation::GLOBAL) {
-            varValues.emplace(var->name, varInit->getConstantValue());
-        }
-    }
-
-    for(const auto &d : derivedParamsNamed) {
-        m_DerivedParams.push_back(d.func(varValues, dt));
-    }
+    // Calculate derived parameter values
+    Utils::calcDerivedParamVal(getNeuronModel(), m_VarInitialisers, m_VarImplementation, dt, m_DerivedParams);
 
     // Initialise derived parameters for variable initialisers
     for(auto &v : m_VarInitialisers) {
@@ -295,14 +246,14 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         m_MergedInSyn.emplace_back(a, std::vector<SynapseGroupInternal*>{a});
 
         // Continue if merging of postsynaptic models is disabled
-        if(!merge) {
+        //if(!merge) {
             continue;
-        }
+        //}
 
         // Continue if postsynaptic model has any variables
         // **NOTE** many models with variables would work fine, but nothing stops
         // initialisers being used to configure PS models to behave totally different
-        if(!a->getPSVarInitialisers().empty()) {
+        /*(!a->getPSVarInitialisers().empty()) {
             continue;
         }
 
@@ -347,7 +298,7 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         // If synapse group A was successfully merged with anything, set it's merge target to the unique name
         if(m_MergedInSyn.back().second.size() > 1) {
             a->setPSModelMergeTarget(mergedPSMName);
-        }
+        }*/
     }
 }
 //----------------------------------------------------------------------------

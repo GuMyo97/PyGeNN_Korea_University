@@ -109,6 +109,31 @@ public:
         }
     }
 
+    template<typename T>
+    void addGlobalVarSubstitution(const std::vector<T> &variables, const std::vector<Models::VarInit> &initialisers, const std::vector<VarImplementation> &implementation,
+                                  const std::string &sourceSuffix = "")
+    {
+        if(variables.size() != initialisers.size()) {
+            throw std::runtime_error("Number of variables does not match number of initialisers");
+        }
+        if(variables.size() != implementation.size()) {
+            throw std::runtime_error("Number of variables does not match number of implementations");
+        }
+
+        auto var = variables.cbegin();
+        auto varInit = initialisers.cbegin();
+        auto varImpl = implementation.cbegin();
+        for (;var != variables.cend(); var++, varInit++, varImpl++) {
+            if(*varImpl == VarImplementation::GLOBAL) {
+                std::stringstream stream;
+                writePreciseString(stream, varInit->getConstantValue());
+                addVarSubstitution(var->name + sourceSuffix,
+                                "(" + stream.str() + ")");
+            }
+        }
+    }
+
+
     void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values,
                                    const std::string &sourceSuffix = "")
     {

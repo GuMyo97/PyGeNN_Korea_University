@@ -93,10 +93,10 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
     }
 }
 //------------------------------------------------------------------------
-template<typename I, typename M, typename Q, typename P>
+template<typename I, typename M, typename P, typename Q>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
                           const Models::Base::VarVec &vars, size_t count, size_t numDelaySlots, const std::string &popName, const std::string &ftype,
-                          I getVarInitialiser, M getVarLocation, Q isVarQueueRequired, P getVarImplementation)
+                          I getVarInitialiser, M getVarLocation, P getVarImplementation, Q isVarQueueRequired)
 {
     using namespace CodeGenerator;
 
@@ -148,14 +148,14 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
     }
 }
 //------------------------------------------------------------------------
-template<typename I, typename M>
+template<typename I, typename M, typename P>
 void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
                           const Models::Base::VarVec &vars, size_t count, const std::string &popName, const std::string &ftype,
-                          I getVarInitialiser, M getVarMode)
+                          I getVarInitialiser, M getVarMode, P getVarImplementation)
 {
     genInitNeuronVarCode(os, backend, popSubs, vars, count, 0, popName, ftype, getVarInitialiser, getVarMode,
-                         [](size_t){ return false; },
-                         [](size_t){ return VarImplementation::INDIVIDUAL; });
+                         getVarImplementation,
+                         [](size_t){ return false; });
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
@@ -168,9 +168,10 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = sg.getWUVarInitialisers().at(k);
         const VarLocation varLoc = sg.getWUVarLocation(k);
+        const VarImplementation varImpl = sg.getWUVarImplementation(k);
 
-        // If this variable has any initialisation code
-        if(!varInit.getSnippet()->getCode().empty()) {
+        // If this variable is implemenated individually has any initialisation code
+        if(varImpl == VarImplementation::INDIVIDUAL && !varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
 
             // Generate target-specific code to initialise variable
@@ -242,8 +243,8 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                                  ng.getName(),  model.getPrecision(),
                                  [&ng](size_t i){ return ng.getVarInitialisers().at(i); },
                                  [&ng](size_t i){ return ng.getVarLocation(i); },
-                                 [&ng](size_t i){ return ng.isVarQueueRequired(i); },
-                                 [&ng](size_t i){ return ng.getVarImplementation(i); });
+                                 [&ng](size_t i){ return ng.getVarImplementation(i); },
+                                 [&ng](size_t i){ return ng.isVarQueueRequired(i); });
 
             // Loop through incoming synaptic populations
             for(const auto &m : ng.getMergedInSyn()) {
@@ -272,11 +273,10 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 }
 
                 // If postsynaptic model variables should be individual
-                if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), ng.getNumNeurons(), sg->getName(), model.getPrecision(),
-                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
-                                         [sg](size_t i){ return sg->getPSVarLocation(i); });
-                }
+                genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), ng.getNumNeurons(), sg->getName(), model.getPrecision(),
+                                     [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
+                                     [sg](size_t i){ return sg->getPSVarLocation(i); },
+                                     [sg](size_t i){ return sg->getPSVarImplementation(i); });
             }
 
             // Loop through incoming synaptic populations
@@ -284,8 +284,8 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPostVars(), ng.getNumNeurons(), s->getTrgNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
                                      [&s](size_t i){ return s->getWUPostVarInitialisers().at(i); },
                                      [&s](size_t i){ return s->getWUPostVarLocation(i); },
-                                     [&s](size_t){ return (s->getBackPropDelaySteps() != NO_DELAY); },
-                                     [](size_t){ return VarImplementation::INDIVIDUAL; });
+                                     [&s](size_t i){ return s->getWUPostVarImplementation(i); },
+                                     [&s](size_t){ return (s->getBackPropDelaySteps() != NO_DELAY); });
             }
 
             // Loop through outgoing synaptic populations
@@ -294,8 +294,8 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 genInitNeuronVarCode(os, backend, popSubs, s->getWUModel()->getPreVars(), ng.getNumNeurons(), s->getSrcNeuronGroup()->getNumDelaySlots(), s->getName(), model.getPrecision(),
                                      [&s](size_t i){ return s->getWUPreVarInitialisers().at(i); },
                                      [&s](size_t i){ return s->getWUPreVarLocation(i); },
-                                     [&s](size_t){ return (s->getDelaySteps() != NO_DELAY); },
-                                     [](size_t){ return VarImplementation::INDIVIDUAL; });
+                                     [&s](size_t i){ return s->getWUPreVarImplementation(i); },
+                                     [&s](size_t){ return (s->getDelaySteps() != NO_DELAY); });
             }
 
             // Loop through current sources
@@ -303,7 +303,8 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             for (auto const *cs : ng.getCurrentSources()) {
                 genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), ng.getNumNeurons(), cs->getName(), model.getPrecision(),
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); },
-                                     [cs](size_t i){ return cs->getVarLocation(i); });
+                                     [cs](size_t i){ return cs->getVarLocation(i); },
+                                     [](size_t){ return VarImplementation::INDIVIDUAL; });
             }
         },
         // Remote neuron group initialisation
