@@ -53,30 +53,6 @@ public:
         }
     }
 
-    void addParamNameSubstitution(const std::vector<std::string> &paramNames, const std::string &sourceSuffix = "",
-                                  const std::string &destPrefix = "", const std::string &destSuffix = "")
-    {
-        for(const auto &p : paramNames) {
-            addVarSubstitution(p + sourceSuffix,
-                               destPrefix + p + destSuffix);
-        }
-    }
-
-    template<typename T>
-    void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
-                                 const std::string &sourceSuffix = "")
-    {
-        if(variables.size() != values.size()) {
-            throw std::runtime_error("Number of variables does not match number of values");
-        }
-
-        auto var = variables.cbegin();
-        auto val = values.cbegin();
-        for (;var != variables.cend() && val != values.cend(); var++, val++) {
-            addVarSubstitution(var->name + sourceSuffix, *val);
-        }
-    }
-
     template<typename T>
     void addVarSubstitution(const std::vector<T> &variables, const std::vector<Models::VarInit> &initialisers, const std::vector<VarImplementation> &implementation,
                             const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
