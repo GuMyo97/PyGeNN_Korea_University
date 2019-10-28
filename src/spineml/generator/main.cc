@@ -390,7 +390,7 @@ int main(int argc, char *argv[])
                 const auto &neuronModel = getCreateModel(modelParams, neuronModels);
 
                 // Add population to model
-                auto *pop = model.addNeuronPopulation(popName, popSize, &neuronModel,
+                auto *pop = model.addNeuronPopulation(&neuronModel, popName, popSize,
                                                       NeuronModel::VarValues(varInitialisers, neuronModel));
 
                 // Typically fixed-value parameters are candidates for hard-coding into model.

@@ -246,14 +246,14 @@ public:
 
     //! Adds a new neuron group to the model using a neuron model managed by the user
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
+        \param model neuron model to use for neuron group.
         \param name string containing unique name of neuron population.
         \param size integer specifying how many neurons are in the population.
-        \param model neuron model to use for neuron group.
         \param varInitialisers variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \param hostID if using MPI, the ID of the node to simulate this population on.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModel *model,
+    NeuronGroup *addNeuronPopulation(const NeuronModel *model, const std::string &name, unsigned int size,
                                      const typename NeuronModel::VarValues &varInitialisers,
                                      int hostID = 0)
     {
@@ -313,7 +313,7 @@ public:
                                      const typename NeuronModel::VarValues &varInitialisers,
                                      int hostID = 0)
     {
-        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), varInitialisers, hostID);
+        return addNeuronPopulation<NeuronModel>(NeuronModel::getInstance(), name, size, varInitialisers, hostID);
     }
 
     // PUBLIC SYNAPSE FUNCTIONS
