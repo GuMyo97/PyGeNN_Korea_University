@@ -68,13 +68,7 @@ public:
         auto varInit = initialisers.cbegin();
         auto varImpl = implementation.cbegin();
         for (;var != variables.cend(); var++, varInit++, varImpl++) {
-            if(*varImpl == VarImplementation::GLOBAL) {
-                addVarSubstitution(var->name + sourceSuffix, varInit->getConstantValue());
-            }
-            else {
-                addVarSubstitution(var->name + sourceSuffix, destPrefix + var->name + destSuffix);
-            }
-
+            addVarSubstitution(*var, *varInit, *varImpl, sourceSuffix, destPrefix, destSuffix, vectorWidth);
         }
     }
 
@@ -94,7 +88,7 @@ public:
         auto varImpl = implementation.cbegin();
         for (;var != variables.cend(); var++, varInit++, varImpl++) {
             if(*varImpl == VarImplementation::GLOBAL) {
-                addVarSubstitution(var->name + sourceSuffix, varInit->getConstantValue());
+                addVarSubstitution(*var, *varInit, *varImpl, sourceSuffix, "", "", vectorWidth);
             }
         }
     }
@@ -128,6 +122,38 @@ public:
         std::stringstream stream;
         writePreciseString(stream, value);
         addVarSubstitution(source, "(" + stream.str() + ")", allowOverride);
+    }
+
+    void addVarSubstitution(const Models::Base::Var &var, const Models::VarInit &varInit, VarImplementation varImpl,
+                            const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "",
+                            unsigned int vectorWidth = 1)
+    {
+        if(varImpl == VarImplementation::GLOBAL) {
+            const double value = varInit.getConstantValue();
+            addVarSubstitution(var.name + sourceSuffix, value);
+
+            // If variable is a vector, also add .x, .y, .z for accessing individual lanes
+            // **TODO** does this box us into a corner wrt platforms where you might access vector types with x[0]?
+            if(vectorWidth > 1) {
+                for(unsigned int i = 0; i < vectorWidth; i++) {
+                    const char fieldName = 'x' + i;
+                    addVarSubstitution(var.name + sourceSuffix + "." + fieldName, value);
+                }
+            }
+        }
+        else {
+            addVarSubstitution(var.name + sourceSuffix, destPrefix + var.name + destSuffix);
+
+            // If variable is a vector, also add .x, .y, .z for accessing individual lanes
+            // **TODO** does this box us into a corner wrt platforms where you might access vector types with x[0]?
+            if(vectorWidth > 1) {
+                for(unsigned int i = 0; i < vectorWidth; i++) {
+                    const char fieldName = 'x' + i;
+                    addVarSubstitution(var.name + sourceSuffix + "." + fieldName,
+                                       destPrefix + var.name + destSuffix + "." + fieldName);
+                }
+            }
+        }
     }
 
     void addFuncSubstitution(const std::string &source, unsigned int numArguments, const std::string &funcTemplate, bool allowOverride = false)
