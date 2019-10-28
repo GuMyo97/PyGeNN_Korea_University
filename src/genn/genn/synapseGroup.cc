@@ -314,12 +314,14 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
 :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
-    m_MaxDendriticDelayTimesteps(1), m_MatrixConnectivity(getSynapseMatrixConnectivity(matrixType)), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
+    m_MaxDendriticDelayTimesteps(1), m_MatrixConnectivity(getSynapseMatrixConnectivity(matrixType)),
     m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), m_EventThresholdReTestRequired(false),
-    m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
-    m_WUModel(wu), m_WUVarLocation(wuParams.size() + wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
-    m_PSModel(ps), m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-    m_PSVarLocation(psParams.size() + psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled), m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
+    m_WUModel(wu), m_PSModel(ps), m_WUVarLocation(wuParams.size() + wuVarInitialisers.size(), defaultVarLocation),
+    m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation), m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation),
+    m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_PSVarLocation(psParams.size() + psVarInitialisers.size(), defaultVarLocation),
+    m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
     m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
     m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
@@ -350,10 +352,10 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixConnectivity mat
     m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled), 
     m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
     m_WUModel(wu), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers),
-    m_WUPostVarInitialisers(wuPostVarInitialisers), m_PSVarInitialisers(psVarInitialisers),
+    m_WUPostVarInitialisers(wuPostVarInitialisers), m_PSModel(ps), m_PSVarInitialisers(psVarInitialisers),
     m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
     m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-    m_PSModel(ps), m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+    m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
     m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
     m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
