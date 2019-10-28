@@ -53,8 +53,7 @@ public:
         }
     }
 
-    template<typename T>
-    void addVarSubstitution(const std::vector<T> &variables, const std::vector<Models::VarInit> &initialisers, const std::vector<VarImplementation> &implementation,
+    void addVarSubstitution(const Models::Base::VarVec &variables, const std::vector<Models::VarInit> &initialisers, const std::vector<VarImplementation> &implementation,
                             const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
     {
         if(variables.size() != initialisers.size()) {
@@ -78,8 +77,7 @@ public:
         }
     }
 
-    template<typename T>
-    void addGlobalVarSubstitution(const std::vector<T> &variables, const std::vector<Models::VarInit> &initialisers, const std::vector<VarImplementation> &implementation,
+    void addGlobalVarSubstitution(const Models::Base::VarVec &variables, const std::vector<Models::VarInit> &initialisers, const std::vector<VarImplementation> &implementation,
                                   const std::string &sourceSuffix = "")
     {
         if(variables.size() != initialisers.size()) {
