@@ -246,14 +246,16 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         m_MergedInSyn.emplace_back(a, std::vector<SynapseGroupInternal*>{a});
 
         // Continue if merging of postsynaptic models is disabled
-        //if(!merge) {
+        if(!merge) {
             continue;
-        //}
+        }
 
-        // Continue if postsynaptic model has any variables
-        // **NOTE** many models with variables would work fine, but nothing stops
+        // Continue if postsynaptic model has any variables not implemented as GLOBAL
+        // **NOTE** many models with independant would work fine, but nothing stops
         // initialisers being used to configure PS models to behave totally different
-        /*(!a->getPSVarInitialisers().empty()) {
+        if(std::any_of(a->getPSVarImplementation().cbegin(), a->getPSVarImplementation().cend(),
+                       [](VarImplementation impl){ return (impl != VarImplementation::GLOBAL); }))
+        {
             continue;
         }
 
@@ -261,8 +263,8 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
 
         // Cache useful bits from A
-        const auto &aParamsBegin = a->getPSParams().cbegin();
-        const auto &aParamsEnd = a->getPSParams().cend();
+        const auto &aVarInitBegin = a->getPSVarInitialisers().cbegin();
+        const auto &aVarInitEnd = a->getPSVarInitialisers().cend();
         const auto &aDerivedParamsBegin = a->getPSDerivedParams().cbegin();
         const auto &aDerivedParamsEnd = a->getPSDerivedParams().cend();
         const auto aModelTypeHash = typeid(a->getPSModel()).hash_code();
@@ -274,7 +276,8 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
             if(typeid((*b)->getPSModel()).hash_code() == aModelTypeHash
                 && a->getInSynLocation() == (*b)->getInSynLocation()
                 && a->getMaxDendriticDelayTimesteps() == (*b)->getMaxDendriticDelayTimesteps()
-                && std::equal(aParamsBegin, aParamsEnd, (*b)->getPSParams().cbegin())
+                && std::equal(aVarInitBegin, aVarInitEnd, (*b)->getPSVarInitialisers().cbegin(),
+                              [](const Models::VarInit &a, const Models::VarInit &b){ return (a.getConstantValue() == b.getConstantValue()); })
                 && std::equal(aDerivedParamsBegin, aDerivedParamsEnd, (*b)->getPSDerivedParams().cbegin()))
             {
                 LOGD << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
@@ -298,7 +301,7 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         // If synapse group A was successfully merged with anything, set it's merge target to the unique name
         if(m_MergedInSyn.back().second.size() > 1) {
             a->setPSModelMergeTarget(mergedPSMName);
-        }*/
+        }
     }
 }
 //----------------------------------------------------------------------------
