@@ -198,7 +198,7 @@ public:
     //! Find the index of a named variable
     size_t getVarIndex(const std::string &varName) const
     {
-        return getNamedVecIndex(varName, getVars());
+        return getNamedVecIndex(varName, getCombinedVars());
     }
 
     //! Find the index of a named extra global parameter
