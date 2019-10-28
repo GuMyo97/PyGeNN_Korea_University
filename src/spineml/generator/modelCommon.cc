@@ -176,7 +176,6 @@ Models::Base::VarVec SpineMLGenerator::findModelVariables(const pugi::xml_node &
                    [](const pugi::xml_node &n){ return Models::Base::Var{n.attribute("name").value(), "scalar", VarAccess::READ_WRITE}; });
 
     // Loop through model parameters and add as read-only variables
-    Models::Base::StringVec paramNames;
     for(auto param : componentClass.children("Parameter")) {
         gennVariables.emplace_back(param.attribute("name").value(), "scalar", VarAccess::READ_ONLY);
     }

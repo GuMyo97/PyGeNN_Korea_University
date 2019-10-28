@@ -393,11 +393,17 @@ int main(int argc, char *argv[])
                 auto *pop = model.addNeuronPopulation(popName, popSize, &neuronModel,
                                                       NeuronModel::VarValues(varInitialisers, neuronModel));
 
-                // Typically fixed-value parameters are candidates for hard-coding into model however,
-                // if they are overriden in experiment, they should be implemented individually so mark them as such
+                // Typically fixed-value parameters are candidates for hard-coding into model.
+                // However, if they are overriden in experiment or used as external input ports,
+                // they should be implemented individually so mark them as such
                 if(overridenPropertyNames) {
                     for(const auto &o : *overridenPropertyNames) {
                         pop->setVarImplementation(o, VarImplementation::INDIVIDUAL);
+                    }
+                }
+                if(externalInputPorts) {
+                    for(const auto &e : *externalInputPorts) {
+                        pop->setVarImplementation(e, VarImplementation::INDIVIDUAL);
                     }
                 }
             }
@@ -542,16 +548,27 @@ int main(int argc, char *argv[])
                                                                  &postsynapticModel, PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
                                                                  synapseMatrixProps.connectivityInitSnippet);
 
-                    // Typically fixed-value parameters are candidates for hard-coding into model however,
-                    // if they are overriden in experiment, they should be implemented individually so mark them as such
+                    // Typically fixed-value parameters are candidates for hard-coding into model.
+                    // However, if they are overriden in experiment or used as external input ports,
+                    // they should be implemented individually so mark them as such
                     if(weightUpdateOverridenPropertyNames) {
                         for(const auto &o : *weightUpdateOverridenPropertyNames) {
                             synapsePop->setWUVarImplementation(o, VarImplementation::INDIVIDUAL);
                         }
                     }
+                    if(weightUpdateExternalInputPorts) {
+                        for(const auto &e : *weightUpdateExternalInputPorts) {
+                            synapsePop->setWUVarImplementation(e, VarImplementation::INDIVIDUAL);
+                        }
+                    }
                     if(postSynapseOverridenPropertyNames) {
                         for(const auto &o : *postSynapseOverridenPropertyNames) {
                             synapsePop->setPSVarImplementation(o, VarImplementation::INDIVIDUAL);
+                        }
+                    }
+                    if(postSynapseExternalInputPorts) {
+                        for(const auto &e : *postSynapseExternalInputPorts) {
+                            synapsePop->setPSVarImplementation(e, VarImplementation::INDIVIDUAL);
                         }
                     }
 
