@@ -140,7 +140,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 }
 
                 // If synapse group has individual postsynaptic variables, read then into registers
-                genVariableRead(os, psm->getVars(), backend, sg->getPSModelTargetName(), "lps", popSubs["id"], model.getPrecision(), 1);
+                genVariableRead(os, psm->getCombinedVars(), sg->getPSVarImplementation(), backend,
+                                sg->getPSModelTargetName(), "lps", popSubs["id"], model.getPrecision(), 1);
 
                 Substitutions inSynSubs(&neuronSubs);
                 inSynSubs.addVarSubstitution("inSyn", "linSyn");
@@ -162,7 +163,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 os << backend.getVarPrefix() << "inSyn"  << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
 
                 // If synapse group has individual postsynaptic variables, read then into registers
-                genVariableWriteBack(os, psm->getVars(), backend, sg->getPSModelTargetName(), "lps", popSubs["id"], model.getPrecision(), 1);
+                genVariableWriteBack(os, psm->getCombinedVars(), sg->getPSVarImplementation(), backend,
+                                     sg->getPSModelTargetName(), "lps", popSubs["id"], model.getPrecision(), 1);
             }
 
             // Loop through all of neuron group's current sources
@@ -174,7 +176,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 const auto* csm = cs->getCurrentSourceModel();
 
                 // Read current source variables into registers
-                genVariableRead(os, csm->getVars(), backend, cs->getName(), "lcs", popSubs["id"], model.getPrecision(), 1);
+                genVariableRead(os, csm->getCombinedVars(), cs->getVarImplementation(), backend,
+                                cs->getName(), "lcs", popSubs["id"], model.getPrecision(), 1);
 
                 Substitutions currSourceSubs(&popSubs);
                 currSourceSubs.addFuncSubstitution("injectCurrent", 1, "Isyn += $(0)");
@@ -189,7 +192,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 os << iCode << std::endl;
 
                 // Write read/write variables back to global memory
-                genVariableWriteBack(os, csm->getVars(), backend, cs->getName(), "lcs", popSubs["id"], model.getPrecision(), 1);
+                genVariableWriteBack(os, csm->getVars(), cs->getVarImplementation(), backend,
+                                     cs->getName(), "lcs", popSubs["id"], model.getPrecision(), 1);
             }
 
             if (!nm->getSupportCode().empty()) {

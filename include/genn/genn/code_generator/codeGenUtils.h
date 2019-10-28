@@ -10,6 +10,7 @@
 // GeNN includes
 #include "models.h"
 #include "snippet.h"
+#include "variableImplementation.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -136,14 +137,14 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type);
 void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
 
 //! Generate code to read variables from global memory into registers
-void genVariableRead(CodeStream &os, const Models::Base::VarVec &vars, const BackendBase &backend,
-                     const std::string &popName, const std::string &localVarPrefix, const std::string &id,
-                     const std::string &ftype, unsigned int vectorWidth = 1);
+void genVariableRead(CodeStream &os, const Models::Base::VarVec &vars, const std::vector<VarImplementation> &varImplementation,
+                     const BackendBase &backend, const std::string &popName, const std::string &localVarPrefix,
+                     const std::string &id, const std::string &ftype, unsigned int vectorWidth = 1);
 
 //! Generate code to write variables back to global memory from registers
-void genVariableWriteBack(CodeStream &os, const Models::Base::VarVec &vars, const BackendBase &backend,
-                          const std::string &popName, const std::string &localVarPrefix, const std::string &id,
-                          const std::string &ftype, unsigned int vectorWidth = 1);
+void genVariableWriteBack(CodeStream &os, const Models::Base::VarVec &vars, const std::vector<VarImplementation> &varImplementation,
+                          const BackendBase &backend, const std::string &popName, const std::string &localVarPrefix,
+                          const std::string &id, const std::string &ftype, unsigned int vectorWidth = 1);
 
 void preNeuronSubstitutionsInSynapticCode(
     Substitutions &substitutions,

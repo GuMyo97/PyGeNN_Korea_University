@@ -25,21 +25,22 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     const auto *wum = sg.getWUModel();
 
     // If synaptic matrix has individual state variables, read them into local variables
-    genVariableRead(os, wum->getVars(), backend, sg.getName(), "l", synapseSubs["id_syn"], model.getPrecision(), vectorWidth);
+    genVariableRead(os, wum->getCombinedVars(), sg.getWUVarImplementation(), backend,
+                    sg.getName(), "l", synapseSubs["id_syn"], model.getPrecision(), vectorWidth);
 
     // Substitute parameter and derived parameter names
-    synapseSubs.addParamValueSubstitution(wu->getCombinedDerivedParamNames(), sg.getWUDerivedParams());
-    synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg.getName());
+    synapseSubs.addParamValueSubstitution(wum->getCombinedDerivedParamNames(), sg.getWUDerivedParams());
+    synapseSubs.addVarNameSubstitution(wum->getExtraGlobalParams(), "", "", sg.getName());
 
     // Substitute names of pre and postsynaptic weight update variables
     const std::string delayedPreIdx = (sg.getDelaySteps() == NO_DELAY) ? synapseSubs["id_pre"] : "preReadDelayOffset + " + baseSubs["id_pre"];
-    synapseSubs.addVarSubstitution(wu->getPreVars(), sg.getWUPreVarInitialisers(), sg.getWUPreVarImplementation(),
+    synapseSubs.addVarSubstitution(wum->getPreVars(), sg.getWUPreVarInitialisers(), sg.getWUPreVarImplementation(),
                                    "", backend.getVarPrefix(), sg.getName() + "[" + delayedPreIdx + "]");
 
     const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? synapseSubs["id_post"] : "postReadDelayOffset + " + baseSubs["id_post"];
-    synapseSubs.addVarSubstitution(wu->getPostVars(), sg.getWUPostVarInitialisers(), sg.getWUPostVarImplementation(),
+    synapseSubs.addVarSubstitution(wum->getPostVars(), sg.getWUPostVarInitialisers(), sg.getWUPostVarImplementation(),
                                    "", backend.getVarPrefix(), sg.getName() + "[" + delayedPostIdx + "]");
-    synapseSubs.addVarSubstitution(wu->getCombinedVars(), sg.getWUVarInitialisers(), sg.getWUVarImplementation(),
+    synapseSubs.addVarSubstitution(wum->getCombinedVars(), sg.getWUVarInitialisers(), sg.getWUVarImplementation(),
                                    "", "l", "", vectorWidth);
 
 
@@ -51,7 +52,8 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     os << code;
 
     // If synaptic matrix has individual state variables, write them back to local variables
-    genVariableWriteBack(os, wum->getVars(), backend, sg.getName(), "l", synapseSubs["id_syn"], model.getPrecision(), vectorWidth);
+    genVariableWriteBack(os, wum->getCombinedVars(), sg.getWUVarImplementation(), backend,
+                         sg.getName(), "l", synapseSubs["id_syn"], model.getPrecision(), vectorWidth);
 }
 }   // Anonymous namespace
 

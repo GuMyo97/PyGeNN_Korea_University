@@ -359,7 +359,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
 //----------------------------------------------------------------------------
 size_t VectorPostSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
-    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if (sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) {
         return Utils::ceilDivide(sg.getMaxConnections(), getVectorWidth(sg));
     }
     else {
@@ -377,28 +377,32 @@ bool VectorPostSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDevi
     // If postsynaptic parallelism is selected and matrix is either sparse or dense
     // **TODO** for now also if no event threshold test is required
     if(sg.getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC && !sg.isEventThresholdReTestRequired()
-        && ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)))
+        && ((sg.getMatrixConnectivity() == SynapseMatrixConnectivity::DENSE) || (sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE)))
     {
         // If this is a device which has double half-precision throughput (rather than extremely slow)
+        // **YUCK** why isn't there a 'singleToDoublePrecisionPerfRatio' equivalent for half!?
         if((deviceProps.major == 5 && deviceProps.minor == 3)       // Jetson TX1
             || (deviceProps.major == 6 && deviceProps.minor == 0)   // Tesla P100
             || (deviceProps.major == 6 && deviceProps.minor == 2)   // Jetson TX2
             || (deviceProps.major >= 7))                            // Turing or later
         {
-
-            // If synapse group variables are either GLOBAL or INDIVIDUAL but all half-precision
-            const auto &vars = sg.getWUModel()->getVars();
-            if((sg.getMatrixType() & SynapseMatrixWeight::GLOBAL)
-                || ((sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && std::all_of(vars.cbegin(), vars.cend(), [](const Models::Base::Var &v){ return v.type == "half"; })))
+            // If synapse group either has dense connectivity or sparse connectivity with 16-bit indices
+            // **TODO** no reason for this restriction really
+            if((sg.getMatrixConnectivity() == SynapseMatrixConnectivity::DENSE)
+                || ((sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) && sg.getSparseIndType() == "uint16_t"))
             {
-                // If synapse group either has dense connectivity or sparse connectivity with 16-bit indices
-                // **TODO** no reason for this restriction really
-                if((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE)
-                    || ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && sg.getSparseIndType() == "uint16_t"))
-                {
-                    return true;
+                // If any synapse variables are implemented individually but not half-precision, return false
+                const auto vars = sg.getWUModel()->getVars();
+                auto v = vars.cbegin();
+                auto impl = sg.getWUVarImplementation().cbegin();
+                for (;v != vars.cend(); v++, impl++) {
+                    if(*impl == VarImplementation::INDIVIDUAL && v->type != "half") {
+                        return false;
+                    }
                 }
 
+                // Otherwise, return true
+                return true;
             }
         }
     }
@@ -421,7 +425,7 @@ bool VectorPostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &
     // Otherwise, we should accumulate each postsynaptic neuron's input in shared menory if matrix is sparse
     // and the output population is small enough that input to it can be stored in a shared memory array
     else {
-        return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE)
+        return ((sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE)
                 && sg.getTrgNeuronGroup()->getNumNeurons() <= backend.getKernelBlockSize(KernelPresynapticUpdate));
     }
 }
@@ -455,7 +459,7 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
             const std::string queueOffset = sg.getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
             os << "const unsigned int spk = dd_glbSpk" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[" << queueOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + threadIdx.x];" << std::endl;
             os << "shSpk" << eventSuffix << "[threadIdx.x] = spk;" << std::endl;
-            if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            if(sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength[threadIdx.x] = dd_rowLength" << sg.getName() << "[spk];" << std::endl;
             }
         }
@@ -477,7 +481,7 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
                 os << "const unsigned int rowAddress = " + popSubs["id"] + " * 2;" << std::endl;
 
                 // If matrix is sparse
-                if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if(sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) {
                     os << "const unsigned int npost = shRowLength[j];" << std::endl;
 
                     // If either of our vector lanes will be within row
@@ -509,7 +513,7 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
                 }
                 // Otherwise
                 else {
-                    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) { // SPARSE
+                    if (sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) { // SPARSE
                         // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                         // **TODO** make sure remainder is zeroed
                         if (shouldAccumulateInSharedMemory(sg, backend)) {
@@ -532,7 +536,7 @@ void VectorPostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, con
 
                 wumSimHandler(os, sg, synSubs);
 
-                if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if(sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(140); // end if (id < npost)
                 }
             }

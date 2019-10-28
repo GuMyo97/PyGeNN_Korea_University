@@ -1282,7 +1282,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecInternal &model,
 //--------------------------------------------------------------------------
 size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
-    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if(sg.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) {
         return Utils::padSize(sg.getMaxConnections(), getPresynapticUpdateVectorWidth(sg));
     }
     else {

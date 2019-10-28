@@ -507,50 +507,57 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
 }
 
 //--------------------------------------------------------------------------
-void genVariableRead(CodeStream &os, const Models::Base::VarVec &vars, const BackendBase &backend,
-                     const std::string &popName, const std::string &localVarPrefix, const std::string &id,
-                     const std::string &ftype, unsigned int vectorWidth)
+void genVariableRead(CodeStream &os, const Models::Base::VarVec &vars, const std::vector<VarImplementation> &varImplementation,
+                     const BackendBase &backend, const std::string &popName, const std::string &localVarPrefix,
+                     const std::string &id, const std::string &ftype, unsigned int vectorWidth)
 {
-    // Loop through variables
-    for (const auto &v : vars) {
-        // If variable is read-only add const to enforce this at compile time
-        if(v.access == VarAccess::READ_ONLY) {
-            os << "const ";
-        }
+    // Loop through variables and their implementation
+    auto v = vars.cbegin();
+    auto impl = varImplementation.cbegin();
+    for (;v != vars.cend(); v++, impl++) {
+        // If variable is implemented individually
+        if(*impl == VarImplementation::INDIVIDUAL) {
+            // If variable is read-only add const to enforce this at compile time
+            if(v->access == VarAccess::READ_ONLY) {
+                os << "const ";
+            }
 
-        // If we
-        if(vectorWidth == 1) {
-            os << v.type << " " << localVarPrefix << v.name;
-            os << " = " << backend.getVarPrefix() << v.name << popName << "[" << id << "];" << std::endl;
-        }
-        else {
-            const std::string vectorType = backend.getVectorType(v.type, vectorWidth, ftype);
-            assert(!vectorType.empty());
+            // If we
+            if(vectorWidth == 1) {
+                os << v->type << " " << localVarPrefix << v->name;
+                os << " = " << backend.getVarPrefix() << v->name << popName << "[" << id << "];" << std::endl;
+            }
+            else {
+                const std::string vectorType = backend.getVectorType(v->type, vectorWidth, ftype);
+                assert(!vectorType.empty());
 
-            os << vectorType << " " << localVarPrefix << v.name;
-            os << " = *(" << vectorType << "*)&" << backend.getVarPrefix() << v.name << popName << "[" << id << "];" << std::endl;
+                os << vectorType << " " << localVarPrefix << v->name;
+                os << " = *(" << vectorType << "*)&" << backend.getVarPrefix() << v->name << popName << "[" << id << "];" << std::endl;
+            }
         }
     }
 }
 //--------------------------------------------------------------------------
-void genVariableWriteBack(CodeStream &os, const Models::Base::VarVec &vars, const BackendBase &backend,
-                          const std::string &popName, const std::string &localVarPrefix, const std::string &id,
-                          const std::string &ftype, unsigned int vectorWidth)
+void genVariableWriteBack(CodeStream &os, const Models::Base::VarVec &vars, const std::vector<VarImplementation> &varImplementation,
+                          const BackendBase &backend, const std::string &popName, const std::string &localVarPrefix,
+                          const std::string &id, const std::string &ftype, unsigned int vectorWidth)
 {
     // Loop through variables
-    for (const auto &v : vars) {
-        // If variable is read-write
-        if(v.access == VarAccess::READ_WRITE) {
+    auto v = vars.cbegin();
+    auto impl = varImplementation.cbegin();
+    for (;v != vars.cend(); v++, impl++) {
+        // If variable is read-write and implemented individually
+        if(v->access == VarAccess::READ_WRITE && *impl == VarImplementation::INDIVIDUAL) {
             if(vectorWidth == 1) {
-                os << backend.getVarPrefix() << v.name << popName << "[" << id << "]";
-                os << " = " << localVarPrefix << v.name << ";" << std::endl;
+                os << backend.getVarPrefix() << v->name << popName << "[" << id << "]";
+                os << " = " << localVarPrefix << v->name << ";" << std::endl;
             }
             else {
-                const std::string vectorType = backend.getVectorType(v.type, vectorWidth, ftype);
+                const std::string vectorType = backend.getVectorType(v->type, vectorWidth, ftype);
                 assert(!vectorType.empty());
 
-                os << "*(" << vectorType << "*)&" << backend.getVarPrefix() << v.name << popName << "[" << id << "]";
-                os << " = " << localVarPrefix << v.name << ";" << std::endl;
+                os << "*(" << vectorType << "*)&" << backend.getVarPrefix() << v->name << popName << "[" << id << "]";
+                os << " = " << localVarPrefix << v->name << ";" << std::endl;
             }
         }
     }
