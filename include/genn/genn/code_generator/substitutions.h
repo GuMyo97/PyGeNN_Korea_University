@@ -73,10 +73,7 @@ public:
         auto var = variables.cbegin();
         auto val = values.cbegin();
         for (;var != variables.cend() && val != values.cend(); var++, val++) {
-            std::stringstream stream;
-            writePreciseString(stream, *val);
-            addVarSubstitution(var->name + sourceSuffix,
-                               "(" + stream.str() + ")");
+            addVarSubstitution(var->name + sourceSuffix, *val);
         }
     }
 
@@ -96,14 +93,10 @@ public:
         auto varImpl = implementation.cbegin();
         for (;var != variables.cend(); var++, varInit++, varImpl++) {
             if(*varImpl == VarImplementation::GLOBAL) {
-                std::stringstream stream;
-                writePreciseString(stream, varInit->getConstantValue());
-                addVarSubstitution(var->name + sourceSuffix,
-                                "(" + stream.str() + ")");
+                addVarSubstitution(var->name + sourceSuffix, varInit->getConstantValue());
             }
             else {
-                addVarSubstitution(var->name + sourceSuffix,
-                                   destPrefix + var->name + destSuffix);
+                addVarSubstitution(var->name + sourceSuffix, destPrefix + var->name + destSuffix);
             }
 
         }
@@ -125,10 +118,7 @@ public:
         auto varImpl = implementation.cbegin();
         for (;var != variables.cend(); var++, varInit++, varImpl++) {
             if(*varImpl == VarImplementation::GLOBAL) {
-                std::stringstream stream;
-                writePreciseString(stream, varInit->getConstantValue());
-                addVarSubstitution(var->name + sourceSuffix,
-                                "(" + stream.str() + ")");
+                addVarSubstitution(var->name + sourceSuffix, varInit->getConstantValue());
             }
         }
     }
@@ -144,20 +134,24 @@ public:
         auto param = paramNames.cbegin();
         auto val = values.cbegin();
         for (;param != paramNames.cend() && val != values.cend(); param++, val++) {
-            std::stringstream stream;
-            writePreciseString(stream, *val);
-            addVarSubstitution(*param + sourceSuffix,
-                               "(" + stream.str() + ")");
+            addVarSubstitution(*param + sourceSuffix, *val);
         }
 
     }
 
-    void addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride = false)
+    void addVarSubstitution(const std::string &source, const std::string &destination, bool allowOverride = false)
     {
-        auto res = m_VarSubstitutions.emplace(source, destionation);
+        auto res = m_VarSubstitutions.emplace(source, destination);
         if(!allowOverride && !res.second) {
             throw std::runtime_error("'" + source + "' already has a variable substitution");
         }
+    }
+
+    void addVarSubstitution(const std::string &source, double value, bool allowOverride = false)
+    {
+        std::stringstream stream;
+        writePreciseString(stream, value);
+        addVarSubstitution(source, "(" + stream.str() + ")", allowOverride);
     }
 
     void addFuncSubstitution(const std::string &source, unsigned int numArguments, const std::string &funcTemplate, bool allowOverride = false)
