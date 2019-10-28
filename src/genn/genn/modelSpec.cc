@@ -204,8 +204,8 @@ void ModelSpec::finalize()
                 // do an early replacement of parameters, derived parameters and extra global parameters
                 // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
                 Substitutions thresholdSubs;
-                thresholdSubs.addParamValueSubstitution(wu->getParamNames(), sg->getWUParams());
-                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
+                thresholdSubs.addGlobalVarSubstitution(wu->getCombinedVars(), sg->getWUVarInitialisers(), sg->getWUVarImplementation());
+                thresholdSubs.addParamValueSubstitution(wu->getCombinedDerivedParamNames(), sg->getWUDerivedParams());
                 thresholdSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg->getName());
 
                 std::string eCode = wu->getEventThresholdConditionCode();

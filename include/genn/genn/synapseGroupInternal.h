@@ -25,6 +25,23 @@ public:
         trgNeuronGroup->addInSyn(this);
         srcNeuronGroup->addOutSyn(this);
     }
+
+    SynapseGroupInternal(const std::string name, SynapseMatrixConnectivity matrixConnectivity, unsigned int delaySteps,
+                         const WeightUpdateModels::Base *wu, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                         const PostsynapticModels::Base *ps, const std::vector<Models::VarInit> &psVarInitialisers,
+                         NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
+                         const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
+                         VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
+    :   SynapseGroup(name, matrixConnectivity, delaySteps, wu, wuVarInitialisers, wuPreVarInitialisers, wuPostVarInitialisers,
+                     ps, psVarInitialisers, srcNeuronGroup, trgNeuronGroup,
+                     connectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
+                     defaultSparseConnectivityLocation, defaultNarrowSparseIndEnabled)
+    {
+        // Add references to target and source neuron groups
+        trgNeuronGroup->addInSyn(this);
+        srcNeuronGroup->addOutSyn(this);
+    }
     
     using SynapseGroup::getSrcNeuronGroup;
     using SynapseGroup::getTrgNeuronGroup;

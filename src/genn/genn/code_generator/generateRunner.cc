@@ -590,37 +590,40 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // Neuron state variables
         const auto neuronModel = n.second.getNeuronModel();
-        const auto vars = neuronModel->getVars();
+        const auto vars = neuronModel->getCombinedVars();
         std::vector<std::string> neuronStatePushPullFunctions;
         for(size_t i = 0; i < vars.size(); i++) {
-            const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
-            const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
-            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                               runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + n.first,
-                               n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
+            // If this variable should be implemented individually
+            if(n.second.getVarImplementation(i) == VarImplementation::INDIVIDUAL) {
+                const size_t count = n.second.isVarQueueRequired(i) ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
+                const bool autoInitialized = !n.second.getVarInitialisers()[i].getSnippet()->getCode().empty();
+                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                runnerPushFunc, runnerPullFunc, vars[i].type, vars[i].name + n.first,
+                                n.second.getVarLocation(i), autoInitialized, count, neuronStatePushPullFunctions);
 
-            // Current variable push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
-                                "Current" + vars[i].name + n.first,
-                [&]()
-                {
-                    backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
-                                                       vars[i].name, n.second.getVarLocation(i));
-                });
+                // Current variable push and pull functions
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
+                                    "Current" + vars[i].name + n.first,
+                    [&]()
+                    {
+                        backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
+                                                        vars[i].name, n.second.getVarLocation(i));
+                    });
 
-            // Write getter to get access to correct pointer
-            const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
-            genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
-                              "Current" + vars[i].name + n.first, vars[i].type + "*",
-                [&]()
-                {
-                    if(delayRequired) {
-                        runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ");" << std::endl;
-                    }
-                    else {
-                        runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
-                    }
-                });
+                // Write getter to get access to correct pointer
+                const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
+                genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
+                                "Current" + vars[i].name + n.first, vars[i].type + "*",
+                    [&]()
+                    {
+                        if(delayRequired) {
+                            runnerGetterFunc << "return " << vars[i].name << n.first << " + (spkQuePtr" << n.first << " * " << n.second.getNumNeurons() << ");" << std::endl;
+                        }
+                        else {
+                            runnerGetterFunc << "return " << vars[i].name << n.first << ";" << std::endl;
+                        }
+                    });
+            }
         }
 
         // Add helper function to push and pull entire neuron state
@@ -637,14 +640,16 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
         for (auto const *cs : n.second.getCurrentSources()) {
             const auto csModel = cs->getCurrentSourceModel();
-            const auto csVars = csModel->getVars();
+            const auto csVars = csModel->getCombinedVars();
 
             std::vector<std::string> currentSourceStatePushPullFunctions;
             for(size_t i = 0; i < csVars.size(); i++) {
-                const bool autoInitialized = !cs->getVarInitialisers()[i].getSnippet()->getCode().empty();
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                   runnerPushFunc, runnerPullFunc, csVars[i].type, csVars[i].name + cs->getName(),
-                                   cs->getVarLocation(i), autoInitialized, n.second.getNumNeurons(), currentSourceStatePushPullFunctions);
+                if(cs->getVarImplementation(i) == VarImplementation::INDIVIDUAL) {
+                    const bool autoInitialized = !cs->getVarInitialisers()[i].getSnippet()->getCode().empty();
+                    mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    runnerPushFunc, runnerPullFunc, csVars[i].type, csVars[i].name + cs->getName(),
+                                    cs->getVarLocation(i), autoInitialized, n.second.getNumNeurons(), currentSourceStatePushPullFunctions);
+                }
             }
 
             // Add helper function to push and pull entire current source state
@@ -679,8 +684,8 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), VarLocation::HOST_DEVICE);
             }
 
-            if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                for(const auto &v : sg->getPSModel()->getVars()) {
+            for(const auto &v : sg->getPSModel()->getCombinedVars()) {
+                if(sg->getPSVarImplementation(v.name) == VarImplementation::INDIVIDUAL) {
                     mem += backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                             v.type, v.name + sg->getPSModelTargetName(), sg->getPSVarLocation(v.name),
                                             sg->getTrgNeuronGroup()->getNumNeurons());
@@ -697,14 +702,14 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     for(const auto &s : model.getLocalSynapseGroups()) {
         const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
 
-        if (s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+        if(s.second.getMatrixConnectivity() == SynapseMatrixConnectivity::BITMASK) {
             const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.first,
                                s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
 
         }
-        else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        else if(s.second.getMatrixConnectivity() == SynapseMatrixConnectivity::SPARSE) {
             const VarLocation varLoc = s.second.getSparseConnectivityLocation();
             const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
 
@@ -766,15 +771,15 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
 
         // If weight update variables should be individual
         std::vector<std::string> synapseGroupStatePushPullFunctions;
-        if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
-            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
+        const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
 
-            const auto wuVars = wu->getVars();
-            for(size_t i = 0; i < wuVars.size(); i++) {
+        const auto wuVars = wu->getCombinedVars();
+        for(size_t i = 0; i < wuVars.size(); i++) {
+            if(s.second.getWUVarImplementation(i) == VarImplementation::INDIVIDUAL) {
                 const bool autoInitialized = !s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty();
                 mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                   runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.first,
-                                   s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
+                                    runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.first,
+                                    s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
             }
         }
 
@@ -784,10 +789,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
         const auto wuPreVars = wu->getPreVars();
         for(size_t i = 0; i < wuPreVars.size(); i++) {
-            const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
-            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                               runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.first,
-                               s.second.getWUPreVarLocation(i), autoInitialized, preSize, synapseGroupStatePushPullFunctions);
+            if(s.second.getWUPreVarImplementation(i) == VarImplementation::INDIVIDUAL) {
+                const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
+                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.first,
+                                s.second.getWUPreVarLocation(i), autoInitialized, preSize, synapseGroupStatePushPullFunctions);
+            }
         }
 
         // Postsynaptic W.U.M. variables
@@ -796,10 +803,12 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
         const auto wuPostVars = wu->getPostVars();
         for(size_t i = 0; i < wuPostVars.size(); i++) {
-            const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
-            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                               runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.first,
-                               s.second.getWUPostVarLocation(i), autoInitialized, postSize, synapseGroupStatePushPullFunctions);
+            if(s.second.getWUPostVarImplementation(i) == VarImplementation::INDIVIDUAL) {
+                const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
+                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.first,
+                                s.second.getWUPostVarLocation(i), autoInitialized, postSize, synapseGroupStatePushPullFunctions);
+            }
         }
 
         // If this synapse group's postsynaptic models hasn't been merged (which makes pulling them somewhat ambiguous)
@@ -813,10 +822,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                                 true, s.second.getTrgNeuronGroup()->getNumNeurons());
                 });
 
-            // If this synapse group has individual postsynaptic model variables
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                const auto psmVars = psm->getVars();
-                for(size_t i = 0; i < psmVars.size(); i++) {
+            const auto psmVars = psm->getCombinedVars();
+            for(size_t i = 0; i < psmVars.size(); i++) {
+                if(s.second.getPSVarImplementation(i) == VarImplementation::INDIVIDUAL) {
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
                     genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i), psmVars[i].name + s.first, synapseGroupStatePushPullFunctions,
                         [&]()

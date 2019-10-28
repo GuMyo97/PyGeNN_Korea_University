@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
             // If population is a spike source add GeNN spike source
             // **TODO** is this the only special case?
             if(strcmp(neuron.attribute("url").value(), "SpikeSource") == 0) {
-                model.addNeuronPopulation<NeuronModels::SpikeSource>(popName, popSize, {}, {});
+                model.addNeuronPopulation<NeuronModels::SpikeSource>(popName, popSize, {});
             }
             else {
                 // Get sets of external input and overriden properties for this population
@@ -384,16 +384,28 @@ int main(int argc, char *argv[])
 
                 // Read neuron properties
                 std::map<std::string, Models::VarInit> varInitialisers;
-                ModelParams::Neuron modelParams(basePath, neuron, externalInputPorts,
-                                                overridenPropertyNames, varInitialisers);
+                ModelParams::Neuron modelParams(basePath, neuron, externalInputPorts, varInitialisers);
 
                 // Either get existing neuron model or create new one of no suitable models are available
                 const auto &neuronModel = getCreateModel(modelParams, neuronModels);
 
                 // Add population to model
-                model.addNeuronPopulation(popName, popSize, &neuronModel,
-                                          NeuronModel::ParamValues(varInitialisers, neuronModel),
-                                          NeuronModel::VarValues(varInitialisers, neuronModel));
+                auto *pop = model.addNeuronPopulation(&neuronModel, popName, popSize,
+                                                      NeuronModel::VarValues(varInitialisers, neuronModel));
+
+                // Typically fixed-value parameters are candidates for hard-coding into model.
+                // However, if they are overriden in experiment or used as external input ports,
+                // they should be implemented individually so mark them as such
+                if(overridenPropertyNames) {
+                    for(const auto &o : *overridenPropertyNames) {
+                        pop->setVarImplementation(o, VarImplementation::INDIVIDUAL);
+                    }
+                }
+                if(externalInputPorts) {
+                    for(const auto &e : *externalInputPorts) {
+                        pop->setVarImplementation(e, VarImplementation::INDIVIDUAL);
+                    }
+                }
             }
         }
 
@@ -438,11 +450,11 @@ int main(int argc, char *argv[])
                 // Create synapse population
                 std::string passthroughSynapsePopName = std::string(srcPopName) + "_" + srcPort + "_" + popName + "_"  + dstPort;
                 auto synapsePop = model.addSynapsePopulation(passthroughSynapsePopName, 
-                                                             SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
+                                                             synapseMatrixProps.connectivityType,
                                                              synapseMatrixProps.axonalDelay, 
                                                              srcPopName, popName,
-                                                             &passthroughWeightUpdateModel, {}, {}, {}, {},
-                                                             &passthroughPostsynapticModel, {}, {},
+                                                             &passthroughWeightUpdateModel, {}, {}, {},
+                                                             &passthroughPostsynapticModel, {},
                                                              synapseMatrixProps.connectivityInitSnippet);
 
                 // If matrix uses sparse connectivity and no initialiser is specified
@@ -495,7 +507,6 @@ int main(int argc, char *argv[])
                     ModelParams::WeightUpdate weightUpdateModelParams(basePath, weightUpdate,
                                                                       popName, trgPopName,
                                                                       weightUpdateExternalInputPorts,
-                                                                      weightUpdateOverridenPropertyNames,
                                                                       weightUpdateVarInitialisers,
                                                                       synapseMatrixProps.maxDendriticDelay);
 
@@ -521,7 +532,6 @@ int main(int argc, char *argv[])
                     ModelParams::Postsynaptic postsynapticModelParams(basePath, postSynapse,
                                                                       trgPopName,
                                                                       postSynapseExternalInputPorts,
-                                                                      postSynapseOverridenPropertyNames,
                                                                       postsynapticVarInitialisers);
 
                     // Either get existing postsynaptic model or create new one of no suitable models are available
@@ -531,12 +541,36 @@ int main(int argc, char *argv[])
                     // Add synapse population to model
                     // **NOTE** using weight update name is an arbitrary choice but these are guaranteed unique
                     auto synapsePop = model.addSynapsePopulation(weightUpdateName, 
-                                                                 SynapseMatrixWeight::INDIVIDUAL | synapseMatrixProps.connectivityType, 
+                                                                 synapseMatrixProps.connectivityType,
                                                                  synapseMatrixProps.axonalDelay, 
                                                                  popName, trgPopName,
-                                                                 &weightUpdateModel, WeightUpdateModel::ParamValues(weightUpdateVarInitialisers, weightUpdateModel), WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel), {}, {},
-                                                                 &postsynapticModel, PostsynapticModel::ParamValues(postsynapticVarInitialisers, postsynapticModel), PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
+                                                                 &weightUpdateModel, WeightUpdateModel::VarValues(weightUpdateVarInitialisers, weightUpdateModel), {}, {},
+                                                                 &postsynapticModel, PostsynapticModel::VarValues(postsynapticVarInitialisers, postsynapticModel),
                                                                  synapseMatrixProps.connectivityInitSnippet);
+
+                    // Typically fixed-value parameters are candidates for hard-coding into model.
+                    // However, if they are overriden in experiment or used as external input ports,
+                    // they should be implemented individually so mark them as such
+                    if(weightUpdateOverridenPropertyNames) {
+                        for(const auto &o : *weightUpdateOverridenPropertyNames) {
+                            synapsePop->setWUVarImplementation(o, VarImplementation::INDIVIDUAL);
+                        }
+                    }
+                    if(weightUpdateExternalInputPorts) {
+                        for(const auto &e : *weightUpdateExternalInputPorts) {
+                            synapsePop->setWUVarImplementation(e, VarImplementation::INDIVIDUAL);
+                        }
+                    }
+                    if(postSynapseOverridenPropertyNames) {
+                        for(const auto &o : *postSynapseOverridenPropertyNames) {
+                            synapsePop->setPSVarImplementation(o, VarImplementation::INDIVIDUAL);
+                        }
+                    }
+                    if(postSynapseExternalInputPorts) {
+                        for(const auto &e : *postSynapseExternalInputPorts) {
+                            synapsePop->setPSVarImplementation(e, VarImplementation::INDIVIDUAL);
+                        }
+                    }
 
                     // If matrix uses sparse connectivity and no initialiser is specified
                     if(synapseMatrixProps.connectivityType == SynapseMatrixConnectivity::SPARSE
