@@ -164,7 +164,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 {
     using namespace CodeGenerator;
 
-    const auto vars = sg.getWUModel()->getVars();
+    const auto vars = sg.getWUModel()->getCombinedVars();
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = sg.getWUVarInitialisers().at(k);
         const VarLocation varLoc = sg.getWUVarLocation(k);
@@ -239,7 +239,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             }
 
             // Initialise neuron variables
-            genInitNeuronVarCode(os, backend, popSubs, ng.getNeuronModel()->getVars(), ng.getNumNeurons(), ng.getNumDelaySlots(),
+            genInitNeuronVarCode(os, backend, popSubs, ng.getNeuronModel()->getCombinedVars(), ng.getNumNeurons(), ng.getNumDelaySlots(),
                                  ng.getName(),  model.getPrecision(),
                                  [&ng](size_t i){ return ng.getVarInitialisers().at(i); },
                                  [&ng](size_t i){ return ng.getVarLocation(i); },
@@ -273,7 +273,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 }
 
                 // If postsynaptic model variables should be individual
-                genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), ng.getNumNeurons(), sg->getName(), model.getPrecision(),
+                genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getCombinedVars(), ng.getNumNeurons(), sg->getName(), model.getPrecision(),
                                      [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
                                      [sg](size_t i){ return sg->getPSVarLocation(i); },
                                      [sg](size_t i){ return sg->getPSVarImplementation(i); });
@@ -301,7 +301,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
             // Loop through current sources
             os << "// current source variables" << std::endl;
             for (auto const *cs : ng.getCurrentSources()) {
-                genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), ng.getNumNeurons(), cs->getName(), model.getPrecision(),
+                genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getCombinedVars(), ng.getNumNeurons(), cs->getName(), model.getPrecision(),
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); },
                                      [cs](size_t i){ return cs->getVarLocation(i); },
                                      [cs](size_t i){ return cs->getVarImplementation(i); });

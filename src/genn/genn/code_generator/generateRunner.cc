@@ -640,7 +640,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
         for (auto const *cs : n.second.getCurrentSources()) {
             const auto csModel = cs->getCurrentSourceModel();
-            const auto csVars = csModel->getVars();
+            const auto csVars = csModel->getCombinedVars();
 
             std::vector<std::string> currentSourceStatePushPullFunctions;
             for(size_t i = 0; i < csVars.size(); i++) {
@@ -684,7 +684,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                 backend.genScalar(definitionsVar, definitionsInternal, runnerVarDecl, "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), VarLocation::HOST_DEVICE);
             }
 
-            for(const auto &v : sg->getPSModel()->getVars()) {
+            for(const auto &v : sg->getPSModel()->getCombinedVars()) {
                 if(sg->getPSVarImplementation(v.name) == VarImplementation::INDIVIDUAL) {
                     mem += backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                             v.type, v.name + sg->getPSModelTargetName(), sg->getPSVarLocation(v.name),
@@ -775,7 +775,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             ? s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumNeurons()
             : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getMaxConnections();
 
-        const auto wuVars = wu->getVars();
+        const auto wuVars = wu->getCombinedVars();
         for(size_t i = 0; i < wuVars.size(); i++) {
             if(s.second.getWUVarImplementation(i) == VarImplementation::INDIVIDUAL) {
                 const bool autoInitialized = !s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty();
@@ -824,7 +824,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                                 true, s.second.getTrgNeuronGroup()->getNumNeurons());
                 });
 
-            const auto psmVars = psm->getVars();
+            const auto psmVars = psm->getCombinedVars();
             for(size_t i = 0; i < psmVars.size(); i++) {
                 if(s.second.getPSVarImplementation(i) == VarImplementation::INDIVIDUAL) {
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();

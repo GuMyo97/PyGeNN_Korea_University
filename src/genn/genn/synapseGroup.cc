@@ -366,12 +366,12 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixConnectivity mat
     }
 
     // Automatically determine default implementation for weight update model variables
-    Utils::autoDetermineImplementation(m_WUVarInitialisers, wu->getVars(), m_WUVarImplementation);
+    Utils::autoDetermineImplementation(m_WUVarInitialisers, wu->getCombinedVars(), m_WUVarImplementation);
     Utils::autoDetermineImplementation(m_WUPreVarInitialisers, wu->getPreVars(), m_WUPreVarImplementation);
     Utils::autoDetermineImplementation(m_WUPostVarInitialisers, wu->getPostVars(), m_WUPostVarImplementation);
 
     // Automatically determine default implementation for postsynaptic model variables
-    Utils::autoDetermineImplementation(m_PSVarInitialisers, ps->getVars(), m_PSVarImplementation);
+    Utils::autoDetermineImplementation(m_PSVarInitialisers, ps->getCombinedVars(), m_PSVarImplementation);
 
     setDefaultMaxConnections();
 }

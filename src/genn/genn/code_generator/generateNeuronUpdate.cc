@@ -69,7 +69,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
             const NeuronModels::Base *nm = ng.getNeuronModel();
 
             // Generate code to copy neuron state into local variable
-            for(const auto &v : nm->getVars()) {
+            for(const auto &v : nm->getCombinedVars()) {
                 if(ng.getVarImplementation(v.name) == VarImplementation::INDIVIDUAL) {
                     os << v.type << " l" << v.name << " = ";
                     os << backend.getVarPrefix() << v.name << ng.getName() << "[";
@@ -135,7 +135,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Also pull postsynaptic variables in a coalesced access
                 // **TODO** base behaviour from Models::Base
-                for(const auto &v : psm->getVars()) {
+                for(const auto &v : psm->getCombinedVars()) {
                     if(sg->getPSVarImplementation(v.name) == VarImplementation::INDIVIDUAL) {
                         os << v.type << " lps" << v.name << sg->getPSModelTargetName();
                         os << " = " << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << neuronSubs["id"] << "];" << std::endl;
@@ -169,7 +169,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 const auto* csm = cs->getCurrentSourceModel();
 
                 // Read current source variables into registers
-                for(const auto &v : csm->getVars()) {
+                for(const auto &v : csm->getCombinedVars()) {
                     if(cs->getVarImplementation(v.name) == VarImplementation::INDIVIDUAL) {
                         os <<  v.type << " lcs" << v.name << " = " << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "];" << std::endl;
                     }
@@ -188,7 +188,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 os << iCode << std::endl;
 
                 // Write read/write variables back to global memory
-                for(const auto &v : csm->getVars()) {
+                for(const auto &v : csm->getCombinedVars()) {
                     if(cs->getVarImplementation(v.name) == VarImplementation::INDIVIDUAL && v.access == VarAccess::READ_WRITE) {
                         os << backend.getVarPrefix() << v.name << cs->getName() << "[" << currSourceSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
                     }
@@ -340,7 +340,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
             }
 
             // Loop through neuron state variables
-            for(const auto &v : nm->getVars()) {
+            for(const auto &v : nm->getCombinedVars()) {
                 // If state variables is read/writes - meaning that it may have been updated - or it is delayed -
                 // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
                 // back to global state variables dd_V etc  
@@ -380,7 +380,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                 os << backend.getVarPrefix() << "inSyn"  << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "] = linSyn" << sg->getPSModelTargetName() << ";" << std::endl;
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
-                for (const auto &v : psm->getVars()) {
+                for (const auto &v : psm->getCombinedVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
                         os << backend.getVarPrefix() << v.name << sg->getPSModelTargetName() << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << sg->getPSModelTargetName() << ";" << std::endl;
                     }
@@ -411,7 +411,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                         }
                     }
 
-                    preSubs.addGlobalVarSubstitution(sg->getWUModel()->getVars(), sg->getWUVarInitialisers(), sg->getWUVarImplementation());
+                    preSubs.addGlobalVarSubstitution(sg->getWUModel()->getCombinedVars(), sg->getWUVarInitialisers(), sg->getWUVarImplementation());
                     preSubs.addParamValueSubstitution(sg->getWUModel()->getCombinedDerivedParamNames(), sg->getWUDerivedParams());
                     preSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "", sg->getName());
                     preSubs.addVarSubstitution(sg->getWUModel()->getPreVars(), sg->getWUPreVarInitialisers(),
@@ -466,7 +466,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
                         }
                     }
 
-                    postSubs.addGlobalVarSubstitution(sg->getWUModel()->getVars(), sg->getWUVarInitialisers(), sg->getWUVarImplementation());
+                    postSubs.addGlobalVarSubstitution(sg->getWUModel()->getCombinedVars(), sg->getWUVarInitialisers(), sg->getWUVarImplementation());
                     postSubs.addParamValueSubstitution(sg->getWUModel()->getCombinedDerivedParamNames(), sg->getWUDerivedParams());
                     postSubs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "", sg->getName());
                     postSubs.addVarSubstitution(sg->getWUModel()->getPostVars(), sg->getWUPostVarInitialisers(),

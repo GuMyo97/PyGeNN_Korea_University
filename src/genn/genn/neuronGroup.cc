@@ -195,7 +195,7 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
     }
 
     // Automatically determine default implementation for variables
-    Utils::autoDetermineImplementation(varInitialisers, neuronModel->getVars(), m_VarImplementation);
+    Utils::autoDetermineImplementation(varInitialisers, neuronModel->getCombinedVars(), m_VarImplementation);
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
@@ -344,7 +344,7 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
 void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
 {
     // Loop through variables
-    const auto vars = getNeuronModel()->getVars();
+    const auto vars = getNeuronModel()->getCombinedVars();
     for(size_t i = 0; i < vars.size(); i++) {
         // If the code contains a reference to this variable, set corresponding flag
         if (code.find(vars[i].name + suffix) != std::string::npos) {

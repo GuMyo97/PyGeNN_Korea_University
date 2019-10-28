@@ -35,7 +35,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     const std::string delayedPostIdx = (sg.getBackPropDelaySteps() == NO_DELAY) ? synapseSubs["id_post"] : "postReadDelayOffset + " + baseSubs["id_post"];
     synapseSubs.addVarSubstitution(wu->getPostVars(), sg.getWUPostVarInitialisers(), sg.getWUPostVarImplementation(),
                                    "", backend.getVarPrefix(), sg.getName() + "[" + delayedPostIdx + "]");
-    synapseSubs.addVarSubstitution(wu->getVars(), sg.getWUVarInitialisers(), sg.getWUVarImplementation(),
+    synapseSubs.addVarSubstitution(wu->getCombinedVars(), sg.getWUVarInitialisers(), sg.getWUVarImplementation(),
                                    "", backend.getVarPrefix(), sg.getName() + "[" + synapseSubs["id_syn"] + "]");
 
 
@@ -71,7 +71,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInterna
             Substitutions synapseSubs(&baseSubs);
 
             // Make weight update model substitutions
-            synapseSubs.addGlobalVarSubstitution(sg.getWUModel()->getVars(), sg.getWUVarInitialisers(), sg.getWUVarImplementation());
+            synapseSubs.addGlobalVarSubstitution(sg.getWUModel()->getCombinedVars(), sg.getWUVarInitialisers(), sg.getWUVarImplementation());
             synapseSubs.addParamValueSubstitution(sg.getWUModel()->getCombinedDerivedParamNames(), sg.getWUDerivedParams());
             synapseSubs.addVarNameSubstitution(sg.getWUModel()->getExtraGlobalParams(), "", "", sg.getName());
 

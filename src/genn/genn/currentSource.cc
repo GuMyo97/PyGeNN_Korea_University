@@ -66,7 +66,7 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     }
 
     // Automatically determine default implementation for variables
-    Utils::autoDetermineImplementation(varInitialisers, currentSourceModel->getVars(), m_VarImplementation);
+    Utils::autoDetermineImplementation(varInitialisers, currentSourceModel->getCombinedVars(), m_VarImplementation);
 }
 //----------------------------------------------------------------------------
 void CurrentSource::initDerivedParams(double dt)
