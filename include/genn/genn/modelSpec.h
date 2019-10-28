@@ -627,6 +627,51 @@ public:
         }
     }
 
+    //! Adds a new current source to the model using a current source model managed by the user
+    /*! \tparam CurrentSourceModel type of current source model (derived from CurrentSourceModels::Base).
+        \param currentSourceName string containing unique name of current source.
+        \param model current source model to use for current source.
+        \param targetNeuronGroupName string name of the target neuron group
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSource::VarValues object.
+        \return pointer to newly created CurrentSource */
+    template<typename CurrentSourceModel>
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModel *model,
+                                    const std::string &targetNeuronGroupName,
+                                    const typename CurrentSourceModel::VarValues &varInitialisers)
+    {
+        auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
+
+#ifdef MPI_ENABLE
+        // Get host ID of target neuron group
+        const int hostID = targetGroup->getClusterHostID();
+
+        // Determine the host ID
+        int mpiHostID = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &mpiHostID);
+
+        // Pick map to add group to appropriately
+        auto &groupMap = (hostID == mpiHostID) ? m_LocalCurrentSources : m_RemoteCurrentSources;
+#else
+        // If MPI is disabled always add to local current sources
+        auto &groupMap = m_LocalCurrentSources;
+#endif
+
+        // Add current source to map
+        auto result = groupMap.emplace(std::piecewise_construct,
+            std::forward_as_tuple(currentSourceName),
+            std::forward_as_tuple(currentSourceName, model,
+                                  varInitialisers.getInitialisers(),
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+        if(!result.second) {
+            throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
+        }
+        else {
+            targetGroup->injectCurrent(&result.first->second);
+            return &result.first->second;
+        }
+    }
+
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
         \param currentSourceName string containing unique name of current source.
@@ -640,7 +685,21 @@ public:
                                     const typename CurrentSourceModel::VarValues &varInitialisers)
     {
         return addCurrentSource<CurrentSourceModel>(currentSourceName, CurrentSourceModel::getInstance(),
-                                targetNeuronGroupName, paramValues, varInitialisers);
+                                                    targetNeuronGroupName, paramValues, varInitialisers);
+    }
+
+    //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
+    /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
+        \param currentSourceName string containing unique name of current source.
+        \param targetNeuronGroupName string name of the target neuron group
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSourceModel::VarValues object.
+        \return pointer to newly created CurrentSource */
+    template<typename CurrentSourceModel>
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, const std::string &targetNeuronGroupName,
+                                    const typename CurrentSourceModel::VarValues &varInitialisers)
+    {
+        return addCurrentSource<CurrentSourceModel>(currentSourceName, CurrentSourceModel::getInstance(),
+                                                    targetNeuronGroupName, varInitialisers);
     }
 
 protected:

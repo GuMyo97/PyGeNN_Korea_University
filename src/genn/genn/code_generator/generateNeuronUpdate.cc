@@ -170,14 +170,16 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Read current source variables into registers
                 for(const auto &v : csm->getVars()) {
-                    os <<  v.type << " lcs" << v.name << " = " << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "];" << std::endl;
+                    if(cs->getVarImplementation(v.name) == VarImplementation::INDIVIDUAL) {
+                        os <<  v.type << " lcs" << v.name << " = " << backend.getVarPrefix() << v.name << cs->getName() << "[" << popSubs["id"] << "];" << std::endl;
+                    }
                 }
 
                 Substitutions currSourceSubs(&popSubs);
                 currSourceSubs.addFuncSubstitution("injectCurrent", 1, "Isyn += $(0)");
-                currSourceSubs.addVarNameSubstitution(csm->getVars(), "", "lcs");
-                currSourceSubs.addParamValueSubstitution(csm->getParamNames(), cs->getParams());
-                currSourceSubs.addVarValueSubstitution(csm->getDerivedParams(), cs->getDerivedParams());
+                currSourceSubs.addVarSubstitution(csm->getCombinedVars(), cs->getVarInitialisers(), cs->getVarImplementation(),
+                                                  "", "lcs");
+                currSourceSubs.addParamValueSubstitution(csm->getCombinedDerivedParamNames(), cs->getDerivedParams());
                 currSourceSubs.addVarNameSubstitution(csm->getExtraGlobalParams(), "", "", cs->getName());
 
                 std::string iCode = csm->getInjectionCode();
@@ -187,7 +189,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecInternal
 
                 // Write read/write variables back to global memory
                 for(const auto &v : csm->getVars()) {
-                    if(v.access == VarAccess::READ_WRITE) {
+                    if(cs->getVarImplementation(v.name) == VarImplementation::INDIVIDUAL && v.access == VarAccess::READ_WRITE) {
                         os << backend.getVarPrefix() << v.name << cs->getName() << "[" << currSourceSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
                     }
                 }

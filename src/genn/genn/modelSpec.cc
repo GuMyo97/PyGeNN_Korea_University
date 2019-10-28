@@ -205,7 +205,7 @@ void ModelSpec::finalize()
                 // **NOTE** this is really gross but I can't really see an alternative - backend logic changes based on whether event threshold retesting is required
                 Substitutions thresholdSubs;
                 thresholdSubs.addGlobalVarSubstitution(wu->getVars(), sg->getWUVarInitialisers(), sg->getWUVarImplementation());
-                thresholdSubs.addVarValueSubstitution(wu->getDerivedParams(), sg->getWUDerivedParams());
+                thresholdSubs.addParamValueSubstitution(wu->getCombinedDerivedParamNames(), sg->getWUDerivedParams());
                 thresholdSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "", sg->getName());
 
                 std::string eCode = wu->getEventThresholdConditionCode();

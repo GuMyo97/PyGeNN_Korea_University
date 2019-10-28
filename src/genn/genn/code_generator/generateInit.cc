@@ -114,7 +114,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getCombinedDerivedParamNames(), varInit.getDerivedParams());
 
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
@@ -181,7 +181,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 {
                     varSubs.addVarSubstitution("value", backend.getVarPrefix() + vars[k].name + sg.getName() + "[" + varSubs["id_syn"] +  "]");
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams());
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams());
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getCombinedDerivedParamNames(), varInit.getDerivedParams());
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + sg.getName());
@@ -304,7 +304,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
                 genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), ng.getNumNeurons(), cs->getName(), model.getPrecision(),
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); },
                                      [cs](size_t i){ return cs->getVarLocation(i); },
-                                     [](size_t){ return VarImplementation::INDIVIDUAL; });
+                                     [cs](size_t i){ return cs->getVarImplementation(i); });
             }
         },
         // Remote neuron group initialisation
@@ -344,7 +344,7 @@ void CodeGenerator::generateInit(CodeStream &os, const ModelSpecInternal &model,
 
                 // Add substitutions
                 popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams());
-                popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams());
+                popSubs.addParamValueSubstitution(connectInit.getSnippet()->getCombinedDerivedParamNames(), connectInit.getDerivedParams());
                 popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "", sg.getName());
 
                 std::string code = connectInit.getSnippet()->getRowBuildCode();

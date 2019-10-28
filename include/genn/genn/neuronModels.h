@@ -196,6 +196,53 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// NeuronModels::Izhikevich
+//----------------------------------------------------------------------------
+//! Izhikevich neuron with fixed parameters \cite izhikevich2003simple.
+/*! It is usually described as
+    \f{eqnarray*}
+    \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\
+    \frac{dU}{dt} &=& a (bV-U),
+    \f}
+    I is an external input current and the voltage V is reset to parameter c and U incremented by parameter d, whenever V >= 30 mV. This is paired with a particular integration procedure of two 0.5 ms Euler time steps for the V equation followed by one 1 ms time step of the U equation. Because of its popularity we provide this model in this form here event though due to the details of the usual implementation it is strictly speaking inconsistent with the displayed equations.
+
+    Variables are:
+
+    - \c V - Membrane potential
+    - \c U - Membrane recovery variable
+
+    Parameters are:
+    - \c a - time scale of U
+    - \c b - sensitivity of U
+    - \c c - after-spike reset value of V
+    - \c d - after-spike reset value of U*/
+class IzhikevichAuto : public Base
+{
+public:
+    DECLARE_MODEL(NeuronModels::IzhikevichAuto, 0, 6);
+
+    SET_SIM_CODE(
+        "if ($(V) >= 30.0){\n"
+        "   $(V)=$(c);\n"
+        "   $(U)+=$(d);\n"
+        "} \n"
+        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT; //at two times for numerical stability\n"
+        "$(V)+=0.5*(0.04*$(V)*$(V)+5.0*$(V)+140.0-$(U)+$(Isyn))*DT;\n"
+        "$(U)+=$(a)*($(b)*$(V)-$(U))*DT;\n"
+        "if ($(V) > 30.0){   //keep this to not confuse users with unrealistiv voltage values \n"
+        "  $(V)=30.0; \n"
+        "}\n");
+
+    SET_THRESHOLD_CONDITION_CODE("$(V) >= 29.99");
+
+    SET_VARS({{"V","scalar", VarAccess::READ_WRITE},
+              {"U", "scalar", VarAccess::READ_WRITE},
+              {"a", "scalar", VarAccess::READ_ONLY},
+              {"b", "scalar", VarAccess::READ_ONLY},
+              {"c", "scalar", VarAccess::READ_ONLY},
+              {"d", "scalar", VarAccess::READ_ONLY}});
+};
+//----------------------------------------------------------------------------
 // NeuronModels::LIF
 //----------------------------------------------------------------------------
 class LIF : public Base

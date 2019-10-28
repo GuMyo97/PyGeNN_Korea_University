@@ -178,7 +178,7 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
     m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(params.size() + varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_HostID(hostID)
 {
-    // Populate combied variable initialisers and implementations from legacy parameters and initialisers
+    // Populate combined variable initialisers and implementations from legacy parameters and initialisers
     Utils::initialiseLegacyImplementation(params, varInitialisers, m_VarInitialisers, m_VarImplementation);
 }
 //----------------------------------------------------------------------------
