@@ -233,18 +233,18 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
                                                                      regimeEndFunc);
 
     // Build the final vectors of parameter names and variables from model
-    tie(m_ParamNames, m_Vars) = findModelVariables(componentClass, params.getVariableParams(), multipleRegimes);
+    m_Vars = findModelVariables(componentClass, multipleRegimes);
 
     // If model has heterogeneos delays, add 8-bit unsigned delay to vars
     if(heterogeneousDelay) {
         assert(params.getMaxDendriticDelay() < 0xFF);
-        
+
         LOGD << "\t\tUsing uint8_t for dendritic delay";
         m_Vars.push_back({"_delay", "uint8_t"});
     }
 
     // Add any derived parameters required for time-derivative
-    objectHandlerTimeDerivative.addDerivedParams(m_ParamNames, m_DerivedParams);
+    objectHandlerTimeDerivative.addDerivedParams(m_Vars, m_DerivedParams);
 
     // If we have an analogue send port, add code to apply it to synapse dynamics
     if(!m_SendPortAnalogue.empty()) {
@@ -267,6 +267,6 @@ SpineMLGenerator::WeightUpdateModel::WeightUpdateModel(const ModelParams::Weight
     }
 
     // Correctly wrap references to paramters and variables in code strings
-    substituteModelVariables(m_ParamNames, m_Vars, m_DerivedParams,
+    substituteModelVariables(m_Vars, m_DerivedParams,
                              {&m_SimCode, &m_SynapseDynamicsCode});
 }
