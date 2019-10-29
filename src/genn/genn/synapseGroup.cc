@@ -326,11 +326,10 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
     m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
     // Populate combined weight update model variable initialisers and implementations from legacy parameters and initialisers
-    // **NOTE** because legacy parameters are accessible everywhere, add them to all three
     Utils::initialiseLegacyImplementation(wuParams, wuVarInitialisers, m_WUVarInitialisers, m_WUVarImplementation,
         (matrixType & SynapseMatrixWeight::INDIVIDUAL) ? VarImplementation::INDIVIDUAL : VarImplementation::GLOBAL);
-    Utils::initialiseLegacyImplementation(wuParams, wuPreVarInitialisers, m_WUPreVarInitialisers, m_WUPreVarImplementation);
-    Utils::initialiseLegacyImplementation(wuParams, wuPostVarInitialisers, m_WUPostVarInitialisers, m_WUPostVarImplementation);
+    Utils::initialiseLegacyImplementation({}, wuPreVarInitialisers, m_WUPreVarInitialisers, m_WUPreVarImplementation);
+    Utils::initialiseLegacyImplementation({}, wuPostVarInitialisers, m_WUPostVarInitialisers, m_WUPostVarImplementation);
 
     // Populate combined weight update model variable initialisers and implementations from legacy parameters and initialisers
     // **NOTE** because legacy parameters are accessible everywhere, add them to all three
