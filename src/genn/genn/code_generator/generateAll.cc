@@ -48,9 +48,9 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
     CodeStream runner(runnerStream);
 
     // Generate modules
-    generateNeuronUpdate(neuronUpdate, model, backend, standaloneModules);
-    generateSynapseUpdate(synapseUpdate, model, backend, standaloneModules);
-    generateInit(init, model, backend, standaloneModules);
+    generateNeuronUpdate(neuronUpdate, model, backend);
+    generateSynapseUpdate(synapseUpdate, model, backend);
+    generateInit(init, model, backend);
     auto mem = generateRunner(definitions, definitionsInternal, runner, model, backend, 0);
     generateSupportCode(supportCode, model);
 

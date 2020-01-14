@@ -57,15 +57,9 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend,
-                                          bool standaloneModules)
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecInternal &model, const BackendBase &backend)
 {
-    if(standaloneModules) {
-        os << "#include \"runner.cc\"" << std::endl;
-    }
-    else {
-        os << "#include \"definitionsInternal.h\"" << std::endl;
-    }
+    os << "#include \"definitionsInternal.h\"" << std::endl;
     os << "#include \"supportCode.h\"" << std::endl;
     os << std::endl;
 
