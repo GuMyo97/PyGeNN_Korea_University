@@ -39,6 +39,8 @@ struct PreferencesBase
     //! Generate code with debug symbols
     bool debugCode = false;
 
+    //! Should GeNN generate empty state push and pull functions
+    bool generateEmptyStatePushPull = true;
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
@@ -261,7 +263,10 @@ public:
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
 
-    //! How many bytes of memory does 'device' have
+
+    //! Should GeNN generate empty state push and pull functions?
+    virtual bool shouldGenerateEmptyStatePushPull() const = 0;
+ //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 
     //--------------------------------------------------------------------------

@@ -202,6 +202,8 @@ public:
     virtual bool isSynRemapRequired() const override{ return true; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
+    //! Should GeNN generate empty state push and pull functions?
+    virtual bool shouldGenerateEmptyStatePushPull() const override { return m_Preferences.generateEmptyStatePushPull; }
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
 

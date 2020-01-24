@@ -192,24 +192,31 @@ void genSpikeGetters(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::
 }
 //-------------------------------------------------------------------------
 void genStatePushPull(CodeGenerator::CodeStream &definitionsFunc, CodeGenerator::CodeStream &runnerPushFunc, CodeGenerator::CodeStream &runnerPullFunc,
-                      const std::string &name, std::vector<std::string> &statePushPullFunction)
+                      const std::string &name, bool generateEmptyStatePushPull, 
+                      const std::vector<std::string> &groupPushPullFunction, std::vector<std::string> &modelPushPullFunctions)
 {
-    definitionsFunc << "EXPORT_FUNC void push" << name << "StateToDevice(bool uninitialisedOnly = false);" << std::endl;
-    definitionsFunc << "EXPORT_FUNC void pull" << name << "StateFromDevice();" << std::endl;
+    // If we should either generate emtpy state push pull functions or this one won't be empty!
+    if(generateEmptyStatePushPull || !groupPushPullFunction.empty()) {
+        definitionsFunc << "EXPORT_FUNC void push" << name << "StateToDevice(bool uninitialisedOnly = false);" << std::endl;
+        definitionsFunc << "EXPORT_FUNC void pull" << name << "StateFromDevice();" << std::endl;
 
-    runnerPushFunc << "void push" << name << "StateToDevice(bool uninitialisedOnly)";
-    runnerPullFunc << "void pull" << name << "StateFromDevice()";
-    {
-        CodeGenerator::CodeStream::Scope a(runnerPushFunc);
-        CodeGenerator::CodeStream::Scope b(runnerPullFunc);
+        runnerPushFunc << "void push" << name << "StateToDevice(bool uninitialisedOnly)";
+        runnerPullFunc << "void pull" << name << "StateFromDevice()";
+        {
+            CodeGenerator::CodeStream::Scope a(runnerPushFunc);
+            CodeGenerator::CodeStream::Scope b(runnerPullFunc);
 
-        for(const auto &func : statePushPullFunction) {
-            runnerPushFunc << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
-            runnerPullFunc << "pull" << func << "FromDevice();" << std::endl;
+            for(const auto &func : groupPushPullFunction) {
+                runnerPushFunc << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
+                runnerPullFunc << "pull" << func << "FromDevice();" << std::endl;
+            }
         }
+        runnerPushFunc << std::endl;
+        runnerPullFunc << std::endl;
+
+        // Add function to list
+        modelPushPullFunctions.push_back(name);
     }
-    runnerPushFunc << std::endl;
-    runnerPullFunc << std::endl;
 }
 //-------------------------------------------------------------------------
 CodeGenerator::MemAlloc genVariable(const CodeGenerator::BackendBase &backend, CodeGenerator::CodeStream &definitionsVar, CodeGenerator::CodeStream &definitionsFunc,
@@ -451,6 +458,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> currentSpikePullFunctions;
     std::vector<std::string> currentSpikeEventPullFunctions;
+    std::vector<std::string> statePushPullFunctions;
     for(const auto &n : model.getRemoteNeuronGroups()) {
         // Write macro so whether a neuron group is remote or not can be determined at compile time
         // **NOTE** we do this for REMOTE groups so #ifdef GROUP_NAME_REMOTE is backward compatible
@@ -498,6 +506,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         genSpikeMacros(definitionsVar, n.second, true);
 
         // True spike variables
+        const size_t numNeuronDelaySlots = n.second.getNumNeurons() * n.second.getNumDelaySlots();
         const size_t numSpikeCounts = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
         const size_t numSpikes = n.second.isTrueSpikeRequired() ? n.second.getNumNeurons() * n.second.getNumDelaySlots() : n.second.getNumNeurons();
         mem += backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -538,7 +547,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                                     n.second.getNumDelaySlots());
             mem += backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                     "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeEventLocation(),
-                                    n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                                    numNeuronDelaySlots);
 
             // Spike-like event push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(), n.first + "SpikeEvents",
@@ -547,7 +556,7 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
                                                 "unsigned int", "glbSpkCntEvnt" + n.first, n.second.getSpikeLocation(), true, n.second.getNumDelaySlots());
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
-                                                "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeLocation(), true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                                                "unsigned int", "glbSpkEvnt" + n.first, n.second.getSpikeLocation(), true, numNeuronDelaySlots);
                 });
 
             // Current spike-like event push and pull functions
@@ -572,14 +581,15 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         if (n.second.isSpikeTimeRequired()) {
             mem += backend.genArray(definitionsVar, definitionsInternal, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                     model.getTimePrecision(), "sT" + n.first, n.second.getSpikeTimeLocation(),
-                                    n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                                    numNeuronDelaySlots);
 
             // Generate push and pull functions
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(), n.first + "SpikeTimes",
                 [&]()
                 {
                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                "sT" + n.first, n.second.getSpikeTimeLocation(), true, n.second.getNumNeurons() * n.second.getNumDelaySlots());
+                                                "sT" + n.first, n.second.getSpikeTimeLocation(), true, 
+                                                numNeuronDelaySlots);
                 });
         }
 
@@ -624,7 +634,10 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
         }
 
         // Add helper function to push and pull entire neuron state
-        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, n.first, neuronStatePushPullFunctions);
+
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, 
+                             n.first, backend.shouldGenerateEmptyStatePushPull(), 
+                             neuronStatePushPullFunctions, statePushPullFunctions);
 
         const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
         for(size_t i = 0; i < extraGlobalParams.size(); i++) {
@@ -648,7 +661,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
 
             // Add helper function to push and pull entire current source state
-            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, cs->getName(), currentSourceStatePushPullFunctions);
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, 
+                                 cs->getName(), backend.shouldGenerateEmptyStatePushPull(), 
+                                 currentSourceStatePushPullFunctions, statePushPullFunctions);
 
             const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
             for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
@@ -830,8 +845,11 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
             }
         }
 
-        // Add helper function to push and pull entire synapse group state
-        genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, s.first, synapseGroupStatePushPullFunctions);
+        // Add helper function to push and pull entire synapse group states
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, 
+                             s.second.getName(), backend.shouldGenerateEmptyStatePushPull(), 
+                             synapseGroupStatePushPullFunctions, statePushPullFunctions);
+      
 
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
@@ -893,17 +911,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "void copyStateToDevice(bool uninitialisedOnly)";
     {
         CodeStream::Scope b(runner);
-         for(const auto &n : model.getLocalNeuronGroups()) {
-            runner << "push" << n.first << "StateToDevice(uninitialisedOnly);" << std::endl;
-        }
-
-        for(const auto &cs : model.getLocalCurrentSources()) {
-            runner << "push" << cs.first << "StateToDevice(uninitialisedOnly);" << std::endl;
-        }
-
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            runner << "push" << s.first << "StateToDevice(uninitialisedOnly);" << std::endl;
-        }
+            for(const auto &g : statePushPullFunctions) {
+                runner << "push" << g << "StateToDevice(uninitialisedOnly);" << std::endl;
+            }
     }
     runner << std::endl;
 
@@ -923,17 +933,9 @@ CodeGenerator::MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, C
     runner << "void copyStateFromDevice()";
     {
         CodeStream::Scope b(runner);
-        for(const auto &n : model.getLocalNeuronGroups()) {
-            runner << "pull" << n.first << "StateFromDevice();" << std::endl;
-        }
-
-        for(const auto &cs : model.getLocalCurrentSources()) {
-            runner << "pull" << cs.first << "StateFromDevice();" << std::endl;
-        }
-
-        for(const auto &s : model.getLocalSynapseGroups()) {
-            runner << "pull" << s.first << "StateFromDevice();" << std::endl;
-        }
+            for(const auto &g : statePushPullFunctions) {
+                runner << "pull" << g << "StateFromDevice();" << std::endl;
+            }
     }
     runner << std::endl;
 
