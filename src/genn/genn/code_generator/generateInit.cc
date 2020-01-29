@@ -353,7 +353,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedEGPMap &mergedEGPs,
                 // Apply substitutions to row build code
                 std::string code = connectInit.getSnippet()->getRowBuildCode();
                 popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
-                popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : merged" + std::to_string(sg.getIndex()));
+                popSubs.applyCheckUnreplaced(codnitSparseConnectivity : merged" + std::to_string(sg.getIndex()));
                 code = ensureFtype(code, model.getPrecision());
 
                 // Write out code

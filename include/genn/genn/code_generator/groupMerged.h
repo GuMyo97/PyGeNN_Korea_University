@@ -266,6 +266,19 @@ class GENN_EXPORT NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
     //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    enum class Role
+    {
+        Update,
+        Init,
+        SpikeQueueUpdate,
+    };
+
+    NeuronGroupMerged(size_t index, const std::string &prefix, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups,
+                      Role role, const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend);
+
+    //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     //! Get the expression to calculate the queue offset for accessing state of variables this timestep
@@ -285,10 +298,6 @@ public:
 
     //! Is the current source derived parameter implemented as a heterogeneous parameter?
     bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-protected:
-    NeuronGroupMerged(size_t index, const std::string &prefix, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups,
-                      bool init, const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend);
 
 private:
     //------------------------------------------------------------------------
@@ -400,47 +409,28 @@ private:
 
 
 //----------------------------------------------------------------------------
-// CodeGenerator::NeuronUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMerged
-{
-public:
-    NeuronUpdateGroupMerged(size_t index, std::vector<std::reference_wrapper<const NeuronGroupInternal>> groups,
-                            const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    :   NeuronGroupMerged(index, "NeuronUpdate", groups, false, modelSpec, backend)
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::NeuronInitGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMerged
-{
-public:
-    NeuronInitGroupMerged(size_t index, std::vector<std::reference_wrapper<const NeuronGroupInternal>> groups,
-                          const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    :   NeuronGroupMerged(index, "NeuronInit", groups, true, modelSpec, backend)
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
-{
-public:
-    NeuronSpikeQueueUpdateGroupMerged(size_t index, std::vector<std::reference_wrapper<const NeuronGroupInternal>> groups,
-                                      const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend);
-};
-
-//----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMerged
 //----------------------------------------------------------------------------
 class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
+    //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    enum class Role
+    {
+        PresynapticUpdate,
+        PostsynapticUpdate,
+        SynapseDynamics,
+        DenseInit,
+        SparseInit,
+        ConnectivityInit,
+        DendriticDelayUpdate,
+    };
+
+    SynapseGroupMerged(size_t index, const std::string &prefix, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups,
+                       Role role, const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend);
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -459,22 +449,6 @@ public:
 
     //! Is the weight update model variable initialization derived parameter implemented as a heterogeneous parameter?
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
-
-protected:
-    //------------------------------------------------------------------------
-    // Enumerations
-    //------------------------------------------------------------------------
-    enum class Role
-    {
-        PresynapticUpdate,
-        PostsynapticUpdate,
-        SynapseDynamics,
-        DenseInit,
-        SparseInit,
-    };
-
-    SynapseGroupMerged(size_t index, const std::string &prefix, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups,
-                       Role role, const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend);
 
 private:
     //------------------------------------------------------------------------
@@ -511,90 +485,5 @@ private:
                  [egp](const SynapseGroupInternal &sg, size_t) { return egp.name + sg.getTrgNeuronGroup()->getName(); },
                  Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
     }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMerged
-{
-public:
-    PresynapticUpdateGroupMerged(size_t index, std::vector<std::reference_wrapper<const SynapseGroupInternal>> groups,
-                                 const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    :   SynapseGroupMerged(index, "PresynapticUpdate", groups, Role::PresynapticUpdate, modelSpec, backend)
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::PostsynapticUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMerged
-{
-public:
-    PostsynapticUpdateGroupMerged(size_t index, std::vector<std::reference_wrapper<const SynapseGroupInternal>> groups,
-                                  const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    :   SynapseGroupMerged(index, "PostsynapticUpdate", groups, Role::PostsynapticUpdate, modelSpec, backend)
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseDynamicsGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMerged
-{
-public:
-    SynapseDynamicsGroupMerged(size_t index, std::vector<std::reference_wrapper<const SynapseGroupInternal>> groups,
-                               const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    :   SynapseGroupMerged(index, "SynapseDynamics", groups, Role::SynapseDynamics, modelSpec, backend)
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseDenseInitGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMerged
-{
-public:
-    SynapseDenseInitGroupMerged(size_t index, std::vector<std::reference_wrapper<const SynapseGroupInternal>> groups,
-                                const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    :   SynapseGroupMerged(index, "SynapseDenseInit", groups, Role::DenseInit, modelSpec, backend)
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseSparseInitGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMerged
-{
-public:
-    SynapseSparseInitGroupMerged(size_t index, std::vector<std::reference_wrapper<const SynapseGroupInternal>> groups,
-                                 const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    :   SynapseGroupMerged(index, "SynapseSparseInit", groups, Role::SparseInit, modelSpec, backend)
-    {
-    }
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseConnectivityInitGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal>
-{
-public:
-    SynapseConnectivityInitGroupMerged(size_t index, std::vector<std::reference_wrapper<const SynapseGroupInternal>> groups,
-                                       const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend);
-};
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
-{
-public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, std::vector<std::reference_wrapper<const SynapseGroupInternal>> groups,
-                                           const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend);
 };
 }   // namespace CodeGenerator
