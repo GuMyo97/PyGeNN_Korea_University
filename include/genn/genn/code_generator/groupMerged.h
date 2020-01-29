@@ -26,7 +26,7 @@ class ModelSpecMerged;
 //! Very thin wrapper around a number of groups which have been merged together
 namespace CodeGenerator
 {
-template<typename G>
+template<typename G, typename D>
 class GroupMerged
 {
 public:
@@ -176,7 +176,8 @@ protected:
         // Loop through params
         for(size_t p = 0; p < paramNames.size(); p++) {
             // If parameters is heterogeneous
-            if((this->*isHeterogeneous)(p)) {
+            D *upcastThis = static_cast<D *>(this);
+            if((upcastThis->*isHeterogeneous)(p)) {
                 // Add field
                 addField("scalar", paramNames[p],
                          [p, getParamValues](const G &g, size_t)
@@ -195,7 +196,8 @@ protected:
         // Loop through derived params
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameters isn't homogeneous
-            if((this->*isHeterogeneous)(p)) {
+            D *upcastThis = static_cast<D *>(this);
+            if((upcastThis->*isHeterogeneous)(p)) {
                 // Add field
                 addField("scalar", derivedParams[p].name,
                          [p, getDerivedParamValues](const G &g, size_t)
@@ -216,7 +218,8 @@ protected:
             // Loop through parameters
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
-                if((this->*isHeterogeneous)(v, p)) {
+                D *upcastThis = static_cast<D *>(this);
+                if((upcastThis->*isHeterogeneous)(v, p)) {
                     addField("scalar", varInit.getSnippet()->getParamNames()[p] + vars[v].name,
                              [p, v, getVarInitialisers](const typename G &ng, size_t)
                              {
@@ -237,7 +240,8 @@ protected:
             // Loop through parameters
             const Models::VarInit &varInit = archetypeVarInitialisers[v];
             for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
-                if((this->*isHeterogeneous)(v, d)) {
+                D *upcastThis = static_cast<D *>(this);
+                if((upcastThis->*isHeterogeneous)(v, d)) {
                     addField("scalar", varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
                              [d, v, getVarInitialisers](const typename G &ng, size_t)
                              {
@@ -262,7 +266,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronGroupMerged : public GroupMerged<NeuronGroupInternal, NeuronGroupMerged>
 {
 public:
     //------------------------------------------------------------------------
@@ -411,7 +415,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal, SynapseGroupMerged>
 {
 public:
     //------------------------------------------------------------------------

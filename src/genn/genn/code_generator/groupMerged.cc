@@ -14,7 +14,7 @@
 //----------------------------------------------------------------------------
 CodeGenerator::NeuronGroupMerged::NeuronGroupMerged(size_t index, const std::string &prefix, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups,
                                                     Role role, const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    : CodeGenerator::GroupMerged<NeuronGroupInternal>(index, prefix, groups)
+:   CodeGenerator::GroupMerged<NeuronGroupInternal, NeuronGroupMerged>(index, prefix, groups)
 {
     if(role == Role::SpikeQueueUpdate) {
         if(getArchetype().isDelayRequired()) {
@@ -293,7 +293,7 @@ bool CodeGenerator::NeuronGroupMerged::isCurrentSourceDerivedParamHeterogeneous(
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseGroupMerged::SynapseGroupMerged(size_t index, const std::string &prefix, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups,
                                                       Role role, const CodeGenerator::ModelSpecMerged &modelSpec, const CodeGenerator::BackendBase &backend)
-    : GroupMerged<SynapseGroupInternal>(index, prefix, groups)
+:   GroupMerged<SynapseGroupInternal, SynapseGroupMerged>(index, prefix, groups)
 {
     if(role == Role::ConnectivityInit) {
         addField("unsigned int", "numSrcNeurons",
