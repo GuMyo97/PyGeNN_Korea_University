@@ -87,8 +87,9 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename Group, typename MergedGroup, typename M>
-    void createMergedGroups(std::vector<std::reference_wrapper<const Group>> &unmergedGroups, 
-                            std::vector<MergedGroup> &mergedGroups, const CodeGenerator::BackendBase &backend, M canMerge)
+    void createMergedGroups(std::vector<std::reference_wrapper<const Group>> &unmergedGroups, std::vector<MergedGroup> &mergedGroups, 
+                            const std::string &prefix, typename MergedGroup::Role role,
+                            const CodeGenerator::BackendBase &backend, M canMerge)
     {
         // Loop through un-merged  groups
         std::vector<std::vector<std::reference_wrapper<const Group>>> protoMergedGroups;
@@ -126,12 +127,15 @@ private:
 
         // Build, moving vectors of groups into data structure to avoid copying
         for(size_t i = 0; i < protoMergedGroups.size(); i++) {
-            mergedGroups.emplace_back(i, std::move(protoMergedGroups[i]), *this, backend);
+            mergedGroups.emplace_back(i, prefix, std::move(protoMergedGroups[i]), role,
+                                      *this, backend);
         }
     }
     
     template<typename Group, typename MergedGroup, typename F, typename M>
-    void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups, const CodeGenerator::BackendBase &backend,
+    void createMergedGroups(const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups, 
+                            const std::string &prefix, typename MergedGroup::Role role,
+                            const CodeGenerator::BackendBase &backend,
                             F filter, M canMerge)
     {
         // Build temporary vector of references to groups that pass filter
@@ -143,7 +147,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroups(unmergedGroups, mergedGroups, backend, canMerge);
+        createMergedGroups(unmergedGroups, mergedGroups, prefix, role, backend, canMerge);
     }
 
     //--------------------------------------------------------------------------
