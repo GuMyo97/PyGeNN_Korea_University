@@ -131,18 +131,18 @@ public:
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronGroupMergedHandler wuVarUpdateHandler,
+                                 NeuronGroupSimHandler simHandler, GroupHandler<NeuronUpdateGroupMerged> wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                  SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
-                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
-                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
+                                  GroupHandler<PresynapticUpdateGroupMerged> wumThreshHandler, GroupHandler<PresynapticUpdateGroupMerged> wumSimHandler,
+                                  GroupHandler<PresynapticUpdateGroupMerged> wumEventHandler, GroupHandler<PresynapticUpdateGroupMerged> wumProceduralConnectHandler,
+                                  GroupHandler<PostsynapticUpdateGroupMerged> postLearnHandler, GroupHandler<SynapseDynamicsGroupMerged> synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         NeuronGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler, 
-                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgSparseInitHandler,
+                         GroupHandler<NeuronInitGroupMerged> localNGHandler, GroupHandler<SynapseDenseInitGroupMerged> sgDenseInitHandler,
+                         GroupHandler<SynapseSparseInitGroupMerged> sgSparseConnectHandler, GroupHandler<SynapseSparseInitGroupMerged> sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
