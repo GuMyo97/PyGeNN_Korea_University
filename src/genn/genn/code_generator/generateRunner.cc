@@ -1205,7 +1205,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         runner << "updateSynapses(t);" << std::endl;
 
         // Generate code to advance host-side spike queues
-   
+        // **NOTE** this needs to be here for CPU backend
         for(const auto &n : model.getNeuronGroups()) {
             if (n.second.isDelayRequired()) {
                 runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;

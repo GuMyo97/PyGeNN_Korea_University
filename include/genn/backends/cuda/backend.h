@@ -113,6 +113,8 @@ struct Preferences : public PreferencesBase
 
     //! NVCC compiler options for all GPU code
     std::string userNvccFlags = "";
+
+    bool useGraphs = false;
 };
 
 //--------------------------------------------------------------------------
@@ -371,6 +373,9 @@ private:
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
+
+    void genAddKernelToGraph(CodeStream &os, Kernel kernel, size_t numThreads, 
+                             bool time, std::string &lastDependency) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);

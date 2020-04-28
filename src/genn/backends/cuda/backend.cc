@@ -192,6 +192,11 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
         LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
     }
 
+    // Throw an exception if graphs are used on CUDA versions older than 10
+    if(m_Preferences.useGraphs && m_RuntimeVersion < 10000) {
+        throw std::runtime_error("CUDA graphs are only supported on CUDA 10 and later.");
+    }
+
     // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
     addDeviceType("curandState", 44);
     addDeviceType("curandStatePhilox4_32_10_t", 64);
@@ -214,6 +219,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                   modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
                                   [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
     os << std::endl;
+
+    if(m_Preferences.useGraphs) {
+        os << "cudaGraphNode_t " << KernelNames[KernelPreNeuronReset] << "GraphNode;" << std::endl;
+        os << "cudaGraphNode_t " << KernelNames[KernelNeuronUpdate] << "GraphNode;" << std::endl;
+    }
 
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
@@ -400,27 +410,47 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         );
     }
 
+    if(m_Preferences.useGraphs) {
+        os << "void addNeuronUpdateGraphNodes(const cudaGraphNode_t *lastSynapseUpdateNode)";
+        {
+            std::string lastDependency = "lastSynapseUpdateNode";
+            CodeStream::Scope b(os);
+            if(idPreNeuronReset > 0) {
+                CodeStream::Scope b(os);
+                genAddKernelToGraph(os, KernelPreNeuronReset, idPreNeuronReset, false, lastDependency);
+            }
+
+            if(idStart > 0) {
+                CodeStream::Scope b(os);
+                genAddKernelToGraph(os, KernelNeuronUpdate, idStart, true, lastDependency);
+            }
+        }
+    }
+    
     os << "void updateNeurons(" << model.getTimePrecision() << ")";
     {
+        
         CodeStream::Scope b(os);
 
-        // Push any required EGPS
-        pushEGPHandler(os);
+        if(!m_Preferences.useGraphs) {
+            // Push any required EGPS
+            pushEGPHandler(os);
 
-        if(idPreNeuronReset > 0) {
-            CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
-            os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>();" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-        if(idStart > 0) {
-            CodeStream::Scope b(os);
+            if(idPreNeuronReset > 0) {
+                CodeStream::Scope b(os);
+                genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
+                os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>();" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+            if(idStart > 0) {
+                CodeStream::Scope b(os);
 
-            Timer t(os, "neuronUpdate", model.isTimingEnabled());
+                Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelNeuronUpdate, idStart);
-            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+                genKernelDimensions(os, KernelNeuronUpdate, idStart);
+                os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
         }
     }
 }
@@ -446,6 +476,22 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelSynapseDynamicsUpdate], totalConstMem,
                                   modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics",
                                   [this](const SynapseGroupInternal &sg){ return getNumSynapseDynamicsThreads(sg); });
+
+
+    if(m_Preferences.useGraphs) {
+        if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
+            os << "cudaGraphNode_t " << KernelNames[KernelPreSynapseReset] << "GraphNode;" << std::endl;
+        }
+        if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+            os << "cudaGraphNode_t " << KernelNames[KernelPresynapticUpdate] << "GraphNode;" << std::endl;
+        }
+        if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
+            os << "cudaGraphNode_t " << KernelNames[KernelPostsynapticUpdate] << "GraphNode;" << std::endl;
+        }
+        if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
+            os << "cudaGraphNode_t " << KernelNames[KernelSynapseDynamicsUpdate] << "GraphNode;" << std::endl;
+        }
+    }
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -747,6 +793,36 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         }
     }
 
+    if(m_Preferences.useGraphs) {
+        os << "const cudaGraphNode_t *addSynapseUpdateGraphNodes()";
+        {
+            CodeStream::Scope b(os);
+            std::string lastDependency = "";
+            if(idPreSynapseReset > 0) {
+                CodeStream::Scope b(os);
+                genAddKernelToGraph(os, KernelPreSynapseReset, idPreSynapseReset, false, lastDependency);
+            }
+
+            if(idSynapseDynamicsStart > 0) {
+                CodeStream::Scope b(os);
+                genAddKernelToGraph(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart, true, lastDependency);
+            }
+
+            if(idPresynapticStart > 0) {
+                CodeStream::Scope b(os);
+                genAddKernelToGraph(os, KernelPresynapticUpdate, idPresynapticStart, true, lastDependency);
+            }
+
+            if(idPostsynapticStart > 0) {
+                CodeStream::Scope b(os);
+                genAddKernelToGraph(os, KernelPostsynapticUpdate, idPostsynapticStart, true, lastDependency);
+            }
+
+            // **TODO**
+            assert(!lastDependency.empty());
+            os << "return " << lastDependency << ";" << std::endl;
+        }
+    }
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
@@ -754,42 +830,47 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         // Push any required EGPs
         pushEGPHandler(os);
 
-        // Launch pre-synapse reset kernel if required
-        if(idPreSynapseReset > 0) {
-            CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
-            os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        if(m_Preferences.useGraphs) {
+            os << "CHECK_CUDA_ERRORS(cudaGraphLaunch(graphInstance, cudaStreamDefault));" << std::endl;
         }
+        else {
+            // Launch pre-synapse reset kernel if required
+            if(idPreSynapseReset > 0) {
+                CodeStream::Scope b(os);
+                genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
+                os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
 
-        // Launch synapse dynamics kernel if required
-        if(idSynapseDynamicsStart > 0) {
-            CodeStream::Scope b(os);
-            Timer t(os, "synapseDynamics", model.isTimingEnabled());
+            // Launch synapse dynamics kernel if required
+            if(idSynapseDynamicsStart > 0) {
+                CodeStream::Scope b(os);
+                Timer t(os, "synapseDynamics", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
-            os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
+                genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
+                os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
 
-        // Launch presynaptic update kernel
-        if(idPresynapticStart > 0) {
-            CodeStream::Scope b(os);
-            Timer t(os, "presynapticUpdate", model.isTimingEnabled());
+            // Launch presynaptic update kernel
+            if(idPresynapticStart > 0) {
+                CodeStream::Scope b(os);
+                Timer t(os, "presynapticUpdate", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
-            os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
+                genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
+                os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
 
-        // Launch postsynaptic update kernel
-        if(idPostsynapticStart > 0) {
-            CodeStream::Scope b(os);
-            Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
+            // Launch postsynaptic update kernel
+            if(idPostsynapticStart > 0) {
+                CodeStream::Scope b(os);
+                Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
-            os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+                genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
+                os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
         }
     }
 }
@@ -1435,6 +1516,18 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         }
     }
     os << std::endl;
+
+    if(m_Preferences.useGraphs) {
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// graph" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "EXPORT_VAR cudaGraph_t graph;" << std::endl;
+        os << "EXPORT_VAR cudaGraphExec_t graphInstance;" << std::endl;
+        os << std::endl;
+        os << "EXPORT_FUNC const cudaGraphNode_t *addSynapseUpdateGraphNodes();" << std::endl;
+        os << "EXPORT_FUNC void addNeuronUpdateGraphNodes(const cudaGraphNode_t *lastSynapseUpdateNode);" << std::endl;
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
@@ -1453,6 +1546,12 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
         os << "return reinterpret_cast<T*>(devPtr);" << std::endl;
     }
     os << std::endl;
+
+    if(m_Preferences.useGraphs) {
+        os << "cudaGraph_t graph;" << std::endl;
+        os << "cudaGraphExec_t graphInstance;" << std::endl;
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -1485,6 +1584,28 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
     }
     os << std::endl;
+
+    if(m_Preferences.useGraphs) {
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// graph" << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        // Create CUDA graph
+        os << "CHECK_CUDA_ERRORS(cudaGraphCreate(&graph, 0));" << std::endl;
+        
+        // Add synapse and neuron update graph nodes
+        os << "const cudaGraphNode_t *lastSynapseUpdateNode = addSynapseUpdateGraphNodes();" << std::endl;
+        os << "addNeuronUpdateGraphNodes(lastSynapseUpdateNode);" << std::endl;
+        
+        // Instantiate graph
+        os << "char instantiateErrorMessage[1024];" << std::endl;
+        os << "cudaGraphNode_t instantiateErrorNode;" << std::endl;
+        os << "const cudaError_t instantiateError = cudaGraphInstantiate(&graphInstance, graph, &instantiateErrorNode, instantiateErrorMessage, 1024);" << std::endl;
+        os << "if(instantiateError != cudaSuccess)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"Unable to instantiate CUDA graph: cuda error \" + std::to_string(instantiateError) + \": \" + cudaGetErrorString(error) + \" - \" + instantiateErrorMessage);" << std::endl;
+        }
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -2226,6 +2347,26 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
         const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
         os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genAddKernelToGraph(CodeStream &os, Kernel kernel, size_t numThreads,
+                                  bool time, std::string &lastDependency) const
+{
+    // Generate kernel dimensions and use to populate node parameters
+    CodeStream::Scope b(os);
+    genKernelDimensions(os, kernel, numThreads);
+    if(time) {
+        os << "void *kernelParams[1] = {reinterpret_cast<void*>(&t)};" << std::endl;
+    }
+    os << "const cudaKernelNodeParams nodeParams{reinterpret_cast<void*>(&" << KernelNames[kernel] << ")";
+    os << ", grid, threads, 0, " << (time ? "kernelParams" : "nullptr") << "};" << std::endl;
+
+    // Add pre-neuron reset kernel to graph
+    os << "CHECK_CUDA_ERRORS(cudaGraphAddKernelNode(&" << KernelNames[kernel] << "GraphNode, graph, ";
+    os << (lastDependency.empty() ? "nullptr" : lastDependency) << ", " << (lastDependency.empty() ? 0 : 1) << ", ";
+    os << "&nodeParams));" << std::endl;
+
+    lastDependency = std::string("&") + KernelNames[kernel] + "GraphNode";
 }
 //--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string &type, size_t size)
