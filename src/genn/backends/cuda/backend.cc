@@ -1603,7 +1603,7 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "if(instantiateError != cudaSuccess)";
         {
             CodeStream::Scope b(os);
-            os << "throw std::runtime_error(\"Unable to instantiate CUDA graph: cuda error \" + std::to_string(instantiateError) + \": \" + cudaGetErrorString(error) + \" - \" + instantiateErrorMessage);" << std::endl;
+            os << "throw std::runtime_error(\"Unable to instantiate CUDA graph: cuda error \" + std::to_string(instantiateError) + \": \" + cudaGetErrorString(instantiateError) + \" - \" + instantiateErrorMessage);" << std::endl;
         }
     }
 }
