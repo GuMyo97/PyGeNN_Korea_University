@@ -274,7 +274,7 @@ public:
     SET_ROW_BUILD_STATE_VARS({{"x", "scalar", 0.0},{"c", "unsigned int", "$(preCalcRowLength)[($(id_pre) * $(num_threads)) + $(id_thread)]"}});
 
     SET_PARAM_NAMES({"total"});
-    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}})
+    SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "uint16_t*"}});
 
     SET_HOST_INIT_CODE(
         "// Allocate pre-calculated row length array\n"
@@ -339,4 +339,135 @@ public:
             return binomialInverseCDF(quantile, (unsigned int)pars[0], (double)numPre / ((double)numPre * (double)numPost));
         });
 };
+
+#define PROB 0
+#define MAX_DIST 1
+#define PRE_NX 2
+#define PRE_NY 3
+#define PRE_NZ 4
+#define PRE_X0 5
+#define PRE_Y0 6
+#define PRE_Z0 7
+#define PRE_DX 8
+#define PRE_DY 9
+#define PRE_DZ 10
+#define POST_NX 11
+#define POST_NY 12
+#define POST_NZ 13
+#define POST_X0 14
+#define POST_Y0 15
+#define POST_Z0 16
+#define POST_DX 17
+#define POST_DY 18
+#define POST_DZ 19
+
+class MaxDistanceFixedProbability : public Base
+{
+public:
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::MaxDistanceFixedProbability, 20);
+    // prob, max_dist, pre_shape, pre_pos, pre_dx, post_shape, post_pos, post_dx
+
+    SET_PARAM_NAMES({
+        "prob", "max_dist",
+        "pre_nx", "pre_ny", "pre_nz",
+        "pre_x0", "pre_y0", "pre_z0",
+        "pre_dx", "pre_dy", "pre_dz",
+        "post_nx", "post_ny", "post_nz",
+        "post_x0", "post_y0", "post_z0",
+        "post_dx", "post_dy", "post_dz"});
+
+    SET_ROW_BUILD_CODE(
+        "auto coords = [](const int idx, const int nx, const int ny, const int nz, \n"
+        "                 double &x, double &y, double &z){\n"
+        "    const int a = (ny * nz);\n"
+        "    x = (double)(idx / a);\n"
+        "    y = (double)((idx - ((int)x * a)) / nz);\n"
+        "    z = (double)((idx - ((int)x * a)) % nz);\n"
+        "};\n"
+        "auto inDist = [coords](const int pre, const int post){\n"
+        "    double pre_x, pre_y, pre_z, post_x, post_y, post_z;\n"
+        "    coords(pre, $(pre_nx), $(pre_ny), $(pre_nz), pre_x, pre_y, pre_z);\n"
+        "    coords(post, $(post_nx), $(post_ny), $(post_nz), post_x, post_y, post_z);\n"
+        "    pre_x = pre_x * $(pre_dx) + $(pre_x0);\n"
+        "    pre_y = pre_y * $(pre_dy) + $(pre_y0);\n"
+        "    pre_z = pre_z * $(pre_dz) + $(pre_z0);\n"
+        "    post_x = post_x * $(post_dx) + $(post_x0);\n"
+        "    post_y = post_y * $(post_dy) + $(post_y0);\n"
+        "    post_z = post_z * $(post_dz) + $(post_z0);\n"
+        "    double dx = post_x - pre_x,\n"
+        "           dy = post_y - pre_y,\n"
+        "           dz = post_z - pre_z;\n"
+        "    return (sqrt((dx * dx) + (dy * dy) + (dz * dz)) <= ($(max_dist) * 1.4143));\n"
+        "};\n"
+        "const scalar u = $(gennrand_uniform);\n"
+        "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
+        "if(prevJ < $(num_post)) {\n"
+        "   if(inDist($(id_pre), prevJ)){\n"
+//        "       std::cout << $(id_pre) << \", \" << prevJ << std::endl;\n"
+        "       $(addSynapse, prevJ + $(id_post_begin));\n"
+        "   }\n"
+        "}\n"
+        "else {\n"
+        "   $(endRow);\n"
+        "}\n");
+
+    SET_ROW_BUILD_STATE_VARS({{"prevJ", "int", -1},
+    });
+    SET_DERIVED_PARAMS({
+        {"probLogRecip", [](const std::vector<double> &pars, double){ return 1.0 / log(1.0 - pars[PROB]); }},
+    });
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            // Calculate suitable quantile for 0.9999 change when drawing numPre times
+            const double quantile = pow(0.9999, 1.0 / (double)numPre);
+
+            // not a sphere but a cube :)
+            // each pre can reach max_conns posts?
+            // assuming the pre-synaptic neuron is at the centre of the post-synaptic
+            // neuron volume (2*dist)
+            double max_conns = 1.0;
+            if(pars[POST_NX] > 1){
+                max_conns *= (2.0 * pars[MAX_DIST] + 1.0)/pars[POST_DX];
+            }
+            if(pars[POST_NY] > 1){
+                max_conns *= (2.0 * pars[MAX_DIST] + 1.0)/pars[POST_DY];
+            }
+            if(pars[POST_NZ] > 1){
+                max_conns *= (2.0 * pars[MAX_DIST] + 1.0)/pars[POST_DZ];
+            }
+            // There are numConnections connections amongst the numPre*numPost possible connections.
+            // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
+            // probability of being selected and the number of synapses in the sub-row is binomially distributed
+            return binomialInverseCDF(quantile, (unsigned int)max_conns, pars[PROB]);
+        });
+
+    SET_CALC_MAX_COL_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            // Calculate suitable quantile for 0.9999 change when drawing numPost times
+            const double quantile = pow(0.9999, 1.0 / (double)numPost);
+
+            // each post can reach max_conns pre neurons?
+            // assuming post is at the center of pre volume
+            double max_conns = 1.0;
+            if(pars[PRE_NX] > 1){
+                max_conns *= (2.0 * pars[MAX_DIST]/pars[PRE_DX]);
+            }
+            if(pars[PRE_NY] > 1){
+                max_conns *= (2.0 * pars[MAX_DIST]/pars[PRE_DY]);
+            }
+            if(pars[PRE_NZ] > 1){
+                max_conns *= (2.0 * pars[MAX_DIST]/pars[PRE_DZ]);
+            }
+
+            // There are numConnections connections amongst the numPre*numPost possible connections.
+            // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
+            // probability of being selected and the number of synapses in the sub-row is binomially distributed
+            return binomialInverseCDF(quantile, max_conns, pars[PROB]);
+        });
+};
+
+
 }   // namespace InitVarSnippet
