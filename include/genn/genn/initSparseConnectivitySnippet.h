@@ -427,19 +427,22 @@ public:
             // each pre can reach max_conns posts?
             // assuming the pre-synaptic neuron is at the centre of the post-synaptic
             // neuron volume (2*dist)
+            const double max_d = (2.0 * pars[MAX_DIST] + 1.0); // in euclidean
             double max_conns = 1.0;
+            //dividing by dx to convert from euclidean to 'neuron' units
+            //it's euclidean but at unit inter-neuron distances so we need to
+            //adjust/grow the number of reachable units per dimension
             if(pars[POST_NX] > 1){
-                max_conns *= (2.0 * pars[MAX_DIST] + 1.0)/pars[POST_DX];
+                max_conns *= fmin(max_d/pars[POST_DX], pars[POST_NX]);
             }
             if(pars[POST_NY] > 1){
-                max_conns *= (2.0 * pars[MAX_DIST] + 1.0)/pars[POST_DY];
+                max_conns *= fmin(max_d/pars[POST_DY], pars[POST_NY]);
             }
             if(pars[POST_NZ] > 1){
-                max_conns *= (2.0 * pars[MAX_DIST] + 1.0)/pars[POST_DZ];
+                max_conns *= fmin(max_d/pars[POST_DZ], pars[POST_NZ]);
             }
-            // There are numConnections connections amongst the numPre*numPost possible connections.
-            // Each of the numConnections connections has an independent p=float(numPost)/(numPre*numPost)
-            // probability of being selected and the number of synapses in the sub-row is binomially distributed
+            //todo: should these be the total (all pre to post  possible) number
+            // of connections and not a single pre-to-post?
             return binomialInverseCDF(quantile, (unsigned int)max_conns, pars[PROB]);
         });
 
@@ -451,21 +454,22 @@ public:
 
             // each post can reach max_conns pre neurons?
             // assuming post is at the center of pre volume
+            const double max_d = (2.0 * pars[MAX_DIST] + 1.0);
             double max_conns = 1.0;
             if(pars[PRE_NX] > 1){
-                max_conns *= (2.0 * pars[MAX_DIST]/pars[PRE_DX]);
+                max_conns *= fmin(max_d/pars[PRE_DX], pars[PRE_NX]);
             }
             if(pars[PRE_NY] > 1){
-                max_conns *= (2.0 * pars[MAX_DIST]/pars[PRE_DY]);
+                max_conns *= fmin(max_d/pars[PRE_DX], pars[PRE_NX]);
             }
             if(pars[PRE_NZ] > 1){
-                max_conns *= (2.0 * pars[MAX_DIST]/pars[PRE_DZ]);
+                max_conns *= fmin(max_d/pars[PRE_DX], pars[PRE_NX]);
             }
 
             // There are numConnections connections amongst the numPre*numPost possible connections.
             // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
-            return binomialInverseCDF(quantile, max_conns, pars[PROB]);
+            return binomialInverseCDF(quantile, (unsigned int)max_conns, pars[PROB]);
         });
 };
 
