@@ -322,9 +322,10 @@ def generateStlContainersInterface( swigPath ):
         mg.addSwigModuleHeadline()
         with SwigAsIsScope( mg ):
             mg.addCppInclude( '<functional>', '// for std::function' )
-
+            mg.addCppInclude( '<array>')
 
         mg.write( '\n// swig wrappers for STL containers\n' )
+        mg.addSwigInclude( '<std_array.i>' )
         mg.addSwigInclude( '<std_string.i>' )
         mg.addSwigInclude( '<std_pair.i>' )
         mg.addSwigInclude( '<std_vector.i>' )
@@ -350,6 +351,7 @@ def generateStlContainersInterface( swigPath ):
 
         mg.write( '\n// add template specifications for various STL containers\n' )
         mg.addSwigTemplate( 'std::vector<std::string>', 'StringVector' )
+        mg.addSwigTemplate( 'std::array<unsigned long long, 8>', 'CUDABlockSizeArray' )
 
         # These are all data types supported by numpy SWIG interface (at least by default) plus long double
         npDTypes = (
@@ -392,7 +394,10 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigModuleHeadline()
         mg.addSwigEnableUnderCaseConvert()
         mg.addSwigInclude('<exception.i>')
-        
+
+        # Import stl containers so as to support std::string and std::array used to hold block sizes
+        mg.addSwigImport( '"StlContainers.i"' )
+
         with SwigAsIsScope(mg):
             mg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
             mg.addCppInclude('"optimiser.h"')
@@ -415,12 +420,9 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigIgnore("Backend")
         mg.addSwigInclude('"backend.h"')
 
-        # Import stl containers so as to support std::string
-        mg.addSwigImport( '"StlContainers.i"' )
-
         # Include SWIG exception handling library
         mg.addSwigInclude('<exception.i>')
-        
+
         mg.write('''
         %exception create_backend{
             try 
@@ -433,7 +435,7 @@ def generateBackend(swigPath, folder, namespace):
             }
         }
         ''')
-        
+
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
             mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &outputPath, plog::Severity backendLevel, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'

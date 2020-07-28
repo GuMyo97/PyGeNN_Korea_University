@@ -109,7 +109,7 @@ struct Preferences : public PreferencesBase
     BlockSizeSelect blockSizeSelectMethod = BlockSizeSelect::OCCUPANCY;
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
-    KernelBlockSize manualBlockSizes;
+    std::array<unsigned long long, 8> manualBlockSizes;
 
     //! NVCC compiler options for all GPU code
     std::string userNvccFlags = "";
