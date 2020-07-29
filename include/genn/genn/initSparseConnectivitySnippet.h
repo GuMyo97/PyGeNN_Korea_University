@@ -416,7 +416,7 @@ public:
         "}\n");
 
     SET_ROW_BUILD_STATE_VARS({
-        {"deltaRow", "int", "( ($(max_dist)+1) / $(post_dy) ) * ( $(post_nx) * $(post_nz) )"},
+        {"deltaRow", "int", "( ($(max_dist) / $(post_dy)) + 2 ) * ( $(post_nx) * $(post_nz) )"},
         {"preRow", "int", "( $(id_pre) / ($(pre_nx) * $(pre_nz)) ) * $(pre_dy) + $(pre_y0)"},
         {"prevJ", "int",
         "fmax(-1,\n"
