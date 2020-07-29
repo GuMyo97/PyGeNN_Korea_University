@@ -377,17 +377,20 @@ public:
         "post_dx", "post_dy", "post_dz"});
 
     SET_ROW_BUILD_CODE(
-        "auto coords = [](const int idx, const int nx, const int ny, const int nz, \n"
-        "                 double &x, double &y, double &z){\n"
-        "    const int a = (ny * nz);\n"
-        "    x = (double)(idx / a);\n"
-        "    y = (double)((idx - ((int)x * a)) / nz);\n"
-        "    z = (double)((idx - ((int)x * a)) % nz);\n"
+        "auto toCoords = [](const int idx, const int nx, const int ny, const int nz, \n"
+        "                   double &x, double &y, double &z){\n"
+        "    const int a = (nx * nz);\n"
+        //row
+        "    y = (double)(idx / a);\n"
+        //col
+        "    x = (double)((idx - ((int)y * a)) / nz);\n"
+        //depth
+        "    z = (double)((idx - ((int)y * a)) % nz);\n"
         "};\n"
-        "auto inDist = [coords](const int pre, const int post){\n"
+        "auto inDist = [toCoords](const int pre, const int post){\n"
         "    double pre_x, pre_y, pre_z, post_x, post_y, post_z;\n"
-        "    coords(pre, $(pre_nx), $(pre_ny), $(pre_nz), pre_x, pre_y, pre_z);\n"
-        "    coords(post, $(post_nx), $(post_ny), $(post_nz), post_x, post_y, post_z);\n"
+        "    toCoords(pre, $(pre_nx), $(pre_ny), $(pre_nz), pre_x, pre_y, pre_z);\n"
+        "    toCoords(post, $(post_nx), $(post_ny), $(post_nz), post_x, post_y, post_z);\n"
         "    pre_x = pre_x * $(pre_dx) + $(pre_x0);\n"
         "    pre_y = pre_y * $(pre_dy) + $(pre_y0);\n"
         "    pre_z = pre_z * $(pre_dz) + $(pre_z0);\n"
@@ -400,8 +403,9 @@ public:
         "    return (sqrt((dx * dx) + (dy * dy) + (dz * dz)) <= ($(max_dist) * 1.4143));\n"
         "};\n"
         "const scalar u = $(gennrand_uniform);\n"
+//        "std::cout << \"pre_id = \" << $(id_pre) << \" prevJ = \" << prevJ << \" endJ = \" << endJ << std::endl;\n"
         "prevJ += (1 + (int)(log(u) * $(probLogRecip)));\n"
-        "if(prevJ < $(num_post)) {\n"
+        "if(prevJ < endJ) {\n"
         "   if(inDist($(id_pre), prevJ)){\n"
 //        "       std::cout << $(id_pre) << \", \" << prevJ << std::endl;\n"
         "       $(addSynapse, prevJ + $(id_post_begin));\n"
@@ -411,7 +415,19 @@ public:
         "   $(endRow);\n"
         "}\n");
 
-    SET_ROW_BUILD_STATE_VARS({{"prevJ", "int", -1},
+    SET_ROW_BUILD_STATE_VARS({
+        {"deltaRow", "int", "( ($(max_dist)+1) / $(post_dy) ) * ( $(post_nx) * $(post_nz) )"},
+        {"preRow", "int", "( $(id_pre) / ($(pre_nx) * $(pre_nz)) ) * $(pre_dy) + $(pre_y0)"},
+        {"prevJ", "int",
+        "fmax(-1,\n"
+        "   ( ( ( (preRow - $(post_y0)) / $(post_dy) ) * $(post_nx) * $(post_nz) ) - deltaRow - 1)\n"
+        ")"
+        },
+        {"endJ", "int",
+        "fmin($(num_post), \n"
+        "   ( ( ( (preRow - $(post_y0)) / $(post_dy) ) * $(post_nx) * $(post_nz) ) + deltaRow + 1)\n"
+        ")"
+        }
     });
     SET_DERIVED_PARAMS({
         {"probLogRecip", [](const std::vector<double> &pars, double){ return 1.0 / log(1.0 - pars[PROB]); }},
