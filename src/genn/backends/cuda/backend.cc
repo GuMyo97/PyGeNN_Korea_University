@@ -504,32 +504,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << "__shared__ uint8_t shBlockMem[" << maxSharedMemBytesPerThread * m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
             }
 
-            // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
-            /*if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                           [&model](const PresynapticUpdateGroupMerged &s)
-                           {
-                               return (s.getArchetype().getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
-                                       && (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE));
-                           }))
-            {
-                os << "__shared__ unsigned int shRowLength[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }
-
-            if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                           [&model](const PresynapticUpdateGroupMerged &s)
-                           {
-                               return (s.getArchetype().isTrueSpikeRequired() || !s.getArchetype().getWUModel()->getLearnPostCode().empty());
-                           }))
-            {
-                os << "__shared__ unsigned int shSpk[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }
-
-            if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                           [](const PresynapticUpdateGroupMerged &s){ return (s.getArchetype().isSpikeEventRequired()); }))
-            {
-                os << "__shared__ unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }*/
-
             // Parallelise over presynaptic update groups
             genParallelGroup<PresynapticUpdateGroupMerged>(os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate", idPresynapticStart,
                 [this](const SynapseGroupInternal &sg){ return padSize(getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences), m_KernelBlockSizes[KernelPresynapticUpdate]); },
