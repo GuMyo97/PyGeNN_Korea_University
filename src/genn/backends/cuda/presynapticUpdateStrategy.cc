@@ -113,8 +113,8 @@ bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp 
 //----------------------------------------------------------------------------
 size_t PreSpan::getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const
 {
-    // One unsigned int is required per thread if small shared memory optimization should be used for shLg
-    return isSmallSharedMemoryPop(sg, backend) ? backend.getSize("unsigned int") : 0;
+    // One scalar is required per thread if small shared memory optimization should be used for shLg
+    return isSmallSharedMemoryPop(sg, backend) ? backend.getSize("scalar") : 0;
 }
 //----------------------------------------------------------------------------
 void PreSpan::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
@@ -313,10 +313,10 @@ void PostSpan::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, c
 //----------------------------------------------------------------------------
 size_t PostSpan::getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const
 {
-    // One unsigned int is required if small shared memory optimization should be used for shLg
+    // One scalar is required if small shared memory optimization should be used for shLg
     size_t numBytes = 0;
     if(isSmallSharedMemoryPop(sg, backend)) {
-        numBytes += backend.getSize("unsigned int");
+        numBytes += backend.getSize("scalar");
     }
 
     // Another unsigned int is required for shSpike
@@ -592,8 +592,8 @@ bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const cudaD
 //----------------------------------------------------------------------------
 size_t PreSpanProcedural::getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const
 {
-    // One unsigned int is required per thread if small shared memory optimization should be used for shLg
-    return isSmallSharedMemoryPop(sg, backend) ? backend.getSize("unsigned int") : 0;
+    // One scalar is required per thread if small shared memory optimization should be used for shLg
+    return isSmallSharedMemoryPop(sg, backend) ? backend.getSize("scalar") : 0;
 }
 //----------------------------------------------------------------------------
 void PreSpanProcedural::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
@@ -795,7 +795,7 @@ void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecMerged &modelMe
                                   const Substitutions &, const Backend &backend, size_t) const
 {
     os << modelMerged.getModel().getPrecision() << " *shLg = (" << modelMerged.getModel().getPrecision() << "*)&shBlockMem[0];" << std::endl;
-    os << "unsigned int *shSpk = (unsigned int*)&shBlockMem[" << (backend.getKernelBlockSize(KernelPresynapticUpdate) * backend.getSize("unsigned int")) << "];" << std::endl;
+    os << "unsigned int *shSpk = (unsigned int*)&shBlockMem[" << (backend.getKernelBlockSize(KernelPresynapticUpdate) * backend.getSize("scalar")) << "];" << std::endl;
 
     // Loop through bits written by this thread
     for (size_t i = 0; i < 32; i++) {
@@ -809,7 +809,7 @@ void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecMerged &modelMe
 //----------------------------------------------------------------------------
 size_t PostSpanBitmask::getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &, const Backend &backend) const
 {
-    // Another unsigned int is required for shSpike and 32 scalars are required for summing up input
+    // An unsigned int is required for shSpike and 32 scalars are required for summing up input
     return backend.getSize("unsigned int") + (32 * backend.getSize("scalar"));
 }
 //----------------------------------------------------------------------------
