@@ -1016,8 +1016,21 @@ bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitParamHeterogeneous(size_t
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
+    const auto groupParams = varInitSnippet->getGroupParams();
+    const auto preParams = varInitSnippet->getPreParams();
+    const auto postParams = varInitSnippet->getPostParams();
+    
+    // Build list of code strings containing var init code and any param variable values
+    std::vector<std::string> codeStrings{varInitSnippet->getCode()};
+    std::transform(groupParams.cbegin(), groupParams.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+    std::transform(preParams.cbegin(), preParams.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+    std::transform(postParams.cbegin(), postParams.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
+    return isParamValueHeterogeneous(codeStrings, paramName, paramIndex,
                                      [varIndex](const SynapseGroupInternal &sg)
                                      {
                                          return sg.getWUVarInitialisers().at(varIndex).getParams();
@@ -1028,8 +1041,21 @@ bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous
 {
     // If derived parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
+    const auto groupParams = varInitSnippet->getGroupParams();
+    const auto preParams = varInitSnippet->getPreParams();
+    const auto postParams = varInitSnippet->getPostParams();
+
+    // Build list of code strings containing var init code and any param variable values
+    std::vector<std::string> codeStrings{varInitSnippet->getCode()};
+    std::transform(groupParams.cbegin(), groupParams.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+    std::transform(preParams.cbegin(), preParams.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+    std::transform(postParams.cbegin(), postParams.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, paramIndex,
+    return isParamValueHeterogeneous(codeStrings, derivedParamName, paramIndex,
                                      [varIndex](const SynapseGroupInternal &sg)
                                      {
                                          return sg.getWUVarInitialisers().at(varIndex).getDerivedParams();
