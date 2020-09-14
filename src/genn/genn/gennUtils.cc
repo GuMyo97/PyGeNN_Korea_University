@@ -99,4 +99,17 @@ size_t getFlattenedKernelSize(const std::vector<unsigned int> &size)
 {
     return std::accumulate(size.cbegin(), size.cend(), 1, std::multiplies<unsigned int>());
 }
+//--------------------------------------------------------------------------
+std::vector<size_t> getKernelDimensionality(const std::vector<unsigned int> &size)
+{
+    // Loop through dimensions
+    std::vector<size_t> dimensionality;
+    for(size_t i = 0; i < size.size(); i++) {
+        // If size in this dimension is greater than one, add index to vector
+        if(size[i] > 1) {
+            dimensionality.push_back(i);
+        }
+    }
+    return dimensionality;
+}
 }   // namespace utils

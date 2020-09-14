@@ -1029,6 +1029,126 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genKernelVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name,
+                                          VarLocation loc, VarAccess access) const
+{
+    // If variable is read/write, define a standard variable
+    if(access == VarAccess::READ_WRITE) {
+        genVariableDefinition(definitions, definitionsInternal, type, name, loc);
+    }
+    // Otherwise, use texture
+    else {
+        // Write texture object definition
+        definitionsInternal << "EXPORT_VAR cudaTextureObject_t t_" << name << ";" << std::endl;
+
+        // Define standard host array
+        if(loc & VarLocation::HOST) {
+            definitions << "EXPORT_VAR " << type << "* " << name << ";" << std::endl;
+        }
+
+        // Define cuda array on device
+        if(loc & VarLocation::DEVICE) {
+            definitionsInternal << "EXPORT_VAR cudaArray_t d_" << name << ";" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariableImplementation(CodeStream &os, const std::string &type, const std::string &name,
+                                              VarLocation loc, VarAccess access) const
+{
+    // If variable is read/write, implement a standard variable
+    if(access == VarAccess::READ_WRITE) {
+        genVariableImplementation(os, type, name, loc);
+    }
+    // Otherwise, use texture
+    else {
+        // Write texture object implementation
+        os << "cudaTextureObject_t t_" << name << ";" << std::endl;
+
+        // Implement standard host array
+        if(loc & VarLocation::HOST) {
+            os << type << "* " << name << ";" << std::endl;
+        }
+
+        // Implement cuda array on device
+        if(loc & VarLocation::DEVICE) {
+            os << "cudaArray_t d_" << name << ";" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
+MemAlloc Backend::genKernelVariableAllocation(CodeStream &os, const std::string &type, const std::string &name,
+                                              VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const
+{
+    // If variable is read/write, allocate a standard variable
+    if(access == VarAccess::READ_WRITE) {
+        return genVariableAllocation(os, type, name, loc, Utils::getFlattenedKernelSize(size));
+    }
+    // Otherwise, use texture
+    else {
+        // Calculate flattened size and dimensionality of kernel size
+        auto allocation = MemAlloc::zero();
+        const size_t flattenedSize = Utils::getFlattenedKernelSize(size);
+        const auto dimensionality = Utils::getKernelDimensionality(size);
+        
+        CodeStream::Scope b(os);
+       
+        // Allocate standard flattened host array
+        os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << flattenedSize << " * sizeof(" << type << "), cudaHostAllocPortable));" << std::endl;
+        allocation += MemAlloc::hostDevice(flattenedSize * getSize(type));
+
+        // Create channel descriptor
+        os << "const cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<" << type << ">();" << std::endl;
+
+        // Allocate appropriate CUDA array
+        if(dimensionality.size() == 1) {
+            assert(false);
+        }
+        else if(dimensionality.size() == 2) {
+            // Allocate 2D device array
+            os << "CHECK_CUDA_ERRORS(cudaMallocArray(&d_" << name << ", &channelDesc, ";
+            os << size[dimensionality[0]] << ", " << size[dimensionality[1]] << ", 0));" << std::endl;
+        }
+        else {
+            // Multiply size of all remaining dimensions into depth and allocate 3D array
+            const size_t depth = std::accumulate(dimensionality.cbegin() + 2, dimensionality.cend(), size_t{1},
+                                                 [&size](size_t acc, size_t d) { return acc * size[d]; });
+            os << "CHECK_CUDA_ERRORS(cudaMalloc3DArray(&d_" << name << ", &channelDesc, ";
+            os << "make_cudaExtent(" << size[dimensionality[0]] << ", " << size[dimensionality[1]] << ", " << depth << "), 0)); " << std::endl;
+        }
+
+        // Create CUDA texture description
+        os << "cudaTextureDesc texDescr = {};" << std::endl;;
+        os << "texDescr.normalizedCoords = false;" << std::endl;
+        os << "texDescr.filterMode = cudaFilterModePoint;" << std::endl;
+        os << "texDescr.readMode = cudaReadModeElementType;" << std::endl;
+        for(size_t d = 0; d < std::min(size_t{3}, dimensionality.size()); d++) {
+            os << "texDescr.addressMode[" << d << "] = cudaAddressModeBorder;" << std::endl;  // **TODO** expose
+        }
+
+        // Create CUDA resource description pointing to array
+        os << "cudaResourceDesc texRes = {};" << std::endl;
+        os << "texRes.resType = cudaResourceTypeArray;" << std::endl;
+        os << "texRes.res.array.array = d_" << name << ";" << std::endl;
+
+        // Create texture
+        os << "CHECK_CUDA_ERRORS(cudaCreateTextureObject(&t_" << name << ", &texRes, &texDescr, nullptr));" << std::endl;
+        return allocation;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariableFree(CodeStream &os, const std::string &name,
+                                    VarLocation loc, VarAccess access) const
+{
+    // If variable is read/write, free a standard variable
+    if(access == VarAccess::READ_WRITE) {
+        genVariableFree(os, name, loc);
+    }
+    else {
+
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &, 
                                             const std::string &type, const std::string &name, VarLocation loc) const
 {
@@ -1144,6 +1264,18 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
     return type;
 }
 //--------------------------------------------------------------------------
+std::string Backend::getMergedGroupKernelType(const std::string &type, VarAccess access) const
+{
+    // If variable is read/write, pass it to kernel using a raw pointer
+    if(access == VarAccess::READ_WRITE) {
+        return type + "*";
+    }
+    // Otherwise, pass it using texture object
+    else {
+        return "cudaTextureObject_t";
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
 {
     assert(!getPreferences().automaticCopy);
@@ -1172,6 +1304,90 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
         os << ", d_"  << name;
         os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariablePush(CodeStream &os, const std::string &type, const std::string &name,
+                                    VarLocation loc, VarAccess access, bool autoInitialized, const std::vector<unsigned int> &size) const
+{
+    // If variable is read/write, push a standard variable
+    if(access == VarAccess::READ_WRITE) {
+        return genVariablePush(os, type, name, loc, autoInitialized, Utils::getFlattenedKernelSize(size));
+    }
+    // Otherwise, use texture
+    else {
+        const auto dimensionality = Utils::getKernelDimensionality(size);
+        if(dimensionality.size() == 1) {
+            assert(false);
+        }
+        else if(dimensionality.size() == 2) {
+            const size_t width = size[dimensionality[0]];
+            const size_t height= size[dimensionality[1]];
+            
+            // Perform 2D memcpy
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy2DToArray(d_" << name << ", 0, 0, " << name << ", ";
+            os << width << " * sizeof(" << type << "), " << width << " * sizeof(" << type << "), " << height << ", cudaMemcpyHostToDevice));" << std::endl;
+        }
+        else {
+            const size_t width = size[dimensionality[0]];
+            const size_t height = size[dimensionality[1]];
+
+            // Multiply size of all remaining dimensions into third
+            const size_t depth = std::accumulate(dimensionality.cbegin() + 2, dimensionality.cend(), size_t{1},
+                                                 [&size](size_t acc, size_t d) { return acc * size[d]; });
+
+            // Configure 3D memcpy params
+            os << "cudaMemcpy3DParms copyParams = {};" << std::endl;
+            os << "copyParams.srcPtr = make_cudaPitchedPtr(" << name << ", " << width << " * sizeof(" << type << "), " << height << ", " << depth << ");" << std::endl;
+            os << "copyParams.dstArray = d_" << name << ";" << std::endl;
+            os << "copyParams.extent = make_cudaExtent(" << width << ",  " << height << ", " << depth << ");" << std::endl;
+            os << "copyParams.kind = cudaMemcpyHostToDevice;" << std::endl;
+
+            // Perform 3D memcpy
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy3D(&copyParams));" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariablePull(CodeStream &os, const std::string &type, const std::string &name,
+                                    VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const
+{
+    // If variable is read/write, push a standard variable
+    if(access == VarAccess::READ_WRITE) {
+        return genVariablePull(os, type, name, loc, Utils::getFlattenedKernelSize(size));
+    }
+    // Otherwise, use texture
+    else {
+        const auto dimensionality = Utils::getKernelDimensionality(size);
+        if(dimensionality.size() == 1) {
+            assert(false);
+        }
+        else if(dimensionality.size() == 2) {
+            const size_t width = size[dimensionality[0]];
+            const size_t height = size[dimensionality[1]];
+
+            // Perform 2D memcpy
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy2DFromArray(" << name << ", width * sizeof(" << type << "), ";
+            os << "d_" << name << ", 0, 0, " << width << " * sizeof(" << type << "), " << height << ", cudaMemcpyDeviceToHost));" << std::endl;
+        }
+        else {
+            const size_t width = size[dimensionality[0]];
+            const size_t height = size[dimensionality[1]];
+
+            // Multiply size of all remaining dimensions into third
+            const size_t depth = std::accumulate(dimensionality.cbegin() + 2, dimensionality.cend(), size_t{1},
+                                                 [&size](size_t acc, size_t d) { return acc * size[d]; });
+
+            // Configure 3D memcpy params
+            os << "cudaMemcpy3DParms copyParams = {};" << std::endl;
+            os << "copyParams.srcArray = d_" << name << ";" << std::endl;
+            os << "copyParams.dstPtr = make_cudaPitchedPtr(" << name << ", " << width << " * sizeof(" << type << "), " << height << ", " << depth << ");" << std::endl;
+            os << "copyParams.extent = make_cudaExtent(" << width << ",  " << height << ", " << depth << ");" << std::endl;
+            os << "copyParams.kind = cudaMemcpyDeviceToHost;" << std::endl;
+
+            // Perform 3D memcpy
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy3D(&copyParams));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------

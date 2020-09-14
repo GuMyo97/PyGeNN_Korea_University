@@ -99,6 +99,9 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::string getMergedGroupSimRNGType() const override;
 
+    //! When generating merged structures, what type to use for kernel variables 
+    virtual std::string getMergedGroupKernelType(const std::string &type, VarAccess access) const override;
+
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;

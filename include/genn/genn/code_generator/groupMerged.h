@@ -951,7 +951,7 @@ private:
     void addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    void addWeightSharingField(const std::string &type, const std::string &name, const std::string &prefix);
 
     //------------------------------------------------------------------------
     // Members

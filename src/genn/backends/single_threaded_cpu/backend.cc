@@ -801,6 +801,11 @@ std::string Backend::getMergedGroupSimRNGType() const
     return "";
 }
 //--------------------------------------------------------------------------
+std::string Backend::getMergedGroupKernelType(const std::string &type, VarAccess) const
+{
+    return type + "*";
+}
+//--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
