@@ -89,8 +89,67 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     }
     // Otherwise, if weights are kernels
     else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // **HACK** this belongs in backend
+        const auto &kernelSize = sg.getArchetype().getKernelSize();
+        if(kernelSize.size() == 1) {
+            assert(false);
+        }
+        else if(kernelSize.size() == 2) {
+            // Generate texture coordinates
+            const std::string texCoord = synapseSubs["id_kernel_0"] + ", " + synapseSubs["id_kernel_1"];
+            
+            // Substitute vars for calls to tex2D
+            for(const auto &v : wu->getVars()) {
+                synapseSubs.addVarSubstitution(v.name, "tex2D<" + v.type + ">(group->" + v.name + ", " + texCoord + ")");
+            }
+            //synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", "[kernelInd]"); 
+        }
+        else if(kernelSize.size() == 3) {
+            // Generate texture coordinates
+            const std::string texCoord = synapseSubs["id_kernel_0"] + ", " + synapseSubs["id_kernel_1"] + ", " + synapseSubs["id_kernel_2"];
+
+            // Substitute vars for calls to tex3D
+            for(const auto &v : wu->getVars()) {
+                synapseSubs.addVarSubstitution(v.name, "tex3D<" + v.type + ">(group->" + v.name + ", " + texCoord + ")");
+            }
+        }
+        else {
+            // Generate first two dimensions of texture coordinate
+            const std::string texCoord2D = synapseSubs["id_kernel_0"] + ", " + synapseSubs["id_kernel_1"];
+
+            os << "const unsigned int kernelDepth = ";
+            const auto &kernelSize = sg.getArchetype().getKernelSize();
+            for(size_t i = 2; i < kernelSize.size(); i++) {
+                os << "(" << synapseSubs["id_kernel_" + std::to_string(i)];
+                // Loop through remainind dimensions of kernel
+                for(size_t j = i + 1; j < kernelSize.size(); j++) {
+                    // If kernel size if heterogeneous in this dimension, multiply by value from group structure
+                    if(sg.isKernelSizeHeterogeneous(j)) {
+                        os << " * group->kernelSize" << j;
+                    }
+                    // Otherwise, multiply by literal
+                    else {
+                        os << " * " << kernelSize.at(j);
+                    }
+                }
+                os << ")";
+                
+                // If this isn't the last dimension, add +
+                if(i != (kernelSize.size() - 1)) {
+                    os << " + ";
+                }
+            }
+            os << ";" << std::endl;
+
+            // Substitute vars for calls to tex3D
+            for(const auto &v : wu->getVars()) {
+                synapseSubs.addVarSubstitution(v.name, "tex3D<" + v.type + ">(group->" + v.name + ", " + texCoord2D + ", kernelDepth)");
+            }
+        }
+        //const auto dimensionality = Utils::getKernelDimensionality(sg.getArchetype().getKernelSize());
+
         // Loop through kernel dimensions to calculate array index
-        os << "const unsigned int kernelInd = ";
+        /*os << "const unsigned int kernelInd = ";
         const auto &kernelSize = sg.getArchetype().getKernelSize();
         for(size_t i = 0; i < kernelSize.size(); i++) {
             os << "(" << synapseSubs["id_kernel_" + std::to_string(i)];
@@ -115,7 +174,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
         os << ";" << std::endl;
 
         // Use kernel index to index into variables
-        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", "[kernelInd]");
+        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", "[kernelInd]");*/
     }
     // Otherwise, substitute variables for constant values
     else {

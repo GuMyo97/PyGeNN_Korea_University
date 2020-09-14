@@ -49,12 +49,7 @@ GENN_EXPORT std::string getUnderlyingType(const std::string &type);
 //--------------------------------------------------------------------------
 //! \brief Multiply size of kernel in each dimension to get flat size
 //--------------------------------------------------------------------------
-GENN_EXPORT size_t getFlattenedKernelSize(const std::vector<unsigned int> &size);
-
-//--------------------------------------------------------------------------
-//! \brief Get dimensionality of kernel size - vector containing indices to dimensions > 1
-//--------------------------------------------------------------------------
-GENN_EXPORT std::vector<size_t> getKernelDimensionality(const std::vector<unsigned int> &size);
+GENN_EXPORT size_t getFlattenedKernelSize(const std::vector<unsigned int> &size, size_t startingDimension = 0);
 
 //--------------------------------------------------------------------------
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost

@@ -1319,7 +1319,8 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         for(size_t v = 0; v < vars.size(); v++) {
             const auto var = vars[v];
             if(updateRole || !varInit.at(v).getSnippet()->getCode().empty()) {
-                addWeightSharingField(backend.getMergedGroupKernelType(var.type, var.access), var.name, backend.getVarPrefix() + var.name);
+                // **HACK** kernel prefix should be exposed by backend
+                addWeightSharingField(backend.getMergedGroupKernelType(var.type, var.access), var.name, "t_" + var.name);
             }
         }
     }

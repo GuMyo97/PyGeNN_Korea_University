@@ -193,6 +193,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     addDeviceType("curandState", 44);
     addDeviceType("curandStatePhilox4_32_10_t", 64);
     addDeviceType("half", 2);
+    addDeviceType("cudaTextureObject_t", 8);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -1043,7 +1044,7 @@ void Backend::genKernelVariableDefinition(CodeStream &definitions, CodeStream &d
 
         // Define standard host array
         if(loc & VarLocation::HOST) {
-            definitions << "EXPORT_VAR " << type << "* " << name << ";" << std::endl;
+            definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
         }
 
         // Define cuda array on device
@@ -1067,7 +1068,7 @@ void Backend::genKernelVariableImplementation(CodeStream &os, const std::string 
 
         // Implement standard host array
         if(loc & VarLocation::HOST) {
-            os << type << "* " << name << ";" << std::endl;
+            os << type << " " << name << ";" << std::endl;
         }
 
         // Implement cuda array on device
@@ -1089,7 +1090,6 @@ MemAlloc Backend::genKernelVariableAllocation(CodeStream &os, const std::string 
         // Calculate flattened size and dimensionality of kernel size
         auto allocation = MemAlloc::zero();
         const size_t flattenedSize = Utils::getFlattenedKernelSize(size);
-        const auto dimensionality = Utils::getKernelDimensionality(size);
         
         CodeStream::Scope b(os);
        
@@ -1101,20 +1101,19 @@ MemAlloc Backend::genKernelVariableAllocation(CodeStream &os, const std::string 
         os << "const cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<" << type << ">();" << std::endl;
 
         // Allocate appropriate CUDA array
-        if(dimensionality.size() == 1) {
+        if(size.size() == 1) {
             assert(false);
         }
-        else if(dimensionality.size() == 2) {
+        else if(size.size() == 2) {
             // Allocate 2D device array
             os << "CHECK_CUDA_ERRORS(cudaMallocArray(&d_" << name << ", &channelDesc, ";
-            os << size[dimensionality[0]] << ", " << size[dimensionality[1]] << ", 0));" << std::endl;
+            os << size[0] << ", " << size[1] << ", 0));" << std::endl;
         }
         else {
             // Multiply size of all remaining dimensions into depth and allocate 3D array
-            const size_t depth = std::accumulate(dimensionality.cbegin() + 2, dimensionality.cend(), size_t{1},
-                                                 [&size](size_t acc, size_t d) { return acc * size[d]; });
+            const size_t depth = Utils::getFlattenedKernelSize(size, 2);
             os << "CHECK_CUDA_ERRORS(cudaMalloc3DArray(&d_" << name << ", &channelDesc, ";
-            os << "make_cudaExtent(" << size[dimensionality[0]] << ", " << size[dimensionality[1]] << ", " << depth << "), 0)); " << std::endl;
+            os << "make_cudaExtent(" << size[0] << ", " << size[1] << ", " << depth << "), 0)); " << std::endl;
         }
 
         // Create CUDA texture description
@@ -1122,7 +1121,7 @@ MemAlloc Backend::genKernelVariableAllocation(CodeStream &os, const std::string 
         os << "texDescr.normalizedCoords = false;" << std::endl;
         os << "texDescr.filterMode = cudaFilterModePoint;" << std::endl;
         os << "texDescr.readMode = cudaReadModeElementType;" << std::endl;
-        for(size_t d = 0; d < std::min(size_t{3}, dimensionality.size()); d++) {
+        for(size_t d = 0; d < std::min(size_t{3}, size.size()); d++) {
             os << "texDescr.addressMode[" << d << "] = cudaAddressModeBorder;" << std::endl;  // **TODO** expose
         }
 
@@ -1316,31 +1315,24 @@ void Backend::genKernelVariablePush(CodeStream &os, const std::string &type, con
     }
     // Otherwise, use texture
     else {
-        const auto dimensionality = Utils::getKernelDimensionality(size);
-        if(dimensionality.size() == 1) {
+        if(size.size() == 1) {
             assert(false);
         }
-        else if(dimensionality.size() == 2) {
-            const size_t width = size[dimensionality[0]];
-            const size_t height= size[dimensionality[1]];
-            
+        else if(size.size() == 2) {
             // Perform 2D memcpy
             os << "CHECK_CUDA_ERRORS(cudaMemcpy2DToArray(d_" << name << ", 0, 0, " << name << ", ";
-            os << width << " * sizeof(" << type << "), " << width << " * sizeof(" << type << "), " << height << ", cudaMemcpyHostToDevice));" << std::endl;
+            os << size[0] << " * sizeof(" << type << "), " << size[0] << " * sizeof(" << type << "), " << size[1] << ", cudaMemcpyHostToDevice));" << std::endl;
         }
         else {
-            const size_t width = size[dimensionality[0]];
-            const size_t height = size[dimensionality[1]];
 
             // Multiply size of all remaining dimensions into third
-            const size_t depth = std::accumulate(dimensionality.cbegin() + 2, dimensionality.cend(), size_t{1},
-                                                 [&size](size_t acc, size_t d) { return acc * size[d]; });
+            const size_t depth = Utils::getFlattenedKernelSize(size, 2);
 
             // Configure 3D memcpy params
             os << "cudaMemcpy3DParms copyParams = {};" << std::endl;
-            os << "copyParams.srcPtr = make_cudaPitchedPtr(" << name << ", " << width << " * sizeof(" << type << "), " << height << ", " << depth << ");" << std::endl;
+            os << "copyParams.srcPtr = make_cudaPitchedPtr(" << name << ", " << size[0] << " * sizeof(" << type << "), " << size[0] << ", " << size[1] << ");" << std::endl;
             os << "copyParams.dstArray = d_" << name << ";" << std::endl;
-            os << "copyParams.extent = make_cudaExtent(" << width << ",  " << height << ", " << depth << ");" << std::endl;
+            os << "copyParams.extent = make_cudaExtent(" << size[0] << ", " << size[1] << ", " << depth << ");" << std::endl;
             os << "copyParams.kind = cudaMemcpyHostToDevice;" << std::endl;
 
             // Perform 3D memcpy
@@ -1358,31 +1350,23 @@ void Backend::genKernelVariablePull(CodeStream &os, const std::string &type, con
     }
     // Otherwise, use texture
     else {
-        const auto dimensionality = Utils::getKernelDimensionality(size);
-        if(dimensionality.size() == 1) {
+        if(size.size() == 1) {
             assert(false);
         }
-        else if(dimensionality.size() == 2) {
-            const size_t width = size[dimensionality[0]];
-            const size_t height = size[dimensionality[1]];
-
+        else if(size.size() == 2) {
             // Perform 2D memcpy
             os << "CHECK_CUDA_ERRORS(cudaMemcpy2DFromArray(" << name << ", width * sizeof(" << type << "), ";
-            os << "d_" << name << ", 0, 0, " << width << " * sizeof(" << type << "), " << height << ", cudaMemcpyDeviceToHost));" << std::endl;
+            os << "d_" << name << ", 0, 0, " << size[0] << " * sizeof(" << type << "), " << size[1] << ", cudaMemcpyDeviceToHost));" << std::endl;
         }
         else {
-            const size_t width = size[dimensionality[0]];
-            const size_t height = size[dimensionality[1]];
-
             // Multiply size of all remaining dimensions into third
-            const size_t depth = std::accumulate(dimensionality.cbegin() + 2, dimensionality.cend(), size_t{1},
-                                                 [&size](size_t acc, size_t d) { return acc * size[d]; });
+            const size_t depth = Utils::getFlattenedKernelSize(size, 2);
 
             // Configure 3D memcpy params
             os << "cudaMemcpy3DParms copyParams = {};" << std::endl;
             os << "copyParams.srcArray = d_" << name << ";" << std::endl;
-            os << "copyParams.dstPtr = make_cudaPitchedPtr(" << name << ", " << width << " * sizeof(" << type << "), " << height << ", " << depth << ");" << std::endl;
-            os << "copyParams.extent = make_cudaExtent(" << width << ",  " << height << ", " << depth << ");" << std::endl;
+            os << "copyParams.dstPtr = make_cudaPitchedPtr(" << name << ", " << size[0] << " * sizeof(" << type << "), " << size[0] << ", " << size[1] << ");" << std::endl;
+            os << "copyParams.extent = make_cudaExtent(" << size[0] << ", " << size[1] << ", " << depth << ");" << std::endl;
             os << "copyParams.kind = cudaMemcpyDeviceToHost;" << std::endl;
 
             // Perform 3D memcpy
