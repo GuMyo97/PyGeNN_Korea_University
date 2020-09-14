@@ -70,6 +70,15 @@ public:
     virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
+    virtual void genKernelVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name,
+                                             VarLocation loc, VarAccess access) const override;
+    virtual void genKernelVariableImplementation(CodeStream &os, const std::string &type, const std::string &name,
+                                                 VarLocation loc, VarAccess access) const override;
+    virtual MemAlloc genKernelVariableAllocation(CodeStream &os, const std::string &type, const std::string &name,
+                                                 VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const override;
+    virtual void genKernelVariableFree(CodeStream &os, const std::string &name,
+                                       VarLocation loc, VarAccess access) const override;
+
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
@@ -98,6 +107,10 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genKernelVariablePush(CodeStream &os, const std::string &type, const std::string &name,
+                                       VarLocation loc, VarAccess access, bool autoInitialized, const std::vector<unsigned int> &size) const override;
+    virtual void genKernelVariablePull(CodeStream &os, const std::string &type, const std::string &name,
+                                       VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const override;
     virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
 

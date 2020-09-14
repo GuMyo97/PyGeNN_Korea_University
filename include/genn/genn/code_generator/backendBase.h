@@ -16,6 +16,7 @@
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
+#include "models.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -226,6 +227,15 @@ public:
     virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
+    virtual void genKernelVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, 
+                                             VarLocation loc, VarAccess access) const = 0;
+    virtual void genKernelVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, 
+                                                 VarLocation loc, VarAccess access) const = 0;
+    virtual MemAlloc genKernelVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                                 VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const = 0;
+    virtual void genKernelVariableFree(CodeStream &os, const std::string &name, 
+                                       VarLocation loc, VarAccess access) const = 0;
+
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
@@ -257,6 +267,14 @@ public:
 
     //! Generate code for pulling a variable from the 'device'
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
+
+    //! Generate code for pushing a kernel variable to the 'device'
+    virtual void genKernelVariablePush(CodeStream &os, const std::string &type, const std::string &name,
+                                       VarLocation loc, VarAccess access, bool autoInitialized, const std::vector<unsigned int> &size) const = 0;
+
+    //! Generate code for pulling a kernel variable from the 'device'
+    virtual void genKernelVariablePull(CodeStream &os, const std::string &type, const std::string &name,
+                                       VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const = 0;
 
     //! Generate code for pushing a variable's value in the current timestep to the 'device'
     virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -367,6 +385,15 @@ public:
         genVariablePull(pull, type, name, loc, count);
     }
 
+    //! Helper function to generate matching push and pull functions for a kernel variable
+    void genKernelVariablePushPull(CodeStream &push, CodeStream &pull,
+                                   const std::string &type, const std::string &name, VarLocation loc, VarAccess access, 
+                                   bool autoInitialized, const std::vector<unsigned int> &size) const
+    {
+        genKernelVariablePush(push, type, name, loc, access, autoInitialized, size);
+        genKernelVariablePull(pull, type, name, loc, access, size);
+    }
+
     //! Helper function to generate matching push and pull functions for the current state of a variable
     void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull,
                                     const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
@@ -383,6 +410,16 @@ public:
         genVariableImplementation(runner, type + "*", name, loc);
         genVariableFree(free, name, loc);
         return genVariableAllocation(allocations, type, name, loc, count);
+    }
+
+    //! Helper function to generate matching definition, declaration, allocation and free code for a kernel
+    MemAlloc genKernel(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                       const std::string &type, const std::string &name, VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const
+    {
+        genKernelVariableDefinition(definitions, definitionsInternal, type + "*", name, loc, access);
+        genKernelVariableImplementation(runner, type + "*", name, loc, access);
+        genKernelVariableFree(free, name, loc, access);
+        return genKernelVariableAllocation(allocations, type, name, loc, access, size);
     }
 
     //! Get the size of the type

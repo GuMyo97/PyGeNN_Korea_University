@@ -724,6 +724,30 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genKernelVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name,
+                                          VarLocation loc, VarAccess) const
+{
+    genVariableDefinition(definitions, definitionsInternal, type, name, loc);
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariableImplementation(CodeStream &os, const std::string &type, const std::string &name,
+                                              VarLocation loc, VarAccess) const
+{
+    genVariableImplementation(os, type, name, loc);
+}
+//--------------------------------------------------------------------------
+MemAlloc Backend::genKernelVariableAllocation(CodeStream &os, const std::string &type, const std::string &name,
+                                              VarLocation loc, VarAccess, const std::vector<unsigned int> &size) const
+{
+    return genVariableAllocation(os, type, name, loc, Utils::getFlattenedKernelSize(size));
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariableFree(CodeStream &os, const std::string &name,
+                                    VarLocation loc, VarAccess) const
+{
+    genVariableFree(os, name, loc);
+}
+//--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &, 
                                             const std::string &type, const std::string &name, VarLocation) const
 {
@@ -830,6 +854,18 @@ void Backend::genVariablePush(CodeStream&, const std::string&, const std::string
 void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
 {
     assert(!getPreferences().automaticCopy);
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariablePush(CodeStream &os, const std::string &type, const std::string &name,
+                                    VarLocation loc, VarAccess, bool autoInitialized, const std::vector<unsigned int> &size) const
+{
+    genVariablePush(os, type, name, loc, autoInitialized, Utils::getFlattenedKernelSize(size));
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelVariablePull(CodeStream &os, const std::string &type, const std::string &name,
+                                    VarLocation loc, VarAccess, const std::vector<unsigned int> &size) const
+{
+    genVariablePull(os, type, name, loc, Utils::getFlattenedKernelSize(size));
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const

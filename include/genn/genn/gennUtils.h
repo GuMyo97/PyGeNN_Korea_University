@@ -46,6 +46,8 @@ GENN_EXPORT bool isTypePointerToPointer(const std::string &type);
 //--------------------------------------------------------------------------
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);
 
+GENN_EXPORT size_t getFlattenedKernelSize(const std::vector<unsigned int> &size);
+
 //--------------------------------------------------------------------------
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
 //--------------------------------------------------------------------------

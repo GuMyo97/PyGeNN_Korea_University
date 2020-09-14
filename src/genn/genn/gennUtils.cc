@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <numeric>
 
 // GeNN includes
 #include "models.h"
@@ -92,5 +93,10 @@ std::string getUnderlyingType(const std::string &type)
     else {
         return type.substr(0, type.length() - 1);
     }
+}
+//--------------------------------------------------------------------------
+size_t getFlattenedKernelSize(const std::vector<unsigned int> &size)
+{
+    return std::accumulate(size.cbegin(), size.cend(), 1, std::multiplies<unsigned int>());
 }
 }   // namespace utils

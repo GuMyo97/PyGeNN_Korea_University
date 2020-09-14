@@ -229,14 +229,32 @@ MemAlloc genVariable(const BackendBase &backend, CodeStream &definitionsVar, Cod
 {
     // Generate push and pull functions
     genVarPushPullScope(definitionsFunc, push, pull, loc, backend.getPreferences().automaticCopy, name, statePushPullFunction,
-        [&]()
-        {
-            backend.genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
-        });
+                        [&]()
+                        {
+                            backend.genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
+                        });
 
     // Generate variables
     return backend.genArray(definitionsVar, definitionsInternal, runner, allocations, free,
                             type, name, loc, count);
+}
+//-------------------------------------------------------------------------
+MemAlloc genKernel(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsFunc,
+                   CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                   CodeStream &push, CodeStream &pull, const std::string &type, const std::string &name,
+                   VarLocation loc, VarAccess access, bool autoInitialized, 
+                   const std::vector<unsigned int> &size, std::vector<std::string> &statePushPullFunction)
+{
+    // Generate push and pull functions
+    genVarPushPullScope(definitionsFunc, push, pull, loc, backend.getPreferences().automaticCopy, name, statePushPullFunction,
+                    [&]()
+                    {
+                        backend.genKernelVariablePushPull(push, pull, type, name, loc, access, autoInitialized, size);
+                    });
+
+    // Generate variables
+    return backend.genKernel(definitionsVar, definitionsInternal, runner, allocations, free,
+                             type, name, loc, access, size);
 }
 //-------------------------------------------------------------------------
 void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &backend, CodeStream &definitionsVar,
@@ -1018,10 +1036,6 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             }
             // Otherwise, if weights are kernel-based
             else if(s.second.getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                // Calculate size of kernel
-                const size_t size = std::accumulate(s.second.getKernelSize().cbegin(), s.second.getKernelSize().cend(), 
-                                                    1, std::multiplies<unsigned int>());
-
                 // Loop through variables
                 for(size_t i = 0; i < wuVars.size(); i++) {
                     // If there is a weight initializer
@@ -1030,9 +1044,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                     }
 
                     // Generate variable
-                    mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                       runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
-                                       s.second.getWUVarLocation(i), false, size, synapseGroupStatePushPullFunctions);
+                    mem += genKernel(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                     runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
+                                     s.second.getWUVarLocation(i), wuVars[i].access, false, s.second.getKernelSize(), synapseGroupStatePushPullFunctions);
                 }
             }
         }
