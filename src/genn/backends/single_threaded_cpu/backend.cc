@@ -790,20 +790,10 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << "merged" << suffix << "Group" << mergedGroupIdx << "[" << groupIdx << "]." << fieldName << " = " << egpName << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
-{
-    return type;
-}
-//--------------------------------------------------------------------------
 std::string Backend::getMergedGroupSimRNGType() const
 {
     assert(false);
     return "";
-}
-//--------------------------------------------------------------------------
-std::string Backend::getMergedGroupKernelType(const std::string &type, VarAccess) const
-{
-    return type + "*";
 }
 //--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const

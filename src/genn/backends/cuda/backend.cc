@@ -1258,11 +1258,6 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << ", (sizeof(" << structName << ") * (" << groupIdx << ")) + offsetof(" << structName << ", " << fieldName << ")));" << std::endl;
 }
 //--------------------------------------------------------------------------
-std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
-{
-    return type;
-}
-//--------------------------------------------------------------------------
 std::string Backend::getMergedGroupKernelType(const std::string &type, VarAccess access) const
 {
     // If variable is read/write, pass it to kernel using a raw pointer

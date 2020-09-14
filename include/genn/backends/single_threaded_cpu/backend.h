@@ -94,13 +94,13 @@ public:
                                                const std::string &egpName) const override;
 
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
-    virtual std::string getMergedGroupFieldHostType(const std::string &type) const override;
+    virtual std::string getMergedGroupFieldHostType(const std::string &type) const override { return type; }
 
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::string getMergedGroupSimRNGType() const override;
 
     //! When generating merged structures, what type to use for kernel variables 
-    virtual std::string getMergedGroupKernelType(const std::string &type, VarAccess access) const override;
+    virtual std::string getMergedGroupKernelType(const std::string &type, VarAccess) const override { return type; }
 
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
@@ -110,10 +110,12 @@ public:
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+
     virtual void genKernelVariablePush(CodeStream &os, const std::string &type, const std::string &name,
                                        VarLocation loc, VarAccess access, bool autoInitialized, const std::vector<unsigned int> &size) const override;
     virtual void genKernelVariablePull(CodeStream &os, const std::string &type, const std::string &name,
                                        VarLocation loc, VarAccess access, const std::vector<unsigned int> &size) const override;
+
     virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
 
