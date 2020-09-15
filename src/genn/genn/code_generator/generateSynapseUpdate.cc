@@ -96,17 +96,16 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
         }
         else if(kernelSize.size() == 2) {
             // Generate texture coordinates
-            const std::string texCoord = synapseSubs["id_kernel_0"] + ", " + synapseSubs["id_kernel_1"];
+            const std::string texCoord = synapseSubs["id_kernel_1"] + ", " + synapseSubs["id_kernel_0"];
             
             // Substitute vars for calls to tex2D
             for(const auto &v : wu->getVars()) {
                 synapseSubs.addVarSubstitution(v.name, "tex2D<" + v.type + ">(group->" + v.name + ", " + texCoord + ")");
             }
-            //synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", "[kernelInd]"); 
         }
         else if(kernelSize.size() == 3) {
             // Generate texture coordinates
-            const std::string texCoord = synapseSubs["id_kernel_0"] + ", " + synapseSubs["id_kernel_1"] + ", " + synapseSubs["id_kernel_2"];
+            const std::string texCoord = synapseSubs["id_kernel_2"] + ", " + synapseSubs["id_kernel_1"] + ", " + synapseSubs["id_kernel_0"];
 
             // Substitute vars for calls to tex3D
             for(const auto &v : wu->getVars()) {
@@ -115,7 +114,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
         }
         else {
             // Generate first two dimensions of texture coordinate
-            const std::string texCoord2D = synapseSubs["id_kernel_0"] + ", " + synapseSubs["id_kernel_1"];
+            const std::string texCoord2D = synapseSubs["id_kernel_1"] + ", " + synapseSubs["id_kernel_0"];
 
             os << "const unsigned int kernelDepth = ";
             const auto &kernelSize = sg.getArchetype().getKernelSize();
@@ -143,7 +142,7 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
 
             // Substitute vars for calls to tex3D
             for(const auto &v : wu->getVars()) {
-                synapseSubs.addVarSubstitution(v.name, "tex3D<" + v.type + ">(group->" + v.name + ", " + texCoord2D + ", kernelDepth)");
+                synapseSubs.addVarSubstitution(v.name, "tex3D<" + v.type + ">(group->" + v.name + ", kernelDepth, " + texCoord2D + ")");
             }
         }
         //const auto dimensionality = Utils::getKernelDimensionality(sg.getArchetype().getKernelSize());
