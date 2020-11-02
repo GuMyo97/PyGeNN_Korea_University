@@ -19,17 +19,17 @@ using namespace CodeGenerator;
 namespace
 {
 void genInitSpikeCount(CodeStream &os, const BackendBase &backend,
-                       const Substitutions &popSubs, const NeuronInitGroupMerged &ng, bool spikeEvent)
+                       const Substitutions &popSubs, NeuronInitGroupMerged &ng, bool spikeEvent)
 {
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
         // Generate variable initialisation code
         backend.genPopVariableInit(os, popSubs,
-            [&ng, spikeEvent] (CodeStream &os, Substitutions &)
+            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &)
             {
-                // Get variable name
-                const char *spikeCntName = spikeEvent ? "spkCntEvnt" : "spkCnt";
+                // Get correct spike count
+                const std::string spikeCount = spikeEvent ? ng.getSpikeEventCount() : ng.getSpikeCount() ;
 
                 // Is delay required
                 const bool delayRequired = spikeEvent ?
@@ -40,11 +40,11 @@ void genInitSpikeCount(CodeStream &os, const BackendBase &backend,
                     os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                     {
                         CodeStream::Scope b(os);
-                        os << "group->" << spikeCntName << "[d] = 0;" << std::endl;
+                        os << spikeCount << "[d] = 0;" << std::endl;
                     }
                 }
                 else {
-                    os << "group->" << spikeCntName << "[0] = 0;" << std::endl;
+                    os << spikeCount << "[0] = 0;" << std::endl;
                 }
             });
     }
@@ -59,10 +59,10 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend,
     if(initRequired) {
         // Generate variable initialisation code
         backend.genVariableInit(os, ng.getNumNeurons(), "id", popSubs,
-            [&ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
+            [&ng, &backend, spikeEvent] (CodeStream &os, Substitutions &varSubs)
             {
                 // Get variable name
-                const char *spikeName = spikeEvent ? "spkEvnt" : "spk";
+                const std::string spike = spikeEvent ? ng.getSpikeEvents() : ng.getSpikes() ;
 
                 // Is delay required
                 const bool delayRequired = spikeEvent ?
@@ -73,11 +73,11 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend,
                     os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                     {
                         CodeStream::Scope b(os);
-                        os << "group->" << spikeName << "[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = 0;" << std::endl;
+                        os << spike << "[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = 0;" << std::endl;
                     }
                 }
                 else {
-                    os << "group->" << spikeName << "[" << varSubs["id"] << "] = 0;" << std::endl;
+                    os << spike << "[" << varSubs["id"] << "] = 0;" << std::endl;
                 }
             });
     }
@@ -227,18 +227,18 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             if(ng.getArchetype().isSpikeTimeRequired()) {
                 // Generate variable initialisation code
                 backend.genVariableInit(os, ng.getNumNeurons(), "id", popSubs,
-                    [&ng] (CodeStream &os, Substitutions &varSubs)
+                    [&backend, &ng] (CodeStream &os, Substitutions &varSubs)
                     {
                         // Is delay required
                         if(ng.getArchetype().isDelayRequired()) {
                             os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                os << "group->sT[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
+                                os << ng.getSpikeTimes() << "[(d * " << ng.getNumNeurons() << ") + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
                             }
                         }
                         else {
-                            os << "group->sT[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
+                            os << ng.getSpikeTimes() << "[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
                         }
                     });
             }
@@ -246,9 +246,9 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             // If neuron group requires delays, zero spike queue pointer
             if(ng.getArchetype().isDelayRequired()) {
                 backend.genPopVariableInit(os, popSubs,
-                    [](CodeStream &os, Substitutions &)
+                    [&backend, &ng](CodeStream &os, Substitutions &)
                     {
-                        os << "*group->spkQuePtr = 0;" << std::endl;
+                        os << "*" << ng.getSpikeQueuePointer() << " = 0;" << std::endl;
                     });
             }
 

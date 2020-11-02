@@ -149,7 +149,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
     
             // Also read spike time into local variable
             if(ng.getArchetype().isSpikeTimeRequired()) {
-                os << model.getTimePrecision() << " lsT = group->sT[";
+                os << model.getTimePrecision() << " lsT = " << ng.getSpikeTimes() << "[";
                 if (ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
@@ -451,7 +451,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                         // If spike timing is required, copy spike time from register
                         if(ng.getArchetype().isSpikeTimeRequired()) {
-                            os << "group->sT[writeDelayOffset + " << popSubs["id"] << "] = lsT;" << std::endl;
+                            os << ng.getSpikeTimes() << "[writeDelayOffset + " << popSubs["id"] << "] = lsT;" << std::endl;
                         }
 
                         // Copy presynaptic WUM variables between delay slots

@@ -291,7 +291,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy global RNG stream to local and use pointer to this for rng
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGPreamble(os, popSubs, "group->rng[" + popSubs["id"] + "]");
+                    genPopulationRNGPreamble(os, popSubs, ng.getSimRNG() + "[" + popSubs["id"] + "]");
                 }
 
                 simHandler(os, ng, popSubs,
@@ -308,7 +308,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy local stream back to local
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGPostamble(os, "group->rng[" + popSubs["id"] + "]");
+                    genPopulationRNGPostamble(os, ng.getSimRNG() + "[" + popSubs["id"] + "]");
                 }
             }
 
@@ -321,9 +321,9 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     os << "if (shSpkEvntCount > 0)";
                     {
                         CodeStream::Scope b(os);
-                        os << "shPosSpkEvnt = " << getAtomic("unsigned int") << "(&group->spkCntEvnt";
+                        os << "shPosSpkEvnt = " << getAtomic("unsigned int") << "(&" << ng.getSpikeEventCount();
                         if(ng.getArchetype().isDelayRequired()) {
-                            os << "[*group->spkQuePtr], shSpkEvntCount);" << std::endl;
+                            os << "[*" << ng.getSpikeQueuePointer() << "], shSpkEvntCount);" << std::endl;
                         }
                         else {
                             os << "[0], shSpkEvntCount);" << std::endl;
@@ -340,9 +340,9 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     os << "if (shSpkCount > 0)";
                     {
                         CodeStream::Scope b(os);
-                        os << "shPosSpk = " << getAtomic("unsigned int") << "(&group->spkCnt";
+                        os << "shPosSpk = " << getAtomic("unsigned int") << "(&" << ng.getSpikeCount();
                         if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
-                            os << "[*group->spkQuePtr], shSpkCount);" << std::endl;
+                            os << "[*" << ng.getSpikeQueuePointer() << "], shSpkCount);" << std::endl;
                         }
                         else {
                             os << "[0], shSpkCount);" << std::endl;
@@ -357,7 +357,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                 os << "if(" << getThreadID() << " < shSpkEvntCount)";
                 {
                     CodeStream::Scope b(os);
-                    os << "group->spkEvnt[" << queueOffset << "shPosSpkEvnt + " << getThreadID() << "] = shSpkEvnt[" << getThreadID() << "];" << std::endl;
+                    os << ng.getSpikeEvents() << "[" << queueOffset << "shPosSpkEvnt + " << getThreadID() << "] = shSpkEvnt[" << getThreadID() << "];" << std::endl;
                 }
             }
 
@@ -375,9 +375,9 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     wuSubs.addVarSubstitution("id", "n", true);
                     wuVarUpdateHandler(os, ng, wuSubs);
 
-                    os << "group->spk[" << queueOffsetTrueSpk << "shPosSpk + " << getThreadID() << "] = n;" << std::endl;
+                    os << ng.getSpikes() << "[" << queueOffsetTrueSpk << "shPosSpk + " << getThreadID() << "] = n;" << std::endl;
                     if(ng.getArchetype().isSpikeTimeRequired()) {
-                        os << "group->sT[" << queueOffset << "n] = t;" << std::endl;
+                        os << ng.getSpikeTimes() << "[" << queueOffset << "n] = t;" << std::endl;
                     }
                 }
             }
@@ -710,7 +710,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 // If population RNGs are initialised on device and this neuron is going to require one, 
                 // Initialise RNG using GLOBAL thread id for sequence
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGInit(os, "group->rng[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
+                    genPopulationRNGInit(os, ng.getSimRNG() + "[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
                 }
 
                 // If this neuron requires an RNG for initialisation,

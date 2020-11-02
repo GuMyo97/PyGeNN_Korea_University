@@ -51,8 +51,9 @@ public:
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
 
 
-    GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups))
+    GroupMerged(size_t index, const std::string &precision, const BackendBase &backend,
+                const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)), m_Backend(backend)
     {}
 
     //------------------------------------------------------------------------
@@ -159,6 +160,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
+    const BackendBase &getBackend() const { return m_Backend; }
+
     //! Helper to test whether parameter values are heterogeneous within merged group
     template<typename P>
     bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
@@ -212,6 +215,16 @@ protected:
 
         // All groups must have same value so use value directly
         return archetypeValue;
+    }
+
+    std::string getPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+    {
+        // Add field
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+
+        // Return name of struct field
+        return "group->" + name;
     }
 
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
@@ -424,6 +437,7 @@ private:
     const std::string m_LiteralSuffix;
     std::map<std::string, Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
+    const BackendBase &m_Backend;
 };
 
 //----------------------------------------------------------------------------
@@ -463,7 +477,32 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    //! Get code string for accessing number of neurons - may be a literal or 
+    //! group structure member access, in which case, required field will be added
     std::string getNumNeurons();
+
+    //! Get group structure member access for spike count
+    std::string getSpikeCount();
+
+    //! Get group structure member access for spikes
+    std::string getSpikes();
+
+    //! Get group structure member access for spike event count
+    std::string getSpikeEventCount();
+
+    //! Get group structure member access for spike events
+    std::string getSpikeEvents();
+
+    //! Get group structure member access to spike queue pointer
+    std::string getSpikeQueuePointer();
+
+    //! Get group structure member access to spike times
+    std::string getSpikeTimes();
+
+    //! Get group structure member access simulation RNG
+    std::string getSimRNG();
+
+
 
 
     //! Should the parameter be implemented heterogeneously?
@@ -687,6 +726,8 @@ private:
     //------------------------------------------------------------------------
     std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> m_SortedMergedInSyns;
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
+    const std::string m_TimePrecision;
+    
 };
 
 //----------------------------------------------------------------------------
