@@ -258,7 +258,71 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Memo
     
     const ModelSpecInternal &model = modelMerged.getModel();
 
-    // Generate struct definitions
+    // Create string stream to generate body into so it can be written after structures
+    std::ostringstream bodyStream;
+    CodeStream body(bodyStream);
+
+    // Generate reset kernel to be run before the neuron kernel
+    size_t idPreNeuronReset = 0;
+    body << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "()";
+    {
+        CodeStream::Scope b(body);
+
+        body << "const unsigned int id = " << getKernelBlockSize(KernelPreNeuronReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+        genPreNeuronResetKernel(body, modelMerged, idPreNeuronReset);
+    }
+    body << std::endl;
+
+    size_t idStart = 0;
+    body << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        body << ", unsigned int recordingTimestep";
+    }
+    body << ")" << std::endl;
+    {
+        CodeStream::Scope b(body);
+        body << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+        kernelSubs.addVarSubstitution("t", "t");
+
+        genNeuronUpdateKernel(body, kernelSubs, modelMerged, simHandler, wuVarUpdateHandler, idStart);
+    }
+
+    body << "void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        body << ", unsigned int recordingTimestep";
+    }
+    body << ")";
+    {
+        CodeStream::Scope b(body);
+
+        // Push any required EGPS
+        pushEGPHandler(body);
+
+        if(idPreNeuronReset > 0) {
+            CodeStream::Scope b(body);
+            genKernelDimensions(body, KernelPreNeuronReset, idPreNeuronReset);
+            body << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>();" << std::endl;
+            body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+        if(idStart > 0) {
+            CodeStream::Scope b(body);
+
+            Timer t(body, "neuronUpdate", model.isTimingEnabled());
+
+            genKernelDimensions(body, KernelNeuronUpdate, idStart);
+            body << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t";
+            if(model.isRecordingInUse()) {
+                body << ", recordingTimestep";
+            }
+            body << ");" << std::endl;
+            body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+    }
+
+    // Now that data required in structure is determined, generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
 
@@ -279,67 +343,10 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Memo
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelNeuronUpdate), totalConstMem,
                                   modelMerged.getMergedNeuronUpdateGroups(),
                                   [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
+    
+    // Write body back to stream
     os << std::endl;
-
-    // Generate reset kernel to be run before the neuron kernel
-    size_t idPreNeuronReset = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "()";
-    {
-        CodeStream::Scope b(os);
-
-        os << "const unsigned int id = " << getKernelBlockSize(KernelPreNeuronReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
-
-        genPreNeuronResetKernel(os, modelMerged, idPreNeuronReset);
-    }
-    os << std::endl;
-
-    size_t idStart = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << model.getTimePrecision() << " t";
-    if(model.isRecordingInUse()) {
-        os << ", unsigned int recordingTimestep";
-    }
-    os << ")" << std::endl;
-    {
-        CodeStream::Scope b(os);
-        os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-
-        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-        kernelSubs.addVarSubstitution("t", "t");
-
-        genNeuronUpdateKernel(os, kernelSubs, modelMerged, simHandler, wuVarUpdateHandler, idStart);
-    }
-
-    os << "void updateNeurons(" << model.getTimePrecision() << " t";
-    if(model.isRecordingInUse()) {
-        os << ", unsigned int recordingTimestep";
-    }
-    os << ")";
-    {
-        CodeStream::Scope b(os);
-
-        // Push any required EGPS
-        pushEGPHandler(os);
-
-        if(idPreNeuronReset > 0) {
-            CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
-            os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>();" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-        if(idStart > 0) {
-            CodeStream::Scope b(os);
-
-            Timer t(os, "neuronUpdate", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelNeuronUpdate, idStart);
-            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t";
-            if(model.isRecordingInUse()) {
-                os << ", recordingTimestep";
-            }
-            os << ");" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-    }
+    os << bodyStream.str();
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
@@ -490,12 +497,155 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
                       SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
+    const ModelSpecInternal &model = modelMerged.getModel();
+
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << std::endl;
 
-    // Generate struct definitions
+    // Create string stream to generate body into so it can be written after structures
+    std::ostringstream bodyStream;
+    CodeStream body(bodyStream);
+
+    // If device RNG is required, generate kernel to initialise it
+    if(isGlobalDeviceRNGRequired(modelMerged)) {
+        body << "extern \"C\" __global__ void initializeRNGKernel(unsigned long long deviceRNGSeed)";
+        {
+            CodeStream::Scope b(body);
+            body << "if(threadIdx.x == 0)";
+            {
+                CodeStream::Scope b(body);
+                body << "curand_init(deviceRNGSeed, 0, 0, &d_rng);" << std::endl;
+            }
+        }
+        body << std::endl;
+    }
+
+    // init kernel header
+    body << "extern \"C\" __global__ void " << KernelNames[KernelInitialize] << "(unsigned long long deviceRNGSeed)";
+
+    // initialization kernel code
+    size_t idInitStart = 0;
+    {
+        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+
+        // common variables for all cases
+        CodeStream::Scope b(body);
+
+        body << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
+        genInitializeKernel(body, kernelSubs, modelMerged, localNGHandler, 
+                            sgDenseInitHandler, sgSparseConnectHandler, 
+                            sgKernelInitHandler, idInitStart);
+    }
+    const size_t numStaticInitThreads = idInitStart;
+
+    // Sparse initialization kernel code
+    size_t idSparseInitStart = 0;
+    if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
+        body << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
+        {
+            CodeStream::Scope b(body);
+
+            // common variables for all cases
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+
+            body << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            genInitializeSparseKernel(body, kernelSubs, modelMerged, sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
+        }
+    }
+
+    body << "void initialize()";
+    {
+        CodeStream::Scope b(body);
+
+        body << "unsigned long long deviceRNGSeed = 0;" << std::endl;
+
+        // If any sort of on-device global RNG is required
+        const bool simRNGRequired = std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
+                                                [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); });
+        const bool globalDeviceRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
+        if(simRNGRequired || globalDeviceRNGRequired) {
+            // If no seed is specified
+            if (model.getSeed() == 0) {
+                CodeStream::Scope b(body);
+
+                // Use system randomness to generate one unsigned long long worth of seed words
+                body << "std::random_device seedSource;" << std::endl;
+                body << "uint32_t *deviceRNGSeedWord = reinterpret_cast<uint32_t*>(&deviceRNGSeed);" << std::endl;
+                body << "for(int i = 0; i < " << sizeof(unsigned long long) / sizeof(uint32_t) << "; i++)";
+                {
+                    CodeStream::Scope b(body);
+                    body << "deviceRNGSeedWord[i] = seedSource();" << std::endl;
+                }
+            }
+            // Otherwise, use model seed
+            else {
+                body << "deviceRNGSeed = " << model.getSeed() << ";" << std::endl;
+            }
+
+            // If global RNG is required, launch kernel to initalize it
+            if (globalDeviceRNGRequired) {
+                body << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
+                body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+        }
+
+        for(const auto &s : model.getSynapseGroups()) {
+            // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
+            if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
+                body << "CHECK_CUDA_ERRORS(cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
+            }
+            // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
+            else if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
+                body << "CHECK_CUDA_ERRORS(cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
+            }
+        }
+
+        // Push any required EGPs
+        initPushEGPHandler(body);
+
+        // If there are any initialisation threads
+        if(idInitStart > 0) {
+            CodeStream::Scope b(body);
+            {
+                Timer t(body, "init", model.isTimingEnabled(), true);
+
+                genKernelDimensions(body, KernelInitialize, idInitStart);
+                body << KernelNames[KernelInitialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
+                body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+        }
+    }
+    body << std::endl;
+    body << "void initializeSparse()";
+    {
+        CodeStream::Scope b(body);
+
+        // Push any required EGPs
+        initSparsePushEGPHandler(body);
+
+        // Copy all uninitialised state variables to device
+        if(!getPreferences().automaticCopy) {
+            body << "copyStateToDevice(true);" << std::endl;
+            body << "copyConnectivityToDevice(true);" << std::endl << std::endl;
+        }
+
+        // If there are any sparse initialisation threads
+        if(idSparseInitStart > 0) {
+            CodeStream::Scope b(body);
+            {
+                Timer t(body, "initSparse", model.isTimingEnabled(), true);
+
+                genKernelDimensions(body, KernelInitializeSparse, idSparseInitStart);
+                body << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
+                body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+        }
+    }
+
+    // Now that data required in structure is determined, generate struct definitions
     modelMerged.genMergedNeuronInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
@@ -512,7 +662,6 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
-    const ModelSpecInternal &model = modelMerged.getModel();
     size_t totalConstMem = 0;
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelInitialize), totalConstMem,
                                   modelMerged.getMergedNeuronInitGroups(), [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
@@ -522,144 +671,10 @@ void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces
     // Generate data structure for accessing merged groups from within sparse initialisation kernel
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelInitializeSparse), totalConstMem,
                                   modelMerged.getMergedSynapseSparseInitGroups(), [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
+    
+    // Write body back to stream
     os << std::endl;
-
-    // If device RNG is required, generate kernel to initialise it
-    if(isGlobalDeviceRNGRequired(modelMerged)) {
-        os << "extern \"C\" __global__ void initializeRNGKernel(unsigned long long deviceRNGSeed)";
-        {
-            CodeStream::Scope b(os);
-            os << "if(threadIdx.x == 0)";
-            {
-                CodeStream::Scope b(os);
-                os << "curand_init(deviceRNGSeed, 0, 0, &d_rng);" << std::endl;
-            }
-        }
-        os << std::endl;
-    }
-
-    // init kernel header
-    os << "extern \"C\" __global__ void " << KernelNames[KernelInitialize] << "(unsigned long long deviceRNGSeed)";
-
-    // initialization kernel code
-    size_t idInitStart = 0;
-    {
-        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-
-        // common variables for all cases
-        CodeStream::Scope b(os);
-
-        os << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, 
-                            sgDenseInitHandler, sgSparseConnectHandler, 
-                            sgKernelInitHandler, idInitStart);
-    }
-    const size_t numStaticInitThreads = idInitStart;
-
-    // Sparse initialization kernel code
-    size_t idSparseInitStart = 0;
-    if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
-        {
-            CodeStream::Scope b(os);
-
-            // common variables for all cases
-            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-
-            os << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
-        }
-    }
-
-    os << "void initialize()";
-    {
-        CodeStream::Scope b(os);
-
-        os << "unsigned long long deviceRNGSeed = 0;" << std::endl;
-
-        // If any sort of on-device global RNG is required
-        const bool simRNGRequired = std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                                                [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); });
-        const bool globalDeviceRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
-        if(simRNGRequired || globalDeviceRNGRequired) {
-            // If no seed is specified
-            if (model.getSeed() == 0) {
-                CodeStream::Scope b(os);
-
-                // Use system randomness to generate one unsigned long long worth of seed words
-                os << "std::random_device seedSource;" << std::endl;
-                os << "uint32_t *deviceRNGSeedWord = reinterpret_cast<uint32_t*>(&deviceRNGSeed);" << std::endl;
-                os << "for(int i = 0; i < " << sizeof(unsigned long long) / sizeof(uint32_t) << "; i++)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "deviceRNGSeedWord[i] = seedSource();" << std::endl;
-                }
-            }
-            // Otherwise, use model seed
-            else {
-                os << "deviceRNGSeed = " << model.getSeed() << ";" << std::endl;
-            }
-
-            // If global RNG is required, launch kernel to initalize it
-            if (globalDeviceRNGRequired) {
-                os << "initializeRNGKernel<<<1, 1>>>(deviceRNGSeed);" << std::endl;
-                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-            }
-        }
-
-        for(const auto &s : model.getSynapseGroups()) {
-            // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
-            if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
-                os << "CHECK_CUDA_ERRORS(cudaMemset(d_gp" << s.first << ", 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
-            }
-            // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
-            else if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                os << "CHECK_CUDA_ERRORS(cudaMemset(d_colLength" << s.first << ", 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-            }
-        }
-
-        // Push any required EGPs
-        initPushEGPHandler(os);
-
-        // If there are any initialisation threads
-        if(idInitStart > 0) {
-            CodeStream::Scope b(os);
-            {
-                Timer t(os, "init", model.isTimingEnabled(), true);
-
-                genKernelDimensions(os, KernelInitialize, idInitStart);
-                os << KernelNames[KernelInitialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
-                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-            }
-        }
-    }
-    os << std::endl;
-    os << "void initializeSparse()";
-    {
-        CodeStream::Scope b(os);
-
-        // Push any required EGPs
-        initSparsePushEGPHandler(os);
-
-        // Copy all uninitialised state variables to device
-        if(!getPreferences().automaticCopy) {
-            os << "copyStateToDevice(true);" << std::endl;
-            os << "copyConnectivityToDevice(true);" << std::endl << std::endl;
-        }
-
-        // If there are any sparse initialisation threads
-        if(idSparseInitStart > 0) {
-            CodeStream::Scope b(os);
-            {
-                Timer t(os, "initSparse", model.isTimingEnabled(), true);
-
-                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
-                os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
-                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-            }
-        }
-    }
+    os << bodyStream.str();
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) const

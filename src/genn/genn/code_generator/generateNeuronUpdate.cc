@@ -199,7 +199,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
                     os << backend.getPointerPrefix() << model.getPrecision() << " *denDelayFront = ";
-                    os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * group->numNeurons) + " << popSubs["id"] << "];" << std::endl;
+                    os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * " << ng.getNumNeurons() << ") + " << popSubs["id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn += *denDelayFront;" << std::endl;

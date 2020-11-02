@@ -702,10 +702,10 @@ public:
     // Public API
     //------------------------------------------------------------------------
     //! Get the expression to calculate the queue offset for accessing state of variables this timestep
-    std::string getCurrentQueueOffset() const;
+    std::string getCurrentQueueOffset();
 
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
-    std::string getPrevQueueOffset() const;
+    std::string getPrevQueueOffset();
 
     //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
     bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;

@@ -285,7 +285,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
             os << std::endl;
 
             // Call handler to generate generic neuron code
-            os << "if(" << popSubs["id"] << " < group->numNeurons)";
+            os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
             {
                 CodeStream::Scope b(os);
 
@@ -703,7 +703,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
         [this, neuronInitHandler](CodeStream &os, NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
-            os << "if(" << popSubs["id"] << " < group->numNeurons)";
+            os << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
             {
                 CodeStream::Scope b(os);
 

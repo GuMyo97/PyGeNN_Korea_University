@@ -163,7 +163,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
                 os << std::endl;
 
-                os << "for(unsigned int i = 0; i < group->numNeurons; i++)";
+                os << "for(unsigned int i = 0; i < " << n.getNumNeurons() << "; i++)";
                 {
                     CodeStream::Scope b(os);
 

@@ -538,16 +538,16 @@ CodeGenerator::NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, co
 
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentQueueOffset() const
+std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentQueueOffset()
 {
     assert(getArchetype().isDelayRequired());
-    return "(*group->spkQuePtr * group->numNeurons)";
+    return "(*group->spkQuePtr * " + getNumNeurons() + ")";
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getPrevQueueOffset() const
+std::string CodeGenerator::NeuronUpdateGroupMerged::getPrevQueueOffset()
 {
     assert(getArchetype().isDelayRequired());
-    return "(((*group->spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * group->numNeurons)";
+    return "(((*group->spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * " + getNumNeurons() + ")";
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
