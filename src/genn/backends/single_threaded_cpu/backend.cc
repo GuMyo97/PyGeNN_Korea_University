@@ -128,7 +128,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             
         }
         // Loop through merged neuron update groups
-        for(const auto &n : modelMerged.getMergedNeuronUpdateGroups()) {
+        for(auto &n : modelMerged.getMergedNeuronUpdateGroups()) {
             CodeStream::Scope b(os);
             os << "// merged neuron update group " << n.getIndex() << std::endl;
             os << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
@@ -141,7 +141,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 // If spike or spike-like event recording is in use
                 if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
                     // Calculate number of words which will be used to record this population's spikes
-                    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+                    os << "const unsigned int numRecordingWords = (" << n.getNumNeurons() << " + 31) / 32;" << std::endl;
 
                     // Zero spike recording buffer
                     if(n.getArchetype().isSpikeRecordingEnabled()) {

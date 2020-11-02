@@ -190,7 +190,7 @@ void BackendSIMT::addPresynapticUpdateStrategy(PresynapticUpdateStrategySIMT::Ba
     s_PresynapticUpdateStrategies.push_back(strategy);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     // Loop through local neuron groups
     idStart = 0;
@@ -217,7 +217,7 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                         NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const
 {
     // If any neuron groups emit spike events
@@ -272,7 +272,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
     genParallelGroup<NeuronUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelNeuronUpdate)); },
-        [simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
+        [simHandler, wuVarUpdateHandler, this](CodeStream &os, NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             // If axonal delays are required
             if(ng.getArchetype().isDelayRequired()) {
@@ -421,7 +421,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPreSynapseResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genPreSynapseResetKernel(CodeStream &os, ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     // Loop through merged synapse groups
     idStart = 0;
@@ -446,7 +446,7 @@ void BackendSIMT::genPreSynapseResetKernel(CodeStream &os, const ModelSpecMerged
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                              PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                              PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const
 {
@@ -494,7 +494,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
     genParallelGroup<PresynapticUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(getNumPresynapticUpdateThreads(sg, getPreferences()), getKernelBlockSize(KernelPresynapticUpdate)); },
-        [wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this](CodeStream &os, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
+        [wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this](CodeStream &os, PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
         {
             // Get presynaptic update strategy to use for this synapse group
             const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
@@ -535,7 +535,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                               PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const
 {
     os << getSharedPrefix() << "unsigned int shSpk[" << getKernelBlockSize(KernelPostsynapticUpdate) << "];" << std::endl;
@@ -552,7 +552,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
     idStart = 0;
     genParallelGroup<PostsynapticUpdateGroupMerged>(os, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(getNumPostsynapticUpdateThreads(sg), getKernelBlockSize(KernelPostsynapticUpdate)); },
-        [postLearnHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
+        [postLearnHandler, this](CodeStream &os, PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
         {
             // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
             if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
@@ -629,7 +629,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
     );
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                            SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const
 {
     // Parallelise over synapse groups whose weight update models have code for synapse dynamics
@@ -637,7 +637,7 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
     genParallelGroup<SynapseDynamicsGroupMerged>(
         os, kernelSubs, modelMerged.getMergedSynapseDynamicsGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(getNumSynapseDynamicsThreads(sg), getKernelBlockSize(KernelSynapseDynamicsUpdate)); },
-        [synapseDynamicsHandler, &modelMerged, this](CodeStream &os, const SynapseDynamicsGroupMerged &sg, Substitutions &popSubs)
+        [synapseDynamicsHandler, &modelMerged, this](CodeStream &os, SynapseDynamicsGroupMerged &sg, Substitutions &popSubs)
         {
             // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
             if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
@@ -689,7 +689,7 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                       NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
                                       SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, 
                                       SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const
@@ -700,7 +700,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     genParallelGroup<NeuronInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelInitialize)); },
-        [this, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
+        [this, neuronInitHandler](CodeStream &os, NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->numNeurons)";
@@ -730,7 +730,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     genParallelGroup<SynapseDenseInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedSynapseDenseInitGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-        [this, synapseDenseInitHandler](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
+        [this, synapseDenseInitHandler](CodeStream &os, SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
         {
             os << "// only do this for existing postsynaptic neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
@@ -753,7 +753,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     os << "// Synapse groups with sparse connectivity" << std::endl;
     genParallelGroup<SynapseConnectivityInitGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-        [this, synapseConnectivityInitHandler, sgKernelInitHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
+        [this, synapseConnectivityInitHandler, sgKernelInitHandler](CodeStream &os, SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
         {
             os << "// only do this for existing presynaptic neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
@@ -856,7 +856,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                             SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
                                             size_t numInitializeThreads, size_t &idStart) const
 {
@@ -872,7 +872,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
     // Initialise weight update variables for synapse groups with sparse connectivity
     genParallelGroup<SynapseSparseInitGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseSparseInitGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(sg.getMaxConnections(), getKernelBlockSize(KernelInitializeSparse)); },
-        [this, synapseSparseInitHandler, numInitializeThreads](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)
+        [this, synapseSparseInitHandler, numInitializeThreads](CodeStream &os, SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)
         {
             // If this post synapse requires an RNG for initialisation,
             // make copy of global phillox RNG and skip ahead by thread id

@@ -163,25 +163,25 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    void genPreNeuronResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genPreNeuronResetKernel(CodeStream &os, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const;
 
-    void genPreSynapseResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genPreSynapseResetKernel(CodeStream &os, ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                     PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                     PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const;
-    void genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                      PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const;
-    void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                   SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
 
-    void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
                              SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, 
                              SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
    
-    void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+    void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
                                    SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
                                    size_t numInitializeThreads, size_t &idStart) const;
 
@@ -202,12 +202,12 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, std::vector<T> &groups, size_t &idStart,
                           GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
                           GroupHandler<T> handler) const
     {
         // Loop through groups
-        for(const auto &gMerge : groups) {
+        for(auto &gMerge : groups) {
             // Sum padded sizes of each group within merged group
             const size_t paddedSize = std::accumulate(
                 gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},

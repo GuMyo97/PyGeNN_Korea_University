@@ -82,10 +82,10 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Generate modules
     //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
     auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
-    auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
     generateSynapseUpdate(synapseUpdate, memorySpaces, modelMerged, backend);
     generateNeuronUpdate(neuronUpdate, memorySpaces, modelMerged, backend);
     generateInit(init, memorySpaces, modelMerged, backend);
+    auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
 
     // Generate support code module if the backend supports namespaces
     if (backend.supportsNamespace()) {

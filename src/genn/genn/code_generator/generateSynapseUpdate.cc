@@ -145,7 +145,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                          const ModelSpecMerged &modelMerged, const BackendBase &backend)
+                                          ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     if (backend.supportsNamespace()) {

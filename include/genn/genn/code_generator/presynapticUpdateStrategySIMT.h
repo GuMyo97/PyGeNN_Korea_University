@@ -37,17 +37,17 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const = 0;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const BackendSIMT &backend) const = 0;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                            const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const = 0;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const = 0;
 };
 
@@ -73,17 +73,17 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                            const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
 };
 
@@ -109,17 +109,17 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                            const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
 private:
@@ -153,17 +153,17 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                            const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
 };
 
@@ -189,17 +189,17 @@ public:
     //! How many neurons does each thread accumulate the outputs of into shared memory
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
-    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                            const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
-    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
 };
 }   // namespace PresynapticUpdateStrategySIMT

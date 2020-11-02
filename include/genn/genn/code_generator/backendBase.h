@@ -137,7 +137,7 @@ public:
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
     
     template<typename T>
-    using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
+    using GroupHandler = std::function <void(CodeStream &, T &, Substitutions&)> ;
 
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
     typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
@@ -151,7 +151,7 @@ public:
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
-    typedef std::function <void(CodeStream &, const NeuronUpdateGroupMerged &, Substitutions&,
+    typedef std::function <void(CodeStream &, NeuronUpdateGroupMerged &, Substitutions&,
                                 NeuronUpdateGroupMergedHandler, NeuronUpdateGroupMergedHandler)> NeuronGroupSimHandler;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
@@ -168,7 +168,7 @@ public:
         \param modelMerged              merged model to generate code for
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, 
+    virtual void genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, 
                                  HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
 
@@ -190,7 +190,7 @@ public:
         \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+    virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                   HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
@@ -205,7 +205,7 @@ public:
         \param sgDenseInitHandler           callback to write platform-independent code to initialize the synaptic state of a merged synapse group with 
                                             dense connectivity depending on parallelism strategy, "id_pre" or "id_post" variables may be provided to 
                                             to callback via Substitutions.*/
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+    virtual void genInit(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                          SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
                          SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;

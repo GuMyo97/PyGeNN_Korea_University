@@ -194,6 +194,26 @@ protected:
         }
     }
 
+    std::string getValueField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue)
+    {
+        // Get value of field in archetype group
+        const std::string archetypeValue = getFieldValue(getArchetype(), 0);
+
+        // Loop through remaining groups
+        for(size_t groupIndex = 1; groupIndex < getGroups().size(); groupIndex++) {
+            const G &group = getGroups()[groupIndex];
+
+            // If this group's field value differs - we need to pass this via struct field
+            if(getFieldValue(group, groupIndex) != archetypeValue) {
+                addField(type, name, getFieldValue);
+                return "group->" + name;
+            }
+        }
+
+        // All groups must have same value so use value directly
+        return archetypeValue;
+    }
+
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         // Add field to data structure
@@ -443,6 +463,9 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    std::string getNumNeurons();
+
+
     //! Should the parameter be implemented heterogeneously?
     bool isParamHeterogeneous(size_t index) const;
 

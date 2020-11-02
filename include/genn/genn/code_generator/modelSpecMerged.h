@@ -95,36 +95,47 @@ public:
 
     //! Get merged neuron groups which require updating
     const std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
+    std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups(){ return m_MergedNeuronUpdateGroups; }
 
     //! Get merged synapse groups which require presynaptic updates
     const std::vector<PresynapticUpdateGroupMerged> &getMergedPresynapticUpdateGroups() const{ return m_MergedPresynapticUpdateGroups; }
+    std::vector<PresynapticUpdateGroupMerged> &getMergedPresynapticUpdateGroups(){ return m_MergedPresynapticUpdateGroups; }
 
     //! Get merged synapse groups which require postsynaptic updates
     const std::vector<PostsynapticUpdateGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
+    std::vector<PostsynapticUpdateGroupMerged> &getMergedPostsynapticUpdateGroups(){ return m_MergedPostsynapticUpdateGroups; }
 
     //! Get merged synapse groups which require synapse dynamics
     const std::vector<SynapseDynamicsGroupMerged> &getMergedSynapseDynamicsGroups() const{ return m_MergedSynapseDynamicsGroups; }
+    std::vector<SynapseDynamicsGroupMerged> &getMergedSynapseDynamicsGroups(){ return m_MergedSynapseDynamicsGroups; }
 
     //! Get merged neuron groups which require initialisation
     const std::vector<NeuronInitGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
+    std::vector<NeuronInitGroupMerged> &getMergedNeuronInitGroups(){ return m_MergedNeuronInitGroups; }
 
     //! Get merged synapse groups with dense connectivity which require initialisation
     const std::vector<SynapseDenseInitGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
+    std::vector<SynapseDenseInitGroupMerged> &getMergedSynapseDenseInitGroups(){ return m_MergedSynapseDenseInitGroups; }
 
     //! Get merged synapse groups which require connectivity initialisation
     const std::vector<SynapseConnectivityInitGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
+    std::vector<SynapseConnectivityInitGroupMerged> &getMergedSynapseConnectivityInitGroups(){ return m_MergedSynapseConnectivityInitGroups; }
 
     //! Get merged synapse groups with sparse connectivity which require initialisation
     const std::vector<SynapseSparseInitGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
+    std::vector<SynapseSparseInitGroupMerged> &getMergedSynapseSparseInitGroups(){ return m_MergedSynapseSparseInitGroups; }
 
     //! Get merged neuron groups which require their spike queues updating
     const std::vector<NeuronSpikeQueueUpdateGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
+    std::vector<NeuronSpikeQueueUpdateGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups(){ return m_MergedNeuronSpikeQueueUpdateGroups; }
 
     //! Get merged synapse groups which require their dendritic delay updating
     const std::vector<SynapseDendriticDelayUpdateGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
+    std::vector<SynapseDendriticDelayUpdateGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups(){ return m_MergedSynapseDendriticDelayUpdateGroups; }
 
     //! Merged synapse groups which require host code to initialise their synaptic connectivity
     const std::vector<SynapseConnectivityHostInitGroupMerged> &getMergedSynapseConnectivityHostInitGroups() const{ return m_MergedSynapseConnectivityHostInitGroups; }
+    std::vector<SynapseConnectivityHostInitGroupMerged> &getMergedSynapseConnectivityHostInitGroups(){ return m_MergedSynapseConnectivityHostInitGroups; }
 
     void genMergedNeuronUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronUpdateGroups); }
     void genMergedPresynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticUpdateGroups); }

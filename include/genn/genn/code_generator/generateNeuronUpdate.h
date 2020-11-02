@@ -15,5 +15,5 @@ class ModelSpecMerged;
 namespace CodeGenerator
 {
 void generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                          const ModelSpecMerged &modelMerged, const BackendBase &backend);
+                          ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

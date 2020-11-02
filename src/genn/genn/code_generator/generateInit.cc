@@ -197,7 +197,7 @@ void genInitWUVarCode(CodeStream &os, const BackendBase &backend,
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                 const ModelSpecMerged &modelMerged, const BackendBase &backend)
+                                 ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
 

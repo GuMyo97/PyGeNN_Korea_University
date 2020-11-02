@@ -58,6 +58,14 @@ void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountR
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
+std::string CodeGenerator::NeuronGroupMergedBase::getNumNeurons()
+{
+    return getValueField("unsigned int", "numNeurons",
+                         [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+}
+//----------------------------------------------------------------------------
+
+
 bool CodeGenerator::NeuronGroupMergedBase::isParamHeterogeneous(size_t index) const
 {
     return isParamValueHeterogeneous(index, [](const NeuronGroupInternal &ng) { return ng.getParams(); });
@@ -209,9 +217,6 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
                              {
                                  return init ? a->canInitBeMerged(*b) : a->canBeMerged(*b);
                              });
-
-    addField("unsigned int", "numNeurons",
-              [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
 
     addPointerField("unsigned int", "spkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
     addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");

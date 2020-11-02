@@ -109,7 +109,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
 // CodeGenerator
 //--------------------------------------------------------------------------
 void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                         const ModelSpecMerged &modelMerged, const BackendBase &backend)
+                                         ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     if (backend.supportsNamespace()) {
@@ -127,7 +127,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
         },
         // Sim handler
-        [&backend, &modelMerged](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs,
+        [&backend, &modelMerged](CodeStream &os, NeuronUpdateGroupMerged &ng, Substitutions &popSubs,
                                  BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitTrueSpike,
                                  BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent)
         {
