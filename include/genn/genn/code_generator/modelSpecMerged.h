@@ -279,16 +279,16 @@ private:
             // Loop through fields
             for(const auto &f : mergedGroups.back().getFields()) {
                 // If field is an EGP, add record to merged EGPS
-                if(std::get<3>(f) == MergedGroup::FieldType::PointerEGP || std::get<3>(f) == MergedGroup::FieldType::ScalarEGP) {
+                if(std::get<3>(f.second) == MergedGroup::FieldType::PointerEGP || std::get<3>(f.second) == MergedGroup::FieldType::ScalarEGP) {
                     // Loop through groups within newly-created merged group
                     for(size_t groupIndex = 0; groupIndex < mergedGroups.back().getGroups().size(); groupIndex++) {
                         const auto &g = mergedGroups.back().getGroups()[groupIndex];
 
                         // Add reference to this group's variable to data structure
-                        m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
+                        m_MergedEGPs[std::get<2>(f.second)(g, groupIndex)].emplace(
                             std::piecewise_construct,
                             std::forward_as_tuple(MergedGroup::name),
-                            std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f)));
+                            std::forward_as_tuple(i, groupIndex, std::get<0>(f.second), std::get<1>(f.second)));
                     }
                 }
             }

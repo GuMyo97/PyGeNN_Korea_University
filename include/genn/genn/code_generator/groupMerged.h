@@ -67,14 +67,17 @@ public:
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
     //! Get group fields
-    const std::vector<Field> &getFields() const{ return m_Fields; }
+    const std::map<std::string, Field> &getFields() const{ return m_Fields; }
 
     //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
-        auto sortedFields = m_Fields;
+        std::vector<Field> sortedFields;
+        sortedFields.reserve(m_Fields.size());
+        std::transform(m_Fields.cbegin(), m_Fields.cend(), std::back_inserter(sortedFields),
+                       [](const std::map<std::string, Field>::value_type &f) { return f.second; });
         std::sort(sortedFields.begin(), sortedFields.end(),
                   [&backend](const Field &a, const Field &b)
                   {
@@ -194,7 +197,9 @@ protected:
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         // Add field to data structure
-        m_Fields.emplace_back(type, name, getFieldValue, fieldType);
+        m_Fields.emplace(std::piecewise_construct,
+                         std::forward_as_tuple(name),
+                         std::forward_as_tuple(type, name, getFieldValue, fieldType));
     }
 
     void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
@@ -397,7 +402,7 @@ private:
     //------------------------------------------------------------------------
     const size_t m_Index;
     const std::string m_LiteralSuffix;
-    std::vector<Field> m_Fields;
+    std::map<std::string, Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
 };
 
