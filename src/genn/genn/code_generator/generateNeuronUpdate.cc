@@ -26,7 +26,7 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, Cod
 {
     const NeuronModels::Base *nm = ng.getArchetype().getNeuronModel();
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l");
-    substitution.addParamValueSubstitution(nm->getParamNames(), [&ng](size_t i) { return ng.getNeuronParam(i);  });
+    substitution.addParamValueSubstitution(nm->getParamNames(), [&ng](size_t i) { return ng.getNeuronParam(i); });
     substitution.addVarValueSubstitution(nm->getDerivedParams(), [&ng](size_t i) { return ng.getNeuronDerivedParam(i); });
     substitution.addVarNameSubstitution<Snippet::Base::EGP>(nm->getExtraGlobalParams(), 
                                                             [&ng](const Snippet::Base::EGP &egp){ return ng.getEGPField(egp); },

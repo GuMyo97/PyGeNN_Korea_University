@@ -83,11 +83,12 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend,
     }
 }
 //------------------------------------------------------------------------
-template<typename I, typename Q, typename P, typename D>
+// **TODO** make typed like generateWUVarUpdate 
+template<typename I, typename Q, typename P, typename D, typename V, typename E>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
-                          const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &count, 
+                          const Models::Base::VarVec &vars, const std::string &count, 
                           size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
-                          I getVarInitialiser, Q isVarQueueRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
+                          I getVarInitialiser, Q isVarQueueRequired, P getParamFn, D getDerivedParamFn, V getVarFn, E getEGPFn)
 {
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
@@ -98,20 +99,16 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 
             // Generate target-specific code to initialise variable
             backend.genVariableInit(os, count, "id", popSubs,
-                [&vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
+                [&vars, &varInit, &ftype, groupIndex, k, count, isVarQueueRequired, getParamFn, getDerivedParamFn, getVarFn, getEGPFn, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                /*substitution.addParamValueSubstitution(nm->getParamNames(), [&ng](size_t i) { return ng.getNeuronParam(i);  });
-    substitution.addVarValueSubstitution(nm->getDerivedParams(), [&ng](size_t i) { return ng.getNeuronDerivedParam(i); });*/
                     // Substitute in parameters and derived parameters for initialising variables
-                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                      [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
-                                                      "", "group->", vars[k].name + fieldSuffix);
+                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), 
+                                                      [k, getParamFn](size_t i) { return getParamFn(k, i); });
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                    [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
-                                                    "", "group->", vars[k].name + fieldSuffix);
-                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                                   "", "group->", vars[k].name + fieldSuffix);
+                                                    [k, getDerivedParamFn](size_t i) { return getDerivedParamFn(k, i); });
+                    varSubs.addVarNameSubstitution<Snippet::Base::EGP>(varInit.getSnippet()->getExtraGlobalParams(),
+                                                                       [getEGPFn](const Snippet::Base::EGP &egp){ return getEGPFn(egp); });
 
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
@@ -129,11 +126,11 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                         os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
                         {
                             CodeStream::Scope b(os);
-                            os << "group->" + vars[k].name << fieldSuffix << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
+                            os << getVarFn(vars[k]) << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
                         }
                     }
                     else {
-                        varSubs.addVarSubstitution("value", "group->" + vars[k].name + fieldSuffix + "[" + varSubs["id"] + "]");
+                        varSubs.addVarSubstitution("value", getVarFn(vars[k]) + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
                         varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
@@ -145,17 +142,16 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
     }
 }
 //------------------------------------------------------------------------
-template<typename I, typename P, typename D>
+template<typename I, typename P, typename D, typename V, typename E>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
-                          const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &count, 
+                          const Models::Base::VarVec &vars, const std::string &count, 
                           const size_t groupIndex, const std::string &ftype, 
-                          I getVarInitialiser, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
+                          I getVarInitialiser, P getParamFn, D getDerivedParamFn, V getVarFn, E getEGPFn)
 {
-    genInitNeuronVarCode(os, backend, popSubs, vars, fieldSuffix, count, 0, groupIndex, ftype,
+    genInitNeuronVarCode(os, backend, popSubs, vars, count, 0, groupIndex, ftype,
                          getVarInitialiser,
                          [](size_t){ return false; }, 
-                         isParamHeterogeneousFn,
-                         isDerivedParamHeterogeneousFn);
+                         getParamFn, getDerivedParamFn, getVarFn, getEGPFn);
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
@@ -255,12 +251,14 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             }
 
             // Initialise neuron variables
-            genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), "", ng.getNumNeurons(),
+            genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), ng.getNumNeurons(),
                                  ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(),
                                  [&ng](size_t i){ return ng.getArchetype().getVarInitialisers().at(i); },
                                  [&ng](size_t i){ return ng.getArchetype().isVarQueueRequired(i); },
-                                 [&ng](size_t v, size_t p) { return ng.isVarInitParamHeterogeneous(v, p); },
-                                 [&ng](size_t v, size_t p) { return ng.isVarInitDerivedParamHeterogeneous(v, p); });
+                                 [&ng](size_t v, size_t p) { return ng.getVarInitParam(v, p); },
+                                 [&ng](size_t v, size_t p) { return ng.getVarInitDerivedParam(v, p); },
+                                 [&ng](const Models::Base::Var &var) { return ng.getVarField(var); },
+                                 [&ng](const Snippet::Base::EGP &egp) { return ng.getEGPField(egp); });
 
             // Loop through incoming synaptic populations
             for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
@@ -299,12 +297,13 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
                 // If postsynaptic model variables should be individual
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), 
-                                         "InSyn" + std::to_string(i), ng.getNumNeurons(),
-                                         i, model.getPrecision(),
-                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
-                                         [&ng, i](size_t v, size_t p) { return ng.isPSMVarInitParamHeterogeneous(i, v, p); },
-                                         [&ng, i](size_t v, size_t p) { return ng.isPSMVarInitDerivedParamHeterogeneous(i, v, p); });
+                    genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(),
+                                         ng.getNumNeurons(), i, model.getPrecision(),
+                                         [sg](size_t i) { return sg->getPSVarInitialisers().at(i); },
+                                         [&ng, i](size_t v, size_t p) { return ng.getPSMVarInitParam(i, v, p); },
+                                         [&ng, i](size_t v, size_t p) { return ng.getPSMVarInitDerivedParam(i, v, p); },
+                                         [&ng, i](const Models::Base::Var &var) { return ng.getPSMVar(i, var); },
+                                         [&ng, i](const Snippet::Base::EGP &egp) { return ng.getPS(egp); });
                 }
             }
 
@@ -314,12 +313,13 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             for(size_t i = 0; i < inSynWithPostVars.size(); i++) {
                 const auto *sg = inSynWithPostVars.at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPostVars(),
-                                     "WUPost" + std::to_string(i), ng.getNumNeurons(), sg->getTrgNeuronGroup()->getNumDelaySlots(),
+                                     ng.getNumNeurons(), sg->getTrgNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),
                                      [&sg](size_t i){ return sg->getWUPostVarInitialisers().at(i); },
                                      [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); },
-                                     [&ng, i](size_t v, size_t p) { return ng.isInSynWUMVarInitParamHeterogeneous(i, v, p); },
-                                     [&ng, i](size_t v, size_t p) { return ng.isInSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
+                                     [&ng, i](size_t v, size_t p) { return ng.getInSynPostVarInitParam(i, v, p); },
+                                     [&ng, i](size_t v, size_t p) { return ng.getInSynPostVarInitDerivedParam(i, v, p); },
+                                     [&ng, i](const Models::Base::Var &var) { return ng.getInSynVar(i, var); });
             }
 
             // Loop through outgoing synaptic populations with presynaptic update code
@@ -328,12 +328,13 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             for(size_t i = 0; i < outSynWithPostVars.size(); i++) {
                 const auto *sg = outSynWithPostVars.at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPreVars(),
-                                     "WUPre" + std::to_string(i), ng.getNumNeurons(), sg->getSrcNeuronGroup()->getNumDelaySlots(),
+                                     ng.getNumNeurons(), sg->getSrcNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),
                                      [&sg](size_t i){ return sg->getWUPreVarInitialisers().at(i); },
                                      [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); },
-                                     [&ng, i](size_t v, size_t p) { return ng.isOutSynWUMVarInitParamHeterogeneous(i, v, p); },
-                                     [&ng, i](size_t v, size_t p) { return ng.isOutSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
+                                     [&ng, i](size_t v, size_t p) { return ng.getOutSynPreVarInitParam(i, v, p); },
+                                     [&ng, i](size_t v, size_t p) { return ng.getOutSynPreVarInitDerivedParam(i, v, p); },
+                                     [&ng, i](const Models::Base::Var &var) { return ng.getOutSynVar(i, var); });
             }
 
             // Loop through current sources
@@ -342,11 +343,12 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 const auto *cs = ng.getArchetype().getCurrentSources()[i];
 
                 genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), 
-                                     "CS" + std::to_string(i), ng.getNumNeurons(),
+                                     ng.getNumNeurons(),
                                      i, model.getPrecision(),
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); },
-                                     [&ng, i](size_t v, size_t p) { return ng.isCurrentSourceVarInitParamHeterogeneous(i, v, p); },
-                                     [&ng, i](size_t v, size_t p) { return ng.isCurrentSourceVarInitDerivedParamHeterogeneous(i, v, p); });
+                                     [&ng, i](size_t v, size_t p) { return ng.getCurrentSourceVarInitParam(i, v, p); },
+                                     [&ng, i](size_t v, size_t p) { return ng.getCurrentSourceVarInitDerivedParam(i, v, p); },
+                                     [&ng, i](const Models::Base::Var &var) { return ng.getCurrentSourceVar(i, var); });
             }
         },
         // Dense syanptic matrix variable initialisation

@@ -589,14 +589,6 @@ public:
     //! Get group structure member access for simulation RNG
     std::string getSimRNG();
 
-    //! Get code string for accessing neuron var init parameter - may be a literal or 
-    //! group structure member access, in which case, required field will be added
-    std::string getVarInitParam(size_t varIndex, size_t paramIndex);
-
-    //! Get code string for accessing neuron var init derived parameter - may be a literal or 
-    //! group structure member access, in which case, required field will be added
-    std::string getVarInitDerivedParam(size_t varIndex, size_t paramIndex);
-
     //! Get group structure member for current source variable
     std::string getCurrentSourceVar(size_t childIndex, const Models::Base::Var &var);
 
@@ -608,21 +600,6 @@ public:
 
     //! Get group structure member for outgoing synapse weight update model presynaptic variable
     std::string getOutSynVar(size_t childIndex, const Models::Base::Var &var);
-
-    //! Should the current source var init parameter be implemented heterogeneously?
-    bool isCurrentSourceVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the current source var init derived parameter be implemented heterogeneously?
-    bool isCurrentSourceVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the GLOBALG postsynaptic model variable be implemented heterogeneously?
-    bool isPSMGlobalVarHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the postsynaptic model var init parameter be implemented heterogeneously?
-    bool isPSMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the postsynaptic model var init derived parameter be implemented heterogeneously?
-    bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
 protected:
     //------------------------------------------------------------------------
@@ -969,17 +946,46 @@ public:
     NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
-    //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    //! Get code string for accessing neuron var init parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getVarInitParam(size_t varIndex, size_t paramIndex);
 
-    //! Should the incoming synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    //! Get code string for accessing neuron var init derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getVarInitDerivedParam(size_t varIndex, size_t paramIndex);
+    
+    //! Get code string for accessing current source var init parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getCurrentSourceVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex);
 
-    //! Should the outgoing synapse weight update model var init parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    //! Get code string for accessing current source var init derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getCurrentSourceVarInitDerivedParam(size_t childIndex, size_t varIndex, size_t paramIndex);
 
-    //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    //! Get code string for accessing postsynaptic model var init parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getPSMVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex);
+
+    //! Get code string for accessing postsynaptic model var init derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getPSMVarInitDerivedParam(size_t childIndex, size_t varIndex, size_t paramIndex);
+
+    //! Get code string for accessing incoming synapse weight update model post var init parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getInSynPostVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex);
+
+    //! Get code string for accessing incoming synapse weight update model post var init derived parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getInSynPostVarInitDerivedParam(size_t childIndex, size_t varIndex, size_t paramIndex);
+
+    //! Get code string for accessing outgoing synapse weight update model pre var init parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getOutSynPreVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex);
+
+    //! Get code string for accessing outgoing synapse weight update model pre var init derived parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getOutSynPreVarInitDerivedParam(size_t childIndex, size_t varIndex, size_t paramIndex);
+    
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
