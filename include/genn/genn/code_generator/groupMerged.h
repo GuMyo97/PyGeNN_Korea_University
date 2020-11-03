@@ -162,19 +162,19 @@ public:
         addPointerField(var.type, var.name + suffix, m_Backend.getDeviceVarPrefix() + var.name);
 
         // Return name of struct field
-        return "group->" + var.name + suffix
+        return "group->" + var.name + suffix;
     }
 
-    std::string getEGPField(const Snippet::Base::EGP &egp, const std::string &suffix = "")
+    std::string getEGPField(const Snippet::Base::EGP &egp)
     {
         const bool isPointer = Utils::isTypePointer(egp.type);
         const std::string prefix = isPointer ? m_Backend.getDeviceVarPrefix() : "";
-        addField(egp.type, egp.name + suffix,
-                 [egp, prefix, suffix](const G &g, size_t) { return prefix + egp.name + suffix + g.getName(); },
+        addField(egp.type, egp.name,
+                 [egp, prefix](const G &g, size_t) { return prefix + egp.name + g.getName(); },
                  isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 
         // Return name of struct field
-        return "group->" + egp.name + suffix;
+        return "group->" + egp.name;
     }
 
 protected:
@@ -283,7 +283,7 @@ protected:
 
     //! Helper to test whether derived parameter values are heterogeneous within merged group
     template<typename P>
-    std::string getDerivedParamField(size_t index, Snippet::Base::DerivedParamVec &derivedParams, 
+    std::string getDerivedParamField(size_t index, const Snippet::Base::DerivedParamVec &derivedParams, 
                                      const std::string &suffix, P getDerivedParamValuesFn)
     {
         // Get value of parameter in archetype group
@@ -580,46 +580,40 @@ public:
     //! Get group structure member access for spike events
     std::string getSpikeEvents();
 
-    //! Get group structure member access to spike queue pointer
+    //! Get group structure member access for spike queue pointer
     std::string getSpikeQueuePointer();
 
-    //! Get group structure member access to spike times
+    //! Get group structure member access for spike times
     std::string getSpikeTimes();
 
-    //! Get group structure member access simulation RNG
+    //! Get group structure member access for simulation RNG
     std::string getSimRNG();
 
-    //! Get code string for accessing neuron parameter - may be a literal or 
+    //! Get code string for accessing neuron var init parameter - may be a literal or 
     //! group structure member access, in which case, required field will be added
-    std::string getNeuronParam(size_t index);
+    std::string getVarInitParam(size_t varIndex, size_t paramIndex);
 
-    //! Get code string for accessing neuron derived parameter - may be a literal or 
+    //! Get code string for accessing neuron var init derived parameter - may be a literal or 
     //! group structure member access, in which case, required field will be added
-    std::string getNeuronDerivedParam(size_t index);
+    std::string getVarInitDerivedParam(size_t varIndex, size_t paramIndex);
 
-    //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+    //! Get group structure member for current source variable
+    std::string getCurrentSourceVar(size_t childIndex, const Models::Base::Var &var);
 
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+    //! Get group structure member for postsynaptic model variable
+    std::string getPSMVar(size_t childIndex, const Models::Base::Var &var);
 
-    //! Should the current source parameter be implemented heterogeneously?
-    bool isCurrentSourceParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    //! Get group structure member for incoming synapse weight update model postsynaptic variable
+    std::string getInSynVar(size_t childIndex, const Models::Base::Var &var);
 
-    //! Should the current source derived parameter be implemented heterogeneously?
-    bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    //! Get group structure member for outgoing synapse weight update model presynaptic variable
+    std::string getOutSynVar(size_t childIndex, const Models::Base::Var &var);
 
     //! Should the current source var init parameter be implemented heterogeneously?
     bool isCurrentSourceVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     //! Should the current source var init derived parameter be implemented heterogeneously?
     bool isCurrentSourceVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Should the postsynaptic model parameter be implemented heterogeneously?
-    bool isPSMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the postsynaptic model derived parameter be implemented heterogeneously?
-    bool isPSMDerivedParamHeterogeneous(size_t childIndex, size_t varIndex) const;
 
     //! Should the GLOBALG postsynaptic model variable be implemented heterogeneously?
     bool isPSMGlobalVarHeterogeneous(size_t childIndex, size_t paramIndex) const;
@@ -682,6 +676,69 @@ protected:
         const std::vector<T> &archetypeChildren = (getArchetype().*getVectorFunc)();
         orderNeuronGroupChildren(archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
     }
+
+    //! Helper to test whether parameter values are heterogeneous within merged group
+    template<typename P, typename T>
+    std::string getChildParamField(size_t childIndex, size_t paramIndex, const Snippet::Base::StringVec &paramNames, 
+                                   const std::string &suffix, const std::vector<std::vector<T>> &sortedGroupChildren,
+                                   P getParamValuesFn)
+    {
+        // Get value of parameter in archetype group
+        const double archetypeValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
+
+         // Loop through groups within merged group
+        for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
+            const auto group = sortedGroupChildren[i][childIndex];
+            if(getParamValuesFn(group).at(paramIndex) != archetypeValue) {
+                // Add field
+                addScalarField(paramNames.at(paramIndex) + suffix,
+                               [paramIndex, getParamValuesFn](const G &g, size_t)
+                               {
+                                   const auto &values = getParamValuesFn(g);
+                                   return Utils::writePreciseString(values.at(paramIndex));
+                               });
+
+                // Return name of struct field
+                return "group->" + paramNames.at(paramIndex) + suffix;
+            }
+        }
+       
+        return Utils::writePreciseString(archetypeValue);
+    }
+
+    //! Helper to test whether parameter values are heterogeneous within merged group
+    template<typename P, typename T>
+    std::string getChildDerivedParamField(size_t childIndex, size_t paramIndex, const Snippet::Base::DerivedParamVec &derivedParams, 
+                                          const std::string &suffix, const std::vector<std::vector<T>> &sortedGroupChildren,
+                                          P getDerivedParamValuesFn)
+    {
+        // Get value of derived parameter in archetype group
+        const double archetypeValue = getDerivedParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
+
+         // Loop through groups within merged group
+        for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
+            const auto group = sortedGroupChildren[i][childIndex];
+            if(getParamVgetDerivedParamValuesFnaluesFn(group).at(paramIndex) != firstValue) {
+                // Add field
+                addScalarField(derivedParams.at(paramIndex).name + suffix,
+                               [paramIndex, getDerivedParamValuesFn](const G &g, size_t)
+                               {
+                                   const auto &values = getDerivedParamValuesFn(g);
+                                   return Utils::writePreciseString(values.at(paramIndex));
+                               });
+
+                // Return name of struct field
+                return "group->" + derivedParams.at(paramIndex).name + suffix;
+            }
+        }
+       
+        return Utils::writePreciseString(archetypeValue);
+    }
+
+    const std::vector<std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>>> &getSortedMergedInSyns() const { return m_SortedMergedInSyns; }
+    const std::vector<std::vector<CurrentSourceInternal*>> &getSortedCurrentSources() const{ return m_SortedCurrentSources; }
+    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedInSynWithPostVars() const { return m_SortedInSynWithPostVars; }
+    const std::vector<std::vector<SynapseGroupInternal *>> &getSortedOutSynWithPreVars() const { return m_SortedOutSynWithPreVars; }
 
 
     template<typename T, typename G>
@@ -812,6 +869,8 @@ private:
     //------------------------------------------------------------------------
     std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> m_SortedMergedInSyns;
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostVars;
+    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreVars;
     const std::string m_TimePrecision;
     
 };
@@ -834,17 +893,58 @@ public:
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
     std::string getPrevQueueOffset();
 
-    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
-    bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    //! Get code string for accessing neuron parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getNeuronParam(size_t index);
 
-    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
-    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    //! Get code string for accessing neuron derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getNeuronDerivedParam(size_t index);
 
-    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
-    bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    //! Get code string for accessing current source parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getCurrentSourceParam(size_t childIndex, size_t paramIndex);
 
-    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
-    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    //! Get code string for accessing current source derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getCurrentSourceDerivedParam(size_t childIndex, size_t paramIndex);
+
+    //! Get code string for accessing postsynaptic model parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getPSMParam(size_t childIndex, size_t paramIndex);
+
+    //! Get code string for accessing postsynaptic model derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getPSMDerivedParam(size_t childIndex, size_t paramIndex);
+
+    //! Get code string for accessing incoming synapse weight update model parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getInSynParam(size_t childIndex, size_t paramIndex);
+
+    //! Get code string for accessing incoming synapse weight update model derived parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getInSynDerivedParam(size_t childIndex, size_t paramIndex);
+
+    //! Get code string for accessing outgoing synapse weight update model parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getOutSynParam(size_t childIndex, size_t paramIndex);
+
+    //! Get code string for accessing outgoing synapse weight update model derived parameter - 
+    //! may be a literal or group structure member access, in which case, required field will be added
+    std::string getOutSynDerivedParam(size_t childIndex, size_t paramIndex);
+
+    //! Get group structure member for current source variable
+    std::string getCurrentSourceEGP(size_t childIndex, const Models::Base::EGP &egp);
+
+    //! Get group structure member for postsynaptic model extra global parameter
+    std::string getPSMEGP(size_t childIndex, const Models::Base::EGP &egp);
+
+    //! Get group structure member for incoming synapse weight update model extra global parameter
+    std::string getInSynEGP(size_t childIndex, const Models::Base::EGP &egp);
+
+    //! Get group structure member for outgoing synapse weight update model extra global parameter
+    std::string getOutSynEGP(size_t childIndex, const Models::Base::EGP &egp);
+
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
@@ -858,24 +958,6 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
-
-private:
-    //------------------------------------------------------------------------
-    // Private methods
-    //------------------------------------------------------------------------
-    //! Helper to generate merged struct fields for WU pre and post vars
-    void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
-                       const std::vector<SynapseGroupInternal*> &archetypeSyn,
-                       const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
-                       Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                       bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
-                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const);
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostCode;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreCode;
 };
 
 //----------------------------------------------------------------------------
@@ -925,12 +1007,6 @@ private:
                        bool(NeuronInitGroupMerged::*isParamHeterogeneous)(size_t, size_t, size_t) const,
                        bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t, size_t) const);
 
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostVars;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreVars;
 };
 
 //----------------------------------------------------------------------------

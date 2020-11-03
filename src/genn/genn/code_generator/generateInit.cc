@@ -101,6 +101,8 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                 [&vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
+                /*substitution.addParamValueSubstitution(nm->getParamNames(), [&ng](size_t i) { return ng.getNeuronParam(i);  });
+    substitution.addVarValueSubstitution(nm->getDerivedParams(), [&ng](size_t i) { return ng.getNeuronDerivedParam(i); });*/
                     // Substitute in parameters and derived parameters for initialising variables
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                       [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },

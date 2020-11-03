@@ -226,10 +226,10 @@ protected:
     const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
-    std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
+    //std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic update code
-    std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
+    //std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic variables
     std::vector<SynapseGroupInternal *> getInSynWithPostVars() const;

@@ -311,7 +311,7 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
     }
 }
 //----------------------------------------------------------------------------
-std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostCode() const
+/*std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostCode() const
 {
     std::vector<SynapseGroupInternal*> vec;
     std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
@@ -325,7 +325,7 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPreSpikeCode().empty(); });
     return vec;
-}
+}*/
 //----------------------------------------------------------------------------
 std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostVars() const
 {
