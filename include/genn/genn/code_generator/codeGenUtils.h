@@ -31,6 +31,21 @@ namespace CodeGenerator
 GENN_EXPORT void substitute(std::string &s, const std::string &trg, const std::string &rep);
 
 //--------------------------------------------------------------------------
+/*! \brief Tool for substituting strings in the neuron code strings or other templates 
+ * using 'lazy' evaluation - getRep is only called if 'trg' is found
+ */
+//--------------------------------------------------------------------------
+template<typename V>
+void substituteLazy(std::string &s, const std::string &trg, V getRepFn)
+{
+    size_t found= s.find(trg);
+    while (found != std::string::npos) {
+        s.replace(found,trg.length(), getRepFn());
+        found= s.find(trg);
+    }
+}
+
+//--------------------------------------------------------------------------
 //! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
 GENN_EXPORT bool regexVarSubstitute(std::string &s, const std::string &trg, const std::string &rep);
@@ -97,7 +112,7 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
                                        const std::string &offset, const std::string &delayOffset, const std::string &idx, 
                                        const std::string &sourceSuffix, const std::string &destSuffix, 
                                        const std::string &varPrefix, const std::string &varSuffix,
-                                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
+                                       P getParamValueFn, D getDerivedParamValueFn)
 {
 
     // Substitute spike times
@@ -114,10 +129,8 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
     }
 
     // Substitute (potentially heterogeneous) parameters and derived parameters from neuron model
-    substitutions.addParamValueSubstitution(nm->getParamNames(), archetypeNG->getParams(), isParamHeterogeneousFn,
-                                            sourceSuffix, "group->", destSuffix);
-    substitutions.addVarValueSubstitution(nm->getDerivedParams(), archetypeNG->getDerivedParams(), isDerivedParamHeterogeneousFn,
-                                          sourceSuffix, "group->", destSuffix);
+    substitutions.addParamValueSubstitution(nm->getParamNames(), getParamValueFn, sourceSuffix);
+    substitutions.addVarValueSubstitution(nm->getDerivedParams(), getDerivedParamValueFn, sourceSuffix);
 
     // Substitute extra global parameters from neuron model
     substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->", destSuffix);

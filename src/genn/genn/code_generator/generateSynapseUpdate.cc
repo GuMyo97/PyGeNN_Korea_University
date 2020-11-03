@@ -19,7 +19,7 @@ using namespace CodeGenerator;
 namespace
 {
 void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorContext,
-                               const SynapseGroupMergedBase &sg, const Substitutions &baseSubs,
+                               SynapseGroupMergedBase &sg, const Substitutions &baseSubs,
                                const ModelSpecMerged &modelMerged, const bool backendSupportsNamespace)
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -109,8 +109,8 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     const std::string preOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(),
                                       preOffset, axonalDelayOffset, synapseSubs["id_pre"], "_pre", "Pre", "", "",
-                                      [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
-                                      [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+                                      [&sg](size_t paramIndex) { return sg.getSrcNeuronParam(paramIndex); },
+                                      [&sg](size_t derivedParamIndex) { return sg.getSrcNeuronDerivedParam(derivedParamIndex); });
 
 
     // Make postsynaptic neuron substitutions
@@ -118,8 +118,8 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     const std::string postOffset = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getTrgNeuronGroup(),
                                       postOffset, backPropDelayMs, synapseSubs["id_post"], "_post", "Post", "", "",
-                                      [&sg](size_t paramIndex) { return sg.isTrgNeuronParamHeterogeneous(paramIndex); },
-                                      [&sg](size_t derivedParamIndex) { return sg.isTrgNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+                                      [&sg](size_t paramIndex) { return sg.getTrgNeuronParam(paramIndex); },
+                                      [&sg](size_t derivedParamIndex) { return sg.getTrgNeuronDerivedParam(derivedParamIndex); });
 
     // If the backend does not support namespaces then we substitute all support code functions with namepsace as prefix
     if (!backendSupportsNamespace) {
@@ -167,7 +167,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
         },
         // Presynaptic weight update threshold
-        [&modelMerged, &backend](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             Substitutions synapseSubs(&baseSubs);
 
@@ -183,8 +183,8 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             // Get read offset if required and substitute in presynaptic neuron properties
             const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
             neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, "", baseSubs["id_pre"], "_pre", "Pre", "", "",
-                                              [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
-                                              [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+                                              [&sg](size_t paramIndex) { return sg.getSrcNeuronParam(paramIndex); },
+                                              [&sg](size_t derivedParamIndex) { return sg.getSrcNeuronDerivedParam(derivedParamIndex); });
             
             const auto* wum = sg.getArchetype().getWUModel();
 
@@ -200,19 +200,19 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             os << code;
         },
         // Presynaptic spike
-        [&modelMerged, &backend](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getSimCode(), "simCode",
                                       sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Presynaptic spike-like event
-        [&modelMerged, &backend](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getEventCode(), "eventCode",
                                       sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Procedural connectivity
-        [&model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&model](CodeStream &os, PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
 
@@ -251,7 +251,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             }
         },
         // Postsynaptic learning code
-        [&modelMerged, &backend](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
             if (!wum->getLearnPostSupportCode().empty() && backend.supportsNamespace()) {
@@ -262,7 +262,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                                       sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Synapse dynamics
-        [&modelMerged, &backend](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
             if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {

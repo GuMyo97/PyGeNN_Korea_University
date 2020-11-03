@@ -21,22 +21,18 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, const CodeGenerator::NeuronUpdateGroupMerged &ng,
+void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, CodeGenerator::NeuronUpdateGroupMerged &ng,
                                  const std::string &sourceSuffix = "", const std::string &destSuffix = "")
 {
     const NeuronModels::Base *nm = ng.getArchetype().getNeuronModel();
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
-    substitution.addParamValueSubstitution(nm->getParamNames(), ng.getArchetype().getParams(), 
-                                           [&ng](size_t i) { return ng.isParamHeterogeneous(i);  },
-                                           sourceSuffix, "group->");
-    substitution.addVarValueSubstitution(nm->getDerivedParams(), ng.getArchetype().getDerivedParams(), 
-                                         [&ng](size_t i) { return ng.isDerivedParamHeterogeneous(i);  },
-                                         sourceSuffix, "group->");
+    substitution.addParamValueSubstitution(nm->getParamNames(), [&ng](size_t i) { return ng.getNeuronParam(i);  });
+    substitution.addVarValueSubstitution(nm->getDerivedParams(), [&ng](size_t i) { return ng.getNeuronDerivedParam(i); });
     substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->");
 }
 //--------------------------------------------------------------------------
 void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Substitutions &popSubs,
-                         const CodeGenerator::NeuronUpdateGroupMerged &ng, const std::string &fieldPrefixStem,
+                         CodeGenerator::NeuronUpdateGroupMerged &ng, const std::string &fieldPrefixStem,
                          const std::string &precision, const std::string &sourceSuffix,
                          const std::vector<SynapseGroupInternal*> &archetypeSyn,
                          unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
@@ -79,8 +75,8 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
 
         const std::string offset = ng.getArchetype().isDelayRequired() ? "readDelayOffset + " : "";
         neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, "", subs["id"], sourceSuffix, "", "", "",
-                                          [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
-                                          [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
+                                          [&ng](size_t paramIndex) { return ng.getNeuronParam(paramIndex); },
+                                          [&ng](size_t derivedParamIndex) { return ng.getNeuronDerivedParam(derivedParamIndex); });
 
         // Perform standard substitutions
         std::string code = (sg->getWUModel()->*getCode)();
@@ -497,7 +493,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             }
         },
         // WU var update handler
-        [&modelMerged](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
+        [&modelMerged](CodeStream &os, NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             // Generate var update for outgoing synaptic populations with presynaptic update code
             generateWUVarUpdate(os, popSubs, ng, "WUPre", modelMerged.getModel().getPrecision(), "_pre",

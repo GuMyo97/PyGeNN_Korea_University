@@ -99,14 +99,16 @@ std::string CodeGenerator::NeuronGroupMergedBase::getSimRNG()
     return getPointerField(getBackend().getMergedGroupSimRNGType(), "rng", getBackend().getDeviceVarPrefix() + "rng");
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::NeuronGroupMergedBase::isParamHeterogeneous(size_t index) const
+std::string CodeGenerator::NeuronGroupMergedBase::getNeuronParam(size_t index)
 {
-    return isParamValueHeterogeneous(index, [](const NeuronGroupInternal &ng) { return ng.getParams(); });
+    return getParamField(index, getArchetype().getNeuronModel()->getParamNames(), "",
+                         [](const NeuronGroupInternal &ng) { return ng.getParams(); });
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::NeuronGroupMergedBase::isDerivedParamHeterogeneous(size_t index) const
+std::string CodeGenerator::NeuronGroupMergedBase::getNeuronDerivedParam(size_t index)
 {
-    return isParamValueHeterogeneous(index, [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
+    return getDerivedParamField(index, getArchetype().getNeuronModel()->getDerivedParams(), "",
+                                [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
@@ -283,18 +285,6 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     // Otherwise
     else {
         addEGPs(nm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-
-        // Add heterogeneous neuron model parameters
-        addHeterogeneousParams<NeuronGroupMergedBase>(
-            getArchetype().getNeuronModel()->getParamNames(), "",
-            [](const NeuronGroupInternal &ng) { return ng.getParams(); },
-            &NeuronGroupMergedBase::isParamHeterogeneous);
-
-        // Add heterogeneous neuron model derived parameters
-        addHeterogeneousDerivedParams<NeuronGroupMergedBase>(
-            getArchetype().getNeuronModel()->getDerivedParams(), "",
-            [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); },
-            &NeuronGroupMergedBase::isDerivedParamHeterogeneous);
     }
 
     // Loop through merged synaptic inputs in archetypical neuron group
@@ -894,6 +884,30 @@ std::string CodeGenerator::SynapseGroupMergedBase::getDendriticDelayOffset(const
     }
 }
 //----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcNeuronParam(size_t index)
+{
+    return getParamField(index, getArchetype().getSrcNeuronGroup()->getNeuronModel()->getParamNames(), "Src",
+                         [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcNeuronDerivedParam(size_t index)
+{
+    return getDerivedParamField(index, getArchetype().getSrcNeuronGroup()->getNeuronModel()->getDerivedParams(), "Src", 
+                                [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronParam(size_t index)
+{
+    return getParamField(index, getArchetype().getTrgNeuronGroup()->getNeuronModel()->getParamNames(), "Trg", 
+                         [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronDerivedParam(size_t index)
+{
+    return getDerivedParamField(index, getArchetype().getTrgNeuronGroup()->getNeuronModel()->getDerivedParams(), "Trg", 
+                                [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
 bool CodeGenerator::SynapseGroupMergedBase::isWUParamHeterogeneous(size_t paramIndex) const
 {
     const auto *wum = getArchetype().getWUModel();
@@ -979,38 +993,6 @@ bool CodeGenerator::SynapseGroupMergedBase::isConnectivityInitDerivedParamHetero
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isSrcNeuronParamHeterogeneous(size_t paramIndex) const
-{
-    const auto *neuronModel = getArchetype().getSrcNeuronGroup()->getNeuronModel();
-    const std::string paramName = neuronModel->getParamNames().at(paramIndex) + "_pre";
-    return isParamValueHeterogeneous({getArchetypeCode()}, paramName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isSrcNeuronDerivedParamHeterogeneous(size_t paramIndex) const
-{
-    const auto *neuronModel = getArchetype().getSrcNeuronGroup()->getNeuronModel();
-    const std::string derivedParamName = neuronModel->getDerivedParams().at(paramIndex).name + "_pre";
-    return isParamValueHeterogeneous({getArchetypeCode()}, derivedParamName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronParamHeterogeneous(size_t paramIndex) const
-{
-    const auto *neuronModel = getArchetype().getTrgNeuronGroup()->getNeuronModel();
-    const std::string paramName = neuronModel->getParamNames().at(paramIndex) + "_post";
-    return isParamValueHeterogeneous({getArchetypeCode()}, paramName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous(size_t paramIndex) const
-{
-    const auto *neuronModel = getArchetype().getTrgNeuronGroup()->getNeuronModel();
-    const std::string derivedParamName = neuronModel->getDerivedParams().at(paramIndex).name + "_post";
-    return isParamValueHeterogeneous({getArchetypeCode()}, derivedParamName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
 bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) const
 {
     // Get size of this kernel dimension for archetype
@@ -1083,30 +1065,6 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
             addTrgPointerField("unsigned int", "trgSpkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
         }
-
-        // Add heterogeneous presynaptic neuron model parameters
-        addHeterogeneousParams<SynapseGroupMergedBase>(
-            getArchetype().getSrcNeuronGroup()->getNeuronModel()->getParamNames(), "Pre",
-            [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getParams(); },
-            &SynapseGroupMergedBase::isSrcNeuronParamHeterogeneous);
-
-        // Add heterogeneous presynaptic neuron model derived parameters
-        addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            getArchetype().getSrcNeuronGroup()->getNeuronModel()->getDerivedParams(), "Pre",
-            [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getDerivedParams(); },
-            &SynapseGroupMergedBase::isSrcNeuronDerivedParamHeterogeneous);
-
-        // Add heterogeneous postsynaptic neuron model parameters
-        addHeterogeneousParams<SynapseGroupMergedBase>(
-            getArchetype().getTrgNeuronGroup()->getNeuronModel()->getParamNames(), "Post",
-            [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getParams(); },
-            &SynapseGroupMergedBase::isTrgNeuronParamHeterogeneous);
-
-        // Add heterogeneous postsynaptic neuron model derived parameters
-        addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            getArchetype().getTrgNeuronGroup()->getNeuronModel()->getDerivedParams(), "Post",
-            [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); },
-            &SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous);
 
         // Get correct code string
         const std::string code = getArchetypeCode();

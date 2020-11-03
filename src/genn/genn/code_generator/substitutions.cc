@@ -22,9 +22,14 @@ void CodeGenerator::Substitutions::addParamValueSubstitution(const std::vector<s
 
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::Substitutions::addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride)
+void CodeGenerator::Substitutions::addVarSubstitution(const std::string &source, const std::string &destination, bool allowOverride)
 {
-    auto res = m_VarSubstitutions.emplace(source, destionation);
+    addVarSubstitution(source, [destination](){ return destination; }, allowOverride);
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::Substitutions::addVarSubstitution(const std::string &source, std::function<std::string(void)> destinationFn, bool allowOverride)
+{
+    auto res = m_VarSubstitutions.emplace(source, destinationFn);
     if(!allowOverride && !res.second) {
         throw std::runtime_error("'" + source + "' already has a variable substitution");
     }
@@ -46,11 +51,11 @@ bool CodeGenerator::Substitutions::hasVarSubstitution(const std::string &source)
     return (m_VarSubstitutions.find(source) != m_VarSubstitutions.end());
 }
 //--------------------------------------------------------------------------
-const std::string &CodeGenerator::Substitutions::getVarSubstitution(const std::string &source) const
+const std::string CodeGenerator::Substitutions::getVarSubstitution(const std::string &source) const
 {
     auto var = m_VarSubstitutions.find(source);
     if(var != m_VarSubstitutions.end()) {
-        return var->second;
+        return var->second();
     }
     else if(m_Parent) {
         return m_Parent->getVarSubstitution(source);
@@ -91,8 +96,7 @@ void CodeGenerator::Substitutions::applyVars(std::string &code) const
 {
     // Apply variable substitutions
     for(const auto &v : m_VarSubstitutions) {
-        LOGD_CODE_GEN << "Substituting '$(" << v.first << ")' for '" << v.second << "'";
-        substitute(code, "$(" + v.first + ")", v.second);
+        substituteLazy(code, "$(" + v.first + ")", v.second);
     }
 
     // If we have a parent, apply their variable substitutions too

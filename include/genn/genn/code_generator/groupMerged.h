@@ -197,18 +197,19 @@ protected:
         }
     }
 
-    std::string getValueField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue)
+    std::string getValueField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValueFn)
     {
         // Get value of field in archetype group
-        const std::string archetypeValue = getFieldValue(getArchetype(), 0);
+        const std::string archetypeValue = getFieldValueFn(getArchetype(), 0);
 
         // Loop through remaining groups
+        // **TODO** use std::any_of for consistency
         for(size_t groupIndex = 1; groupIndex < getGroups().size(); groupIndex++) {
             const G &group = getGroups()[groupIndex];
 
             // If this group's field value differs - we need to pass this via struct field
-            if(getFieldValue(group, groupIndex) != archetypeValue) {
-                addField(type, name, getFieldValue);
+            if(getFieldValueFn(group, groupIndex) != archetypeValue) {
+                addField(type, name, getFieldValueFn);
                 return "group->" + name;
             }
         }
@@ -226,6 +227,71 @@ protected:
         // Return name of struct field
         return "group->" + name;
     }
+
+    //! Helper to test whether parameter values are heterogeneous within merged group
+    template<typename P>
+    std::string getParamField(size_t index, const Snippet::Base::StringVec &paramNames, 
+                              const std::string &suffix, P getParamValuesFn)
+    {
+        // Get value of parameter in archetype group
+        const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
+
+        // If any parameter values differ from the archetype value
+        if(std::any_of(getGroups().cbegin(), getGroups().cend(),
+                       [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
+                       {
+                           return (getParamValuesFn(g).at(index) != archetypeValue);
+                       }))
+        {
+            // Add field
+            addScalarField(paramNames.at(index) + suffix,
+                           [index, getParamValuesFn](const G &g, size_t)
+                           {
+                               const auto &values = getParamValuesFn(g);
+                               return Utils::writePreciseString(values.at(index));
+                           });
+
+            // Return name of struct field
+            return "group->" + paramNames.at(index) + suffix;
+        }
+        // Otherwise, return precise string with archetype value
+        else {
+            return Utils::writePreciseString(archetypeValue);
+        }
+    }
+
+    //! Helper to test whether derived parameter values are heterogeneous within merged group
+    template<typename P>
+    std::string getDerivedParamField(size_t index, Snippet::Base::DerivedParamVec &derivedParams, 
+                                     const std::string &suffix, P getDerivedParamValuesFn)
+    {
+        // Get value of parameter in archetype group
+        const double archetypeValue = getDerivedParamValuesFn(getArchetype()).at(index);
+
+        // If any parameter values differ from the archetype value
+        if(std::any_of(getGroups().cbegin(), getGroups().cend(),
+                       [archetypeValue, index, getDerivedParamValuesFn](const GroupInternal &g)
+                       {
+                           return (getDerivedParamValuesFn(g).at(index) != archetypeValue);
+                       }))
+        {
+            // Add field
+            addScalarField(derivedParams.at(index).name + suffix,
+                           [index, getDerivedParamValuesFn](const G &g, size_t)
+                           {
+                               const auto &values = getDerivedParamValuesFn(g);
+                               return Utils::writePreciseString(values.at(index));
+                           });
+
+            // Return name of struct field
+            return "group->" + derivedParams.at(index).name + suffix;
+        }
+        // Otherwise, return precise string with archetype value
+        else {
+            return Utils::writePreciseString(archetypeValue);
+        }
+    }
+
 
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
@@ -502,14 +568,13 @@ public:
     //! Get group structure member access simulation RNG
     std::string getSimRNG();
 
+    //! Get code string for accessing neuron parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getNeuronParam(size_t index);
 
-
-
-    //! Should the parameter be implemented heterogeneously?
-    bool isParamHeterogeneous(size_t index) const;
-
-    //! Should the derived parameter be implemented heterogeneously?
-    bool isDerivedParamHeterogeneous(size_t index) const;
+    //! Get code string for accessing neuron derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getNeuronDerivedParam(size_t index);
 
     //! Should the var init parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
@@ -924,6 +989,22 @@ public:
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 
+    //! Get code string for accessing source neuron parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getSrcNeuronParam(size_t index);
+
+    //! Get code string for accessing source neuron derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getSrcNeuronDerivedParam(size_t index);
+
+    //! Get code string for accessing target neuron parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getTrgNeuronParam(size_t index);
+
+    //! Get code string for accessing target neuron derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getTrgNeuronDerivedParam(size_t index);
+
     //! Should the weight update model parameter be implemented heterogeneously?
     bool isWUParamHeterogeneous(size_t paramIndex) const;
 
@@ -944,18 +1025,6 @@ public:
 
     //! Should the connectivity initialization parameter be implemented heterogeneously?
     bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
-
-    //! Is presynaptic neuron parameter heterogeneous?
-    bool isSrcNeuronParamHeterogeneous(size_t paramIndex) const;
-
-    //! Is presynaptic neuron derived parameter heterogeneous?
-    bool isSrcNeuronDerivedParamHeterogeneous(size_t paramIndex) const;
-
-    //! Is postsynaptic neuron parameter heterogeneous?
-    bool isTrgNeuronParamHeterogeneous(size_t paramIndex) const;
-
-    //! Is postsynaptic neuron derived parameter heterogeneous?
-    bool isTrgNeuronDerivedParamHeterogeneous(size_t paramIndex) const;
 
     //! Is kernel size heterogeneous in this dimension?
     bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;

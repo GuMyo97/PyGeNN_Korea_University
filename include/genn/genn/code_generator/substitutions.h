@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <functional>
 #include <map>
 #include <stdexcept>
 #include <string>
@@ -88,6 +89,14 @@ public:
                                    const std::string &sourceSuffix = "");
 
     template<typename G>
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, G getParamValFn, const std::string &sourceSuffix = "")
+    {
+        for(size_t i = 0; i < paramNames.size(); i++) {
+            addVarSubstitution(paramNames[i] + sourceSuffix, [getParamValFn, i]()->std::string { return getParamValFn(i); });
+        }
+    }
+
+    template<typename G>
     void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values, G isHeterogeneousFn,
                                    const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
     {
@@ -127,11 +136,20 @@ public:
         }
     }
 
-    void addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride = false);
+    template<typename T, typename G>
+    void addVarValueSubstitution(const std::vector<T> &variables, G getVarValFn, const std::string &sourceSuffix = "")
+    {
+        for(size_t i = 0; i < variables.size(); i++) {
+            addVarSubstitution(variables[i].name + sourceSuffix, [getVarValFn, i]()->std::string { return getVarValFn(i); });
+        }
+    }
+
+    void addVarSubstitution(const std::string &source, const std::string &destination, bool allowOverride = false);
+    void addVarSubstitution(const std::string &source, std::function<std::string(void)> destinationFn, bool allowOverride = false);
     void addFuncSubstitution(const std::string &source, unsigned int numArguments, const std::string &funcTemplate, bool allowOverride = false);
     bool hasVarSubstitution(const std::string &source) const;
 
-    const std::string &getVarSubstitution(const std::string &source) const;
+    const std::string getVarSubstitution(const std::string &source) const;
 
     void apply(std::string &code) const;
     void applyCheckUnreplaced(std::string &code, const std::string &context) const;
@@ -154,7 +172,7 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    std::map<std::string, std::string> m_VarSubstitutions;
+    std::map<std::string, std::function<std::string(void)>> m_VarSubstitutions;
     std::map<std::string, std::pair<unsigned int, std::string>> m_FuncSubstitutions;
     const Substitutions *m_Parent;
 };
