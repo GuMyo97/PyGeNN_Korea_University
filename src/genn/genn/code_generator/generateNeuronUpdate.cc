@@ -28,7 +28,9 @@ void addNeuronModelSubstitutions(CodeGenerator::Substitutions &substitution, Cod
     substitution.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l", destSuffix);
     substitution.addParamValueSubstitution(nm->getParamNames(), [&ng](size_t i) { return ng.getNeuronParam(i);  });
     substitution.addVarValueSubstitution(nm->getDerivedParams(), [&ng](size_t i) { return ng.getNeuronDerivedParam(i); });
-    substitution.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->");
+    substitution.addVarNameSubstitution<Snippet::Base::EGP>(nm->getExtraGlobalParams(), 
+                                                            [&ng](const Snippet::Base::EGP &egp, const std::string &suffix){ return ng.getEGPField(egp, suffix); },
+                                                            sourceSuffix);
 }
 //--------------------------------------------------------------------------
 void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Substitutions &popSubs,
@@ -136,7 +138,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     os << "const ";
                 }
                 os << v.type << " l" << v.name << " = ";
-                os << "group->" << v.name << "[";
+                os << ng.getVarField(v) << "[";
                 if (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
@@ -483,7 +485,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 // back to global state variables dd_V etc  
                 const bool delayed = (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired());
                 if((v.access == VarAccess::READ_WRITE) || delayed) {
-                    os << "group->" << v.name << "[";
+                    os << ng.getVarField(v) << "[";
 
                     if (delayed) {
                         os << "writeDelayOffset + ";

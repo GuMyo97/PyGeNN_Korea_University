@@ -70,6 +70,18 @@ public:
     }
 
     template<typename T>
+    void addVarNameSubstitution(const std::vector<T> &variables, std::function<std::string(const T&, const std::string&)> getFieldFn, 
+                                 const std::string &sourceSuffix = "", const std::string &destSuffix = "")
+    {
+        for(const auto &v : variables) {
+            addVarSubstitution(v.name + sourceSuffix, 
+                               [v, destSuffix, getFieldFn](){ return getFieldFn(v, destSuffix); });
+        }
+    }
+
+
+
+    template<typename T>
     void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
                                  const std::string &sourceSuffix = "")
     {

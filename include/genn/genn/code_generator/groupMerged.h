@@ -156,6 +156,27 @@ public:
         return padSize(structSize, largestFieldSize) * getGroups().size();
     }
 
+    std::string getVarField(const Models::Base::Var &var, const std::string &suffix = "")
+    {
+        // Add pointer field
+        addPointerField(var.type, var.name + suffix, m_Backend.getDeviceVarPrefix() + var.name);
+
+        // Return name of struct field
+        return "group->" + var.name + suffix
+    }
+
+    std::string getEGPField(const Snippet::Base::EGP &egp, const std::string &suffix = "")
+    {
+        const bool isPointer = Utils::isTypePointer(egp.type);
+        const std::string prefix = isPointer ? m_Backend.getDeviceVarPrefix() : "";
+        addField(egp.type, egp.name + suffix,
+                 [egp, prefix, suffix](const G &g, size_t) { return prefix + egp.name + suffix + g.getName(); },
+                 isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+
+        // Return name of struct field
+        return "group->" + egp.name + suffix;
+    }
+
 protected:
     //------------------------------------------------------------------------
     // Protected methods

@@ -259,12 +259,6 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     const auto &varInit = getArchetype().getVarInitialisers();
     assert(vars.size() == varInit.size());
     for(size_t v = 0; v < vars.size(); v++) {
-        // If we're not initialising or if there is initialization code for this variable
-        const auto var = vars[v];
-        if(!init || !varInit[v].getSnippet()->getCode().empty()) {
-            addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
-        }
-
         // If we're initializing, add any var init EGPs to structure
         if(init) {
             addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
@@ -281,10 +275,6 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
         addHeterogeneousVarInitDerivedParams<NeuronGroupMergedBase>(
             vars, &NeuronGroupInternal::getVarInitialisers,
             &NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous);
-    }
-    // Otherwise
-    else {
-        addEGPs(nm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
     }
 
     // Loop through merged synaptic inputs in archetypical neuron group
