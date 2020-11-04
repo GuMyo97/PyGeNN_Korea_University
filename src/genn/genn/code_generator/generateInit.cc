@@ -84,11 +84,12 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend,
 }
 //------------------------------------------------------------------------
 // **TODO** make typed like generateWUVarUpdate 
-template<typename I, typename Q, typename P, typename D, typename V, typename E>
+template<typename I, typename Q, typename V, typename P, typename D, typename E>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &count, 
                           size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
-                          I getVarInitialiser, Q isVarQueueRequired, P getParamFn, D getDerivedParamFn, V getVarFn, E getEGPFn)
+                          I getVarInitialiser, Q isVarQueueRequired, V getVarFn,
+                          P getVarInitParamFn, D getVarInitDerivedParamFn, E getVarInitEGPFn)
 {
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
@@ -99,16 +100,17 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 
             // Generate target-specific code to initialise variable
             backend.genVariableInit(os, count, "id", popSubs,
-                [&vars, &varInit, &ftype, groupIndex, k, count, isVarQueueRequired, getParamFn, getDerivedParamFn, getVarFn, getEGPFn, numDelaySlots]
+                [&vars, &varInit, &ftype, groupIndex, k, count, isVarQueueRequired, getVarFn,
+                 getVarInitParamFn, getVarInitDerivedParamFn, getVarInitEGPFn, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     // Substitute in parameters and derived parameters for initialising variables
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), 
-                                                      [k, getParamFn](size_t i) { return getParamFn(k, i); });
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                    [k, getDerivedParamFn](size_t i) { return getDerivedParamFn(k, i); });
+                                                      [k, getVarInitParamFn](size_t i) { return getVarInitParamFn(k, i); });
+                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(),
+                                                    [k, getVarInitDerivedParamFn](size_t i) { return getVarInitDerivedParamFn(k, i); });
                     varSubs.addVarNameSubstitution<Snippet::Base::EGP>(varInit.getSnippet()->getExtraGlobalParams(),
-                                                                       [getEGPFn](const Snippet::Base::EGP &egp){ return getEGPFn(egp); });
+                                                                       [k, getVarInitEGPFn](const Snippet::Base::EGP &egp){ return getVarInitEGPFn(k, egp); });
 
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
@@ -146,12 +148,13 @@ template<typename I, typename P, typename D, typename V, typename E>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &count, 
                           const size_t groupIndex, const std::string &ftype, 
-                          I getVarInitialiser, P getParamFn, D getDerivedParamFn, V getVarFn, E getEGPFn)
+                          I getVarInitialiser, V getVarFn,
+                          P getVarInitParamFn, D getVarInitDerivedParamFn, E getVarInitEGPFn)
 {
     genInitNeuronVarCode(os, backend, popSubs, vars, count, 0, groupIndex, ftype,
                          getVarInitialiser,
-                         [](size_t){ return false; }, 
-                         getParamFn, getDerivedParamFn, getVarFn, getEGPFn);
+                         [](size_t){ return false; }, getVarFn,
+                         getVarInitParamFn, getVarInitDerivedParamFn, getVarInitEGPFn);
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
@@ -255,10 +258,10 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                  ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(),
                                  [&ng](size_t i){ return ng.getArchetype().getVarInitialisers().at(i); },
                                  [&ng](size_t i){ return ng.getArchetype().isVarQueueRequired(i); },
+                                 [&ng](const Models::Base::Var &var) { return ng.getVarField(var); },
                                  [&ng](size_t v, size_t p) { return ng.getVarInitParam(v, p); },
                                  [&ng](size_t v, size_t p) { return ng.getVarInitDerivedParam(v, p); },
-                                 [&ng](const Models::Base::Var &var) { return ng.getVarField(var); },
-                                 [&ng](const Snippet::Base::EGP &egp) { return ng.getEGPField(egp); });
+                                 [&ng](size_t v, const Snippet::Base::EGP &egp) { return ng.getVarInitEGP(v, egp); });
 
             // Loop through incoming synaptic populations
             for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
@@ -299,11 +302,11 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(),
                                          ng.getNumNeurons(), i, model.getPrecision(),
-                                         [sg](size_t i) { return sg->getPSVarInitialisers().at(i); },
-                                         [&ng, i](size_t v, size_t p) { return ng.getPSMVarInitParam(i, v, p); },
-                                         [&ng, i](size_t v, size_t p) { return ng.getPSMVarInitDerivedParam(i, v, p); },
-                                         [&ng, i](const Models::Base::Var &var) { return ng.getPSMVar(i, var); },
-                                         [&ng, i](const Snippet::Base::EGP &egp) { return ng.getPS(egp); });
+                                         [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
+                                         [&ng, i](const Models::Base::Var &var){ return ng.getPSMVar(i, var); },
+                                         [&ng, i](size_t v, size_t p){ return ng.getPSMVarInitParam(i, v, p); },
+                                         [&ng, i](size_t v, size_t p){ return ng.getPSMVarInitDerivedParam(i, v, p); },
+                                         [&ng, i](size_t v, const Snippet::Base::EGP &egp){ return ng.getPSMVarInitEGP(i, v, egp); });
                 }
             }
 
@@ -317,9 +320,10 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                      i, model.getPrecision(),
                                      [&sg](size_t i){ return sg->getWUPostVarInitialisers().at(i); },
                                      [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); },
+                                     [&ng, i](const Models::Base::Var &var) { return ng.getInSynVar(i, var); },
                                      [&ng, i](size_t v, size_t p) { return ng.getInSynPostVarInitParam(i, v, p); },
                                      [&ng, i](size_t v, size_t p) { return ng.getInSynPostVarInitDerivedParam(i, v, p); },
-                                     [&ng, i](const Models::Base::Var &var) { return ng.getInSynVar(i, var); });
+                                     [&ng, i](size_t v, const Snippet::Base::EGP &egp){ return ng.getInSynPostVarInitEGP(i, v, egp); });
             }
 
             // Loop through outgoing synaptic populations with presynaptic update code
@@ -332,9 +336,10 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                      i, model.getPrecision(),
                                      [&sg](size_t i){ return sg->getWUPreVarInitialisers().at(i); },
                                      [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); },
+                                     [&ng, i](const Models::Base::Var &var) { return ng.getOutSynVar(i, var); },
                                      [&ng, i](size_t v, size_t p) { return ng.getOutSynPreVarInitParam(i, v, p); },
                                      [&ng, i](size_t v, size_t p) { return ng.getOutSynPreVarInitDerivedParam(i, v, p); },
-                                     [&ng, i](const Models::Base::Var &var) { return ng.getOutSynVar(i, var); });
+                                     [&ng, i](size_t v, const Snippet::Base::EGP &egp){ return ng.getOutSynPreVarInitEGP(i, v, egp); });
             }
 
             // Loop through current sources
@@ -346,9 +351,10 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                      ng.getNumNeurons(),
                                      i, model.getPrecision(),
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); },
+                                     [&ng, i](const Models::Base::Var &var) { return ng.getCurrentSourceVar(i, var); },
                                      [&ng, i](size_t v, size_t p) { return ng.getCurrentSourceVarInitParam(i, v, p); },
                                      [&ng, i](size_t v, size_t p) { return ng.getCurrentSourceVarInitDerivedParam(i, v, p); },
-                                     [&ng, i](const Models::Base::Var &var) { return ng.getCurrentSourceVar(i, var); });
+                                     [&ng, i](size_t v, const Snippet::Base::EGP &egp){ return ng.getCurrentSourceVarInitEGP(i, v, egp); });
             }
         },
         // Dense syanptic matrix variable initialisation
