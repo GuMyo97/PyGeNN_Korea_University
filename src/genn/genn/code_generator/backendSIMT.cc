@@ -401,7 +401,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                     // If we are recording spikes, copy word to correct location in global memory
                     if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                        os << "group->recordSpk[" << globalIndex << "] = shSpkRecord";
+                        os << ng.getRecordSpk() << "[" << globalIndex << "] = shSpkRecord";
                         if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
                             os << "[" << getThreadID() << "]";
                         }
@@ -410,7 +410,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                     // If we are recording spike-like events, copy word to correct location in global memory
                     if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                        os << "group->recordSpkEvent[" << globalIndex << "] = shSpkEvntRecord";
+                        os << ng.getRecordSpkEvent() << "[" << globalIndex << "] = shSpkEvntRecord";
                         if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
                             os << "[" << getThreadID() << "]";
                         }

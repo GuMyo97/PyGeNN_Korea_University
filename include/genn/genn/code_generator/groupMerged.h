@@ -160,22 +160,16 @@ public:
     std::string getVarField(const Models::Base::Var &var, const std::string &suffix = "")
     {
         // Add pointer field
-        addPointerField(var.type, var.name + suffix, m_Backend.getDeviceVarPrefix() + var.name);
-
-        // Return name of struct field
-        return "group->" + var.name + suffix;
+        return addPointerField(var.type, var.name + suffix, m_Backend.getDeviceVarPrefix() + var.name);
     }
 
     std::string getEGPField(const Snippet::Base::EGP &egp)
     {
         const bool isPointer = Utils::isTypePointer(egp.type);
         const std::string prefix = isPointer ? m_Backend.getDeviceVarPrefix() : "";
-        addField(egp.type, egp.name,
-                 [egp, prefix](const G &g, size_t) { return prefix + egp.name + g.getName(); },
-                 isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
-
-        // Return name of struct field
-        return "group->" + egp.name;
+        return addField(egp.type, egp.name,
+                        [egp, prefix](const G &g, size_t) { return prefix + egp.name + g.getName(); },
+                        isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
     }
 
 protected:
@@ -235,8 +229,7 @@ protected:
 
             // If this group's field value differs - we need to pass this via struct field
             if(getFieldValueFn(group, groupIndex) != archetypeValue) {
-                addField(type, name, getFieldValueFn);
-                return "group->" + name;
+                return addField(type, name, getFieldValueFn);
             }
         }
 
@@ -248,10 +241,7 @@ protected:
     {
         // Add field
         assert(!Utils::isTypePointer(type));
-        addField(type + "*", name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
-
-        // Return name of struct field
-        return "group->" + name;
+        return addField(type + "*", name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
     //! Helper to test whether parameter values are heterogeneous within merged group
@@ -270,15 +260,12 @@ protected:
                        }))
         {
             // Add field
-            addScalarField(paramNames.at(index) + suffix,
-                           [index, getParamValuesFn](const G &g, size_t)
-                           {
-                               const auto &values = getParamValuesFn(g);
-                               return Utils::writePreciseString(values.at(index));
-                           });
-
-            // Return name of struct field
-            return "group->" + paramNames.at(index) + suffix;
+            return addScalarField(paramNames.at(index) + suffix,
+                                  [index, getParamValuesFn](const G &g, size_t)
+                                  {
+                                      const auto &values = getParamValuesFn(g);
+                                      return Utils::writePreciseString(values.at(index));
+                                  });
         }
         // Otherwise, return precise string with archetype value
         else {
@@ -302,15 +289,12 @@ protected:
                        }))
         {
             // Add field
-            addScalarField(derivedParams.at(index).name + suffix,
-                           [index, getDerivedParamValuesFn](const G &g, size_t)
-                           {
-                               const auto &values = getDerivedParamValuesFn(g);
-                               return Utils::writePreciseString(values.at(index));
-                           });
-
-            // Return name of struct field
-            return "group->" + derivedParams.at(index).name + suffix;
+            return addScalarField(derivedParams.at(index).name + suffix,
+                                  [index, getDerivedParamValuesFn](const G &g, size_t)
+                                  {
+                                      const auto &values = getDerivedParamValuesFn(g);
+                                      return Utils::writePreciseString(values.at(index));
+                                  });
         }
         // Otherwise, return precise string with archetype value
         else {
@@ -319,28 +303,31 @@ protected:
     }
 
 
-    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
+    std::string addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         // Add field to data structure
         m_Fields.emplace(std::piecewise_construct,
                          std::forward_as_tuple(name),
                          std::forward_as_tuple(type, name, getFieldValue, fieldType));
+
+        // Return code to access field
+        return "group->" + name;
     }
 
-    void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
+    std::string addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
-        addField("scalar", name,
-                 [getFieldValue, this](const G &g, size_t i)
-                 {
-                     return getFieldValue(g, i) + m_LiteralSuffix;
-                 },
-                 fieldType);
+        return addField("scalar", name,
+                        [getFieldValue, this](const G &g, size_t i)
+                        {
+                            return getFieldValue(g, i) + m_LiteralSuffix;
+                        },
+                        fieldType);
     }
 
-    void addPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+    std::string addPointerField(const std::string &type, const std::string &name, const std::string &prefix)
     {
         assert(!Utils::isTypePointer(type));
-        addField(type + "*", name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+        return addField(type + "*", name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
     }
 
 
@@ -684,15 +671,12 @@ protected:
             const auto group = sortedGroupChildren.at(i).at(childIndex);
             if(getParamValuesFn(group).at(paramIndex) != archetypeValue) {
                 // Add field
-                addScalarField(paramNames.at(paramIndex) + suffix,
-                               [childIndex, paramIndex, getParamValuesFn, &sortedGroupChildren](const NeuronGroupInternal&, size_t groupIndex)
-                               {
-                                   const auto &values = getParamValuesFn(sortedGroupChildren.at(groupIndex).at(childIndex));
-                                   return Utils::writePreciseString(values.at(paramIndex));
-                               });
-
-                // Return name of struct field
-                return "group->" + paramNames.at(paramIndex) + suffix;
+                return addScalarField(paramNames.at(paramIndex) + suffix,
+                                      [childIndex, paramIndex, getParamValuesFn, &sortedGroupChildren](const NeuronGroupInternal&, size_t groupIndex)
+                                      {
+                                          const auto &values = getParamValuesFn(sortedGroupChildren.at(groupIndex).at(childIndex));
+                                          return Utils::writePreciseString(values.at(paramIndex));
+                                      });
             }
         }
 
@@ -713,15 +697,12 @@ protected:
             const auto group = sortedGroupChildren.at(i).at(childIndex);
             if(getDerivedParamValuesFn(group).at(paramIndex) != archetypeValue) {
                 // Add field
-                addScalarField(derivedParams.at(paramIndex).name + suffix,
-                               [childIndex, paramIndex, getDerivedParamValuesFn, &sortedGroupChildren](const NeuronGroupInternal&, size_t groupIndex)
-                               {
-                                   const auto &values = getDerivedParamValuesFn(sortedGroupChildren.at(groupIndex).at(childIndex));
-                                   return Utils::writePreciseString(values.at(paramIndex));
-                               });
-
-                // Return name of struct field
-                return "group->" + derivedParams.at(paramIndex).name + suffix;
+                return addScalarField(derivedParams.at(paramIndex).name + suffix,
+                                      [childIndex, paramIndex, getDerivedParamValuesFn, &sortedGroupChildren](const NeuronGroupInternal&, size_t groupIndex)
+                                      {
+                                          const auto &values = getDerivedParamValuesFn(sortedGroupChildren.at(groupIndex).at(childIndex));
+                                          return Utils::writePreciseString(values.at(paramIndex));
+                                      });
             }
         }
 
@@ -760,6 +741,12 @@ public:
 
     //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
     std::string getPrevQueueOffset();
+
+    //! Get group structure member for spike recording
+    std::string getRecordSpk();
+
+    //! Get group structure member for spike event recording
+    std::string getRecordSpkEvent();
 
     //! Get code string for accessing neuron parameter - may be a literal or 
     //! group structure member access, in which case, required field will be added
