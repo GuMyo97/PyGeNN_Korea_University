@@ -272,9 +272,9 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 // If this synapse group's input variable should be initialised on device
                 // Generate target-specific code to initialise variable
                 backend.genVariableInit(os, ng.getNumNeurons(), "id", popSubs,
-                    [&model, i] (CodeStream &os, Substitutions &varSubs)
+                    [&model, &ng, i] (CodeStream &os, Substitutions &varSubs)
                     {
-                        os << "group->inSynInSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << ng.getPSMInSyn(i) << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                     });
 
                 // If dendritic delays are required
@@ -286,15 +286,15 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                             {
                                 CodeStream::Scope b(os);
                                 const std::string denDelayIndex = "(d * " + ng.getNumNeurons() + ") + " + varSubs["id"];
-                                os << "group->denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                os << ng.getPSMDenDelay(i) << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         });
 
                     // Zero dendritic delay pointer
                     backend.genPopVariableInit(os, popSubs,
-                        [i](CodeStream &os, Substitutions &)
+                        [&ng, i](CodeStream &os, Substitutions &)
                         {
-                            os << "*group->denDelayPtrInSyn" << i << " = 0;" << std::endl;
+                            os << "*" << ng.getPSMDenDelayPtr(i) << " = 0;" << std::endl;
                         });
                 }
 

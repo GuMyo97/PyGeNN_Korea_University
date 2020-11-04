@@ -51,9 +51,10 @@ public:
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
 
 
-    GroupMerged(size_t index, const std::string &precision, const BackendBase &backend,
+    GroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                 const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)), m_Backend(backend)
+    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)),
+        m_Backend(backend), m_Precision(precision), m_TimePrecision(timePrecision)
     {}
 
     //------------------------------------------------------------------------
@@ -182,6 +183,10 @@ protected:
     // Protected methods
     //------------------------------------------------------------------------
     const BackendBase &getBackend() const { return m_Backend; }
+
+    const std::string &getPrecision() const{ return m_Precision; }
+
+    const std::string &getTimePrecision() const{ return m_TimePrecision; }
 
     //! Helper to test whether parameter values are heterogeneous within merged group
     template<typename P>
@@ -461,7 +466,7 @@ protected:
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
-            
+
             // Raise error if this field is a host field but this isn't a host structure
             assert(std::get<3>(f) != FieldType::Host || host);
         }
@@ -525,6 +530,8 @@ private:
     std::map<std::string, Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
     const BackendBase &m_Backend;
+    const std::string m_Precision;
+    const std::string m_TimePrecision;
 };
 
 //----------------------------------------------------------------------------
@@ -594,6 +601,15 @@ public:
 
     //! Get group structure member for postsynaptic model variable
     std::string getPSMVar(size_t childIndex, const Models::Base::Var &var);
+
+    //! Get group structure member for postsynaptic model inSyn
+    std::string getPSMInSyn(size_t childIndex);
+
+    //! Get group structure member for postsynaptic model denDelay
+    std::string getPSMDenDelay(size_t childIndex);
+
+    //! Get group structure member for postsynaptic model denDelayPtr
+    std::string getPSMDenDelayPtr(size_t childIndex);
 
     //! Get group structure member for incoming synapse weight update model postsynaptic variable
     std::string getInSynVar(size_t childIndex, const Models::Base::Var &var);
@@ -848,8 +864,6 @@ private:
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
     std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostVars;
     std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreVars;
-    const std::string m_TimePrecision;
-    
 };
 
 //----------------------------------------------------------------------------

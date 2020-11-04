@@ -198,13 +198,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn = group->inSynInSyn" << i << "[" << popSubs["id"] << "];" << std::endl;
+                os << model.getPrecision() << " linSyn = " << ng.getPSMInSyn(i) << "[" << popSubs["id"] << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
                     os << backend.getPointerPrefix() << model.getPrecision() << " *denDelayFront = ";
-                    os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * " << ng.getNumNeurons() << ") + " << popSubs["id"] << "];" << std::endl;
+                    os << "&" << ng.getPSMDenDelay(i) << "[(*" << ng.getPSMDenDelayPtr(i) << " * " << ng.getNumNeurons() << ") + " << popSubs["id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn += *denDelayFront;" << std::endl;
@@ -221,7 +221,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                             os << "const ";
                         }
                         os << v.type << " lps" << v.name;
-                        os << " = " << ng.getInSynVar(i, v) << "[" << neuronSubs["id"] << "];" << std::endl;
+                        os << " = " << ng.getPSMVar(i, v) << "[" << neuronSubs["id"] << "];" << std::endl;
                     }
                 }
 
@@ -236,7 +236,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                                                       [i, &ng](size_t p) { return ng.isPSMGlobalVarHeterogeneous(i, p); },
                                                       "", "group->", "InSyn" + std::to_string(i));
                 }
-            
+
                 inSynSubs.addParamValueSubstitution(psm->getParamNames(), [i, &ng](size_t p) { return ng.getPSMParam(i, p); });
                 inSynSubs.addVarValueSubstitution(psm->getDerivedParams(), [i, &ng](size_t p) { return ng.getPSMDerivedParam(i, p); });
                 inSynSubs.addVarNameSubstitution<Snippet::Base::EGP>(psm->getExtraGlobalParams(), 
@@ -269,12 +269,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
 
                 // Write back linSyn
-                os << "group->inSynInSyn"  << i << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
+                os << ng.getPSMInSyn(i) << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << ng.getInSynVar(i, v) << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
+                        os << ng.getPSMVar(i, v) << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
                     }
                 }
             }
