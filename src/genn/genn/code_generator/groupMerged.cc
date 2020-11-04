@@ -177,24 +177,6 @@ std::string CodeGenerator::NeuronGroupMergedBase::getOutSynVar(size_t childIndex
     return "group->" + var.name + "WUPre" + std::to_string(childIndex);
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::NeuronGroupMergedBase::isPSMGlobalVarHeterogeneous(size_t childIndex, size_t varIndex) const
-{
-    // If synapse group doesn't have individual PSM variables to start with, return false
-    const auto *sg = getArchetype().getMergedInSyn().at(childIndex).first;
-    if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-        return false;
-    }
-    else {
-        const auto *psm = getArchetype().getMergedInSyn().at(childIndex).first->getPSModel();
-        const std::string varName = psm->getVars().at(varIndex).name;
-        return isChildParamValueHeterogeneous({psm->getApplyInputCode(), psm->getDecayCode()}, varName, childIndex, varIndex, m_SortedMergedInSyns,
-                                              [](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &inSyn)
-                                              {
-                                                  return inSyn.first->getPSConstInitVals();
-                                              });
-    }
-}
-//----------------------------------------------------------------------------
 CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                                             bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   CodeGenerator::GroupMerged<NeuronGroupInternal>(index, precision, timePrecision, backend, groups)
@@ -223,30 +205,6 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     // synapse groups, ordered to match those of the archetype group
     orderNeuronGroupChildren(getArchetype().getOutSynWithPreVars(), m_SortedOutSynWithPreVars, &NeuronGroupInternal::getOutSynWithPreVars,
                              [](const SynapseGroupInternal *a, const SynapseGroupInternal *b){ return a->canWUPreInitBeMerged(*b); });
-
-
-    // Loop through merged synaptic inputs in archetypical neuron group
-    for(size_t i = 0; i < getArchetype().getMergedInSyn().size(); i++) {
-        const SynapseGroupInternal *sg = getArchetype().getMergedInSyn()[i].first;
-
-        // Loop through variables
-        const auto vars = sg->getPSModel()->getVars();
-        for(size_t v = 0; v < vars.size(); v++) {
-            // Otherwise, if postsynaptic model variables are global and we're updating 
-            // **NOTE** global variable values aren't useful during initialization
-            if(!init) {
-                // If GLOBALG variable should be implemented heterogeneously, add value
-                if(isPSMGlobalVarHeterogeneous(i, v)) {
-                    addScalarField(vars[v].name + "InSyn" + std::to_string(i),
-                                   [this, i, v](const NeuronGroupInternal &, size_t groupIndex)
-                                   {
-                                       const double val = m_SortedMergedInSyns.at(groupIndex).at(i).first->getPSConstInitVals().at(v);
-                                       return Utils::writePreciseString(val);
-                                   });
-                }
-            }
-        }
-    }
 
     // Loop through neuron groups
     std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
@@ -283,17 +241,6 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
             i++;
         }
     }
-}
-//----------------------------------------------------------------------------
-void CodeGenerator::NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, const std::string &name, 
-                                                                      size_t archetypeIndex, const std::string &prefix)
-{
-    assert(!Utils::isTypePointer(type));
-    addField(type + "*", name + std::to_string(archetypeIndex),
-             [prefix, archetypeIndex, this](const NeuronGroupInternal &, size_t groupIndex)
-             {
-                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex).first->getPSModelTargetName();
-             });
 }
 
 //----------------------------------------------------------------------------
@@ -369,6 +316,21 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentSourceDerivedParam
                                      [](const CurrentSourceInternal *cs) { return cs->getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentSourceEGP(size_t childIndex, const Models::Base::EGP &egp)
+{
+    const bool isPointer = Utils::isTypePointer(egp.type);
+    const std::string varPrefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
+    addField(egp.type, egp.name + "CS" + std::to_string(childIndex),
+             [childIndex, egp, varPrefix, this](const NeuronGroupInternal&, size_t groupIndex)
+             {
+                 return varPrefix + egp.name + getSortedCurrentSources().at(groupIndex).at(childIndex)->getName();
+             },
+             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+
+    return "group->" + egp.name + "CS" + std::to_string(childIndex);
+}
+//
+//----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronUpdateGroupMerged::getPSMParam(size_t childIndex, size_t paramIndex)
 {
     const auto *psm = getArchetype().getMergedInSyn().at(childIndex).first->getPSModel();
@@ -391,6 +353,31 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getPSMDerivedParam(size_t ch
                                      });
 }
 //----------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getPSMEGP(size_t childIndex, const Models::Base::EGP &egp)
+{
+    const bool isPointer = Utils::isTypePointer(egp.type);
+    const std::string varPrefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
+    addField(egp.type, egp.name + "InSyn" + std::to_string(childIndex),
+             [childIndex, egp, varPrefix, this](const NeuronGroupInternal&, size_t groupIndex)
+             {
+                 return varPrefix + egp.name + getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSModelTargetName();
+             },
+             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+
+    return "group->" + egp.name + "InSyn" + std::to_string(childIndex);
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getPSMGlobalVar(size_t childIndex, size_t varIndex)
+{
+    const auto *psm = getArchetype().getMergedInSyn().at(childIndex).first->getPSModel();
+    return getChildDerivedParamField(childIndex, varIndex, psm->getVars(),
+                                     "InSyn" + std::to_string(childIndex), getSortedMergedInSyns(),
+                                     [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &inSyn)
+                                     {
+                                         return inSyn.first->getPSConstInitVals();
+                                     });
+}
+//----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronUpdateGroupMerged::getInSynParam(size_t childIndex, size_t paramIndex)
 {
     const auto *wum = getArchetype().getInSynWithPostVars().at(childIndex)->getWUModel();
@@ -407,6 +394,20 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getInSynDerivedParam(size_t 
                                      [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getInSynEGP(size_t childIndex, const Models::Base::EGP &egp)
+{
+    const bool isPointer = Utils::isTypePointer(egp.type);
+    const std::string varPrefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
+    addField(egp.type, egp.name + "WUPost" + std::to_string(childIndex),
+             [childIndex, egp, varPrefix, this](const NeuronGroupInternal&, size_t groupIndex)
+             {
+                 return varPrefix + egp.name + getSortedInSynWithPostVars().at(groupIndex).at(childIndex)->getName();
+             },
+             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+
+    return "group->" + egp.name + "WUPost" + std::to_string(childIndex);
+}
+//----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronUpdateGroupMerged::getOutSynParam(size_t childIndex, size_t paramIndex)
 {
     const auto *wum = getArchetype().getOutSynWithPreVars().at(childIndex)->getWUModel();
@@ -421,48 +422,6 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getOutSynDerivedParam(size_t
     return getChildDerivedParamField(childIndex, paramIndex, wum->getDerivedParams(), 
                                      "WUPre" + std::to_string(childIndex), getSortedOutSynWithPreVars(),
                                      [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentSourceEGP(size_t childIndex, const Models::Base::EGP &egp)
-{
-    const bool isPointer = Utils::isTypePointer(egp.type);
-    const std::string varPrefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
-    addField(egp.type, egp.name + "CS" + std::to_string(childIndex),
-             [childIndex, egp, varPrefix, this](const NeuronGroupInternal&, size_t groupIndex)
-             {
-                 return varPrefix + egp.name + getSortedCurrentSources().at(groupIndex).at(childIndex)->getName();
-             },
-             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
-
-    return "group->" + egp.name + "CS" + std::to_string(childIndex);
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getPSMEGP(size_t childIndex, const Models::Base::EGP &egp)
-{
-    const bool isPointer = Utils::isTypePointer(egp.type);
-    const std::string varPrefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
-    addField(egp.type, egp.name + "InSyn" + std::to_string(childIndex),
-             [childIndex, egp, varPrefix, this](const NeuronGroupInternal&, size_t groupIndex)
-             {
-                 return varPrefix + egp.name + getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSModelTargetName();
-             },
-             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
-    
-    return "group->" + egp.name + "InSyn" + std::to_string(childIndex);
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getInSynEGP(size_t childIndex, const Models::Base::EGP &egp)
-{
-    const bool isPointer = Utils::isTypePointer(egp.type);
-    const std::string varPrefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
-    addField(egp.type, egp.name + "WUPost" + std::to_string(childIndex),
-             [childIndex, egp, varPrefix, this](const NeuronGroupInternal&, size_t groupIndex)
-             {
-                 return varPrefix + egp.name + getSortedInSynWithPostVars().at(groupIndex).at(childIndex)->getName();
-             },
-             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
-
-    return "group->" + egp.name + "WUPost" + std::to_string(childIndex);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronUpdateGroupMerged::getOutSynEGP(size_t childIndex, const Models::Base::EGP &egp)

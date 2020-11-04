@@ -232,9 +232,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     inSynSubs.addVarNameSubstitution(psm->getVars(), "", "lps");
                 }
                 else {
-                    inSynSubs.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals(),
-                                                      [i, &ng](size_t p) { return ng.isPSMGlobalVarHeterogeneous(i, p); },
-                                                      "", "group->", "InSyn" + std::to_string(i));
+                    inSynSubs.addVarValueSubstitution(psm->getVars(), [i, &ng](size_t v) { return ng.getPSMGlobalVar(i, v); });
                 }
 
                 inSynSubs.addParamValueSubstitution(psm->getParamNames(), [i, &ng](size_t p) { return ng.getPSMParam(i, p); });
