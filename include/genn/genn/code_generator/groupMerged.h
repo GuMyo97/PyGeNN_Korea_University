@@ -233,7 +233,7 @@ protected:
         }
         // Otherwise, return precise string with archetype value
         else {
-            return Utils::writePreciseString(archetypeValue);
+            return "(" + Utils::writePreciseString(archetypeValue) + ")";
         }
     }
 
@@ -262,7 +262,7 @@ protected:
         }
         // Otherwise, return precise string with archetype value
         else {
-            return Utils::writePreciseString(archetypeValue);
+            return "(" + Utils::writePreciseString(archetypeValue) + ")";
         }
     }
 
@@ -544,7 +544,7 @@ protected:
             }
         }
 
-        return Utils::writePreciseString(archetypeValue);
+        return "(" + Utils::writePreciseString(archetypeValue) + ")";
     }
 
     //! Helper to test whether parameter values are heterogeneous within merged group
@@ -570,7 +570,7 @@ protected:
             }
         }
 
-        return Utils::writePreciseString(archetypeValue);
+        return "(" + Utils::writePreciseString(archetypeValue) + ")";
     }
 
     const std::vector<std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>>> &getSortedMergedInSyns() const { return m_SortedMergedInSyns; }
