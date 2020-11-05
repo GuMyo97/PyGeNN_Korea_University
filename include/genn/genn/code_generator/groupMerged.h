@@ -934,6 +934,7 @@ protected:
     :   GroupMerged<SynapseGroupInternal>(index, precision, timePrecision, backend, groups)
     {
     }
+
 private:
     //------------------------------------------------------------------------
     // Private methods

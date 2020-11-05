@@ -137,7 +137,7 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
 }
 
 template<typename G>
-void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs, const G &sg)
+void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs, G &sg)
 {
     // Loop through kernel dimensions to calculate array index
     const auto &kernelSize = sg.getArchetype().getKernelSize();
@@ -145,14 +145,7 @@ void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs, 
         os << "(" << subs["id_kernel_" + std::to_string(i)];
         // Loop through remainining dimensions of kernel
         for(size_t j = i + 1; j < kernelSize.size(); j++) {
-            // If kernel size if heterogeneous in this dimension, multiply by value from group structure
-            if(sg.isKernelSizeHeterogeneous(j)) {
-                os << " * group->kernelSize" << j;
-            }
-            // Otherwise, multiply by literal
-            else {
-                os << " * " << kernelSize.at(j);
-            }
+            os << " * group->kernelSize" << sg.getKernelSize(j);
         }
         os << ")";
 
