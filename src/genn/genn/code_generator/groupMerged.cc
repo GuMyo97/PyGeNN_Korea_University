@@ -225,7 +225,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
                          {
                              return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
                          },
-                         Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                         isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
             }
             i++;
         }
@@ -314,7 +314,7 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentSourceEGP(size_t c
                     {
                         return varPrefix + egp.name + getSortedCurrentSources().at(groupIndex).at(childIndex)->getName();
                     },
-                    Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //
 //----------------------------------------------------------------------------
@@ -349,7 +349,7 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getPSMEGP(size_t childIndex,
              {
                  return varPrefix + egp.name + getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSModelTargetName();
              },
-             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+             isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronUpdateGroupMerged::getPSMGlobalVar(size_t childIndex, size_t varIndex)
@@ -388,7 +388,7 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getInSynEGP(size_t childInde
              {
                  return varPrefix + egp.name + getSortedInSynWithPostVars().at(groupIndex).at(childIndex)->getName();
              },
-             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+             isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronUpdateGroupMerged::getOutSynParam(size_t childIndex, size_t paramIndex)
@@ -416,7 +416,7 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getOutSynEGP(size_t childInd
                     {
                         return varPrefix + egp.name + getSortedOutSynWithPreVars().at(groupIndex).at(childIndex)->getName();
                     },
-                    Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 
 //----------------------------------------------------------------------------
@@ -454,7 +454,7 @@ std::string CodeGenerator::NeuronInitGroupMerged::getVarInitEGP(size_t varIndex,
                     {
                         return varPrefix + egp.name + varName + g.getName();
                     },
-                    Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronInitGroupMerged::getCurrentSourceVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex)
@@ -484,7 +484,7 @@ std::string CodeGenerator::NeuronInitGroupMerged::getCurrentSourceVarInitEGP(siz
                     {
                         return varPrefix + egp.name + varName + getSortedCurrentSources().at(groupIndex).at(childIndex)->getName();
                     },
-                    Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronInitGroupMerged::getPSMVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex)
@@ -518,7 +518,7 @@ std::string CodeGenerator::NeuronInitGroupMerged::getPSMVarInitEGP(size_t childI
                     {
                         return varPrefix + egp.name + varName + getSortedMergedInSyns().at(groupIndex).at(childIndex).first->getPSModelTargetName();
                     },
-                    Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronInitGroupMerged::getInSynPostVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex)
@@ -548,7 +548,7 @@ std::string CodeGenerator::NeuronInitGroupMerged::getInSynPostVarInitEGP(size_t 
                     {
                         return varPrefix + egp.name + varName + getSortedInSynWithPostVars().at(groupIndex).at(childIndex)->getName();
                     },
-                    Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::NeuronInitGroupMerged::getOutSynPreVarInitParam(size_t childIndex, size_t varIndex, size_t paramIndex)
@@ -578,7 +578,7 @@ std::string CodeGenerator::NeuronInitGroupMerged::getOutSynPreVarInitEGP(size_t 
                     {
                         return varPrefix + egp.name + varName + getSortedOutSynWithPreVars().at(groupIndex).at(childIndex)->getName();
                     },
-                    Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 
 //----------------------------------------------------------------------------
@@ -606,8 +606,9 @@ CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostIn
                                                                                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, precision, timePrecision, backend, groups)
 {
+    assert(false);
     // **TODO** these could be generic
-    addField("unsigned int", "numSrcNeurons",
+    /*addField("unsigned int", "numSrcNeurons",
              [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "numTrgNeurons",
              [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
@@ -647,75 +648,79 @@ CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostIn
                          return "&" + backend.getHostVarPrefix() + e.name + g.getName();
                      });
         }
-    }
+    }*/
 }
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
-{
-    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const std::string paramName = connectInitSnippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous({connectInitSnippet->getHostInitCode()}, paramName, paramIndex,
-                                     [](const SynapseGroupInternal &sg)
-                                     {
-                                         return sg.getConnectivityInitialiser().getParams();
-                                     });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
-{
-    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const std::string paramName = connectInitSnippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous({connectInitSnippet->getHostInitCode()}, paramName, paramIndex,
-                                     [](const SynapseGroupInternal &sg)
-                                     {
-                                         return sg.getConnectivityInitialiser().getDerivedParams();
-                                     });
-}
-
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticAxonalDelaySlot() const
+std::string CodeGenerator::SynapseGroupMergedBase::getRowStride()
 {
-    assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
-
-    const unsigned int numDelaySteps = getArchetype().getDelaySteps();
-    if(numDelaySteps == 0) {
-        return "(*group->srcSpkQuePtr)";
-    }
-    else {
-        const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-        return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps) + ") % " + std::to_string(numSrcDelaySlots) + ")";
-    }
+    return getValueField("unsigned int", "rowStride",
+                         [this](const SynapseGroupInternal &sg, size_t) { return std::to_string(getBackend().getSynapticMatrixRowStride(sg)); });
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelaySlot() const
+std::string CodeGenerator::SynapseGroupMergedBase::getColStride()
 {
-    assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
-
-    const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
-    if(numBackPropDelaySteps == 0) {
-        return "(*group->trgSpkQuePtr)";
-    }
-    else {
-        const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-        return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps) + ") % " + std::to_string(numTrgDelaySlots) + ")";
-    }
+   return getValueField("unsigned int", "colStride",
+                        [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getDendriticDelayOffset(const std::string &offset) const
+std::string CodeGenerator::SynapseGroupMergedBase::getNumSrcNeurons()
 {
-    assert(getArchetype().isDendriticDelayRequired());
-
-    if(offset.empty()) {
-        return "(*group->denDelayPtr * group->numTrgNeurons) + ";
-    }
-    else {
-        return "(((*group->denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group->numTrgNeurons) + ";
-    }
+    return getValueField("unsigned int", "numSrcNeurons",
+                         [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getNumTrgNeurons()
+{
+    return getValueField("unsigned int", "numTrgNeurons",
+                         [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getInSyn()
+{
+    return addPSPointerField(getPrecision(), "inSyn", getBackend().getDeviceVarPrefix() + "inSyn");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getDenDelay()
+{
+     return addPSPointerField(getPrecision(), "denDelay", getBackend().getDeviceVarPrefix() + "denDelay");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getDenDelayPtr()
+{
+    return addPSPointerField("unsigned int", "denDelayPtr", getBackend().getScalarAddressPrefix() + "denDelayPtr");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcSpikes()
+{
+    return addSrcPointerField("unsigned int", "srcSpk", getBackend().getDeviceVarPrefix() + "glbSpk");   
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcNumSpikes()
+{
+    return addSrcPointerField("unsigned int", "srcSpkCnt", getBackend().getDeviceVarPrefix() + "glbSpkCnt");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcSpikeEvents()
+{
+    return addSrcPointerField("unsigned int", "srcSpkEvnt", getBackend().getDeviceVarPrefix() + "glbSpkEvnt");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcNumSpikeEvents()
+{
+    return addSrcPointerField("unsigned int", "srcSpkCntEvnt", getBackend().getDeviceVarPrefix() + "glbSpkCntEvnt");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcSpikeQueuePointer()
+{
+    return addSrcPointerField("unsigned int", "srcSpkQuePtr", getBackend().getScalarAddressPrefix() + "spkQuePtr");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcSpikeTimes()
+{
+    return addSrcPointerField(getTimePrecision(), "sTPre", getBackend().getDeviceVarPrefix() + "sT");
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::SynapseGroupMergedBase::getSrcNeuronParam(size_t index)
@@ -730,6 +735,40 @@ std::string CodeGenerator::SynapseGroupMergedBase::getSrcNeuronDerivedParam(size
                                 [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcNeuronVar(const Models::Base::Var &var)
+{
+    return addSrcPointerField(var.type, var.name + "Pre", getBackend().getDeviceVarPrefix() + var.name);
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSrcNeuronEGP(const Snippet::Base::EGP &egp)
+{
+    const bool isPointer = Utils::isTypePointer(egp.type);
+    const std::string prefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
+    return addField(egp.type, egp.name + "Pre",
+                    [egp, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + egp.name + sg.getSrcNeuronGroup()->getName(); },
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgSpikes()
+{
+    return addTrgPointerField("unsigned int", "trgSpk", getBackend().getDeviceVarPrefix() + "glbSpk");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgNumSpikes()
+{
+    return addTrgPointerField("unsigned int", "trgSpkCnt", getBackend().getDeviceVarPrefix() + "glbSpkCnt");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgSpikeQueuePointer()
+{
+    return addTrgPointerField("unsigned int", "trgSpkQuePtr", getBackend().getScalarAddressPrefix() + "spkQuePtr");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgSpikeTimes()
+{
+    return addTrgPointerField(getTimePrecision(), "sTPost", getBackend().getDeviceVarPrefix() + "sT");
+}
+//----------------------------------------------------------------------------
 std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronParam(size_t index)
 {
     return getParamField(index, getArchetype().getTrgNeuronGroup()->getNeuronModel()->getParamNames(), "Trg", 
@@ -742,399 +781,214 @@ std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronDerivedParam(size
                                 [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isWUParamHeterogeneous(size_t paramIndex) const
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronEGP(const Snippet::Base::EGP &egp)
 {
-    const auto *wum = getArchetype().getWUModel();
-    const std::string paramName = wum->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous({getArchetypeCode()}, paramName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getWUParams(); });
+    const bool isPointer = Utils::isTypePointer(egp.type);
+    const std::string prefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
+    addField(egp.type, egp.name + "Post",
+                [egp, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + egp.name + sg.getTrgNeuronGroup()->getName(); },
+                isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isWUDerivedParamHeterogeneous(size_t paramIndex) const
+std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronVar(const Models::Base::Var &var)
 {
-    const auto *wum = getArchetype().getWUModel();
-    const std::string derivedParamName = wum->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous({getArchetypeCode()}, derivedParamName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); });
+    return addTrgPointerField(var.type, var.name + "Post", getBackend().getDeviceVarPrefix() + var.name);
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isWUGlobalVarHeterogeneous(size_t varIndex) const
+std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticAxonalDelaySlot()
 {
-    // If synapse group has global WU variables
-    if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-        const auto *wum = getArchetype().getWUModel();
-        const std::string varName = wum->getVars().at(varIndex).name;
-        return isParamValueHeterogeneous({getArchetypeCode()}, varName, varIndex,
-                                         [](const SynapseGroupInternal &sg) { return sg.getWUConstInitVals(); });
+    assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
+
+    const unsigned int numDelaySteps = getArchetype().getDelaySteps();
+    if(numDelaySteps == 0) {
+        return "(*" + getSrcSpikeQueuePointer() + ")";
     }
-    // Otherwise, return false
     else {
-        return false;
+        const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
+        return "((*" + getSrcSpikeQueuePointer() + " + " + std::to_string(numSrcDelaySlots - numDelaySteps) + ") % " + std::to_string(numSrcDelaySlots) + ")";
     }
 }
 //----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelaySlot()
 {
-    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
-    const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
-                                     [varIndex](const SynapseGroupInternal &sg)
-                                     {
-                                         return sg.getWUVarInitialisers().at(varIndex).getParams();
-                                     });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
-{
-    // If derived parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet();
-    const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, paramIndex,
-                                     [varIndex](const SynapseGroupInternal &sg)
-                                     {
-                                         return sg.getWUVarInitialisers().at(varIndex).getDerivedParams();
-                                     });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
-{
-    const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const auto rowBuildStateVars = connectivityInitSnippet->getRowBuildStateVars();
+    assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
 
-    // Build list of code strings containing row build code and any row build state variable values
-    std::vector<std::string> codeStrings{connectivityInitSnippet->getRowBuildCode()};
-    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
-                   [](const Snippet::Base::ParamVal &p) { return p.value; });
-
-    const std::string paramName = connectivityInitSnippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous(codeStrings, paramName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
-{
-    const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const auto rowBuildStateVars = connectivityInitSnippet->getRowBuildStateVars();
-
-    // Build list of code strings containing row build code and any row build state variable values
-    std::vector<std::string> codeStrings{connectivityInitSnippet->getRowBuildCode()};
-    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
-                   [](const Snippet::Base::ParamVal &p) { return p.value; });
-
-    const std::string derivedParamName = connectivityInitSnippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous(codeStrings, derivedParamName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) const
-{
-    // Get size of this kernel dimension for archetype
-    const unsigned archetypeValue = getArchetype().getKernelSize().at(dimensionIndex);
-
-    // Return true if any of the other groups have a different value
-    return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                       [archetypeValue, dimensionIndex](const GroupInternal &g)
-                       {
-                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
-                       });
-}
-//----------------------------------------------------------------------------
-CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                                              Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, timePrecision, backend, groups), m_ArchetypeCode(archetypeCode)
-{
-    const bool updateRole = ((role == Role::PresynapticUpdate)
-                             || (role == Role::PostsynapticUpdate)
-                             || (role == Role::SynapseDynamics));
-    const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
-
-    addField("unsigned int", "rowStride",
-             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
-    if(role == Role::PostsynapticUpdate || role == Role::SparseInit) {
-        addField("unsigned int", "colStride",
-                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
+    const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
+    if(numBackPropDelaySteps == 0) {
+        return "(*" + getTrgSpikeQueuePointer() + ")";
     }
-
-    addField("unsigned int", "numSrcNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-    addField("unsigned int", "numTrgNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-
-    // If this role is one where postsynaptic input can be provided
-    if(role == Role::PresynapticUpdate || role == Role::SynapseDynamics) {
-        if(getArchetype().isDendriticDelayRequired()) {
-            addPSPointerField(precision, "denDelay", backend.getDeviceVarPrefix() + "denDelay");
-            addPSPointerField("unsigned int", "denDelayPtr", backend.getScalarAddressPrefix() + "denDelayPtr");
-        }
-        else {
-            addPSPointerField(precision, "inSyn", backend.getDeviceVarPrefix() + "inSyn");
-        }
-    }
-
-    if(role == Role::PresynapticUpdate) {
-        if(getArchetype().isTrueSpikeRequired()) {
-            addSrcPointerField("unsigned int", "srcSpkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
-            addSrcPointerField("unsigned int", "srcSpk", backend.getDeviceVarPrefix() + "glbSpk");
-        }
-
-        if(getArchetype().isSpikeEventRequired()) {
-            addSrcPointerField("unsigned int", "srcSpkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
-            addSrcPointerField("unsigned int", "srcSpkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
-        }
-    }
-    else if(role == Role::PostsynapticUpdate) {
-        addTrgPointerField("unsigned int", "trgSpkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
-        addTrgPointerField("unsigned int", "trgSpk", backend.getDeviceVarPrefix() + "glbSpk");
-    }
-
-    // If this structure is used for updating rather than initializing
-    if(updateRole) {
-        // If presynaptic population has delay buffers
-        if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            addSrcPointerField("unsigned int", "srcSpkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
-        }
-
-        // If postsynaptic population has delay buffers
-        if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-            addTrgPointerField("unsigned int", "trgSpkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
-        }
-
-        // Get correct code string
-        const std::string code = getArchetypeCode();
-
-        // Loop through variables in presynaptic neuron model
-        const auto preVars = getArchetype().getSrcNeuronGroup()->getNeuronModel()->getVars();
-        for(const auto &v : preVars) {
-            // If variable is referenced in code string, add source pointer
-            if(code.find("$(" + v.name + "_pre)") != std::string::npos) {
-                addSrcPointerField(v.type, v.name + "Pre", backend.getDeviceVarPrefix() + v.name);
-            }
-        }
-
-        // Loop through variables in postsynaptic neuron model
-        const auto postVars = getArchetype().getTrgNeuronGroup()->getNeuronModel()->getVars();
-        for(const auto &v : postVars) {
-            // If variable is referenced in code string, add target pointer
-            if(code.find("$(" + v.name + "_post)") != std::string::npos) {
-                addTrgPointerField(v.type, v.name + "Post", backend.getDeviceVarPrefix() + v.name);
-            }
-        }
-
-        // Loop through extra global parameters in presynaptic neuron model
-        const auto preEGPs = getArchetype().getSrcNeuronGroup()->getNeuronModel()->getExtraGlobalParams();
-        for(const auto &e : preEGPs) {
-            if(code.find("$(" + e.name + "_pre)") != std::string::npos) {
-                const bool isPointer = Utils::isTypePointer(e.type);
-                const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
-                addField(e.type, e.name + "Pre",
-                         [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getSrcNeuronGroup()->getName(); },
-                         Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
-            }
-        }
-
-        // Loop through extra global parameters in postsynaptic neuron model
-        const auto postEGPs = getArchetype().getTrgNeuronGroup()->getNeuronModel()->getExtraGlobalParams();
-        for(const auto &e : postEGPs) {
-            if(code.find("$(" + e.name + "_post)") != std::string::npos) {
-                const bool isPointer = Utils::isTypePointer(e.type);
-                const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
-                addField(e.type, e.name + "Post",
-                         [e, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + e.name + sg.getTrgNeuronGroup()->getName(); },
-                         Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
-            }
-        }
-
-        // Add spike times if required
-        if(wum->isPreSpikeTimeRequired()) {
-            addSrcPointerField(timePrecision, "sTPre", backend.getDeviceVarPrefix() + "sT");
-        }
-        if(wum->isPostSpikeTimeRequired()) {
-            addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");
-        }
-
-        // Add heterogeneous weight update model parameters
-        addHeterogeneousParams<SynapseGroupMergedBase>(
-            wum->getParamNames(), "",
-            [](const SynapseGroupInternal &sg) { return sg.getWUParams(); },
-            &SynapseGroupMergedBase::isWUParamHeterogeneous);
-
-        // Add heterogeneous weight update model derived parameters
-        addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            wum->getDerivedParams(), "",
-            [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); },
-            &SynapseGroupMergedBase::isWUDerivedParamHeterogeneous);
-
-        // Add pre and postsynaptic variables to struct
-        addVars(wum->getPreVars(), backend.getDeviceVarPrefix());
-        addVars(wum->getPostVars(), backend.getDeviceVarPrefix());
-
-        // Add EGPs to struct
-        addEGPs(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-    }
-
-    // Add pointers to connectivity data
-    if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        addWeightSharingPointerField("unsigned int", "rowLength", backend.getDeviceVarPrefix() + "rowLength");
-        addWeightSharingPointerField(getArchetype().getSparseIndType(), "ind", backend.getDeviceVarPrefix() + "ind");
-
-        // Add additional structure for postsynaptic access
-        if(backend.isPostsynapticRemapRequired() && !wum->getLearnPostCode().empty()
-           && (role == Role::PostsynapticUpdate || role == Role::SparseInit))
-        {
-            addWeightSharingPointerField("unsigned int", "colLength", backend.getDeviceVarPrefix() + "colLength");
-            addWeightSharingPointerField("unsigned int", "remap", backend.getDeviceVarPrefix() + "remap");
-        }
-
-        // Add additional structure for synapse dynamics access
-        if(backend.isSynRemapRequired() && !wum->getSynapseDynamicsCode().empty()
-           && (role == Role::SynapseDynamics || role == Role::SparseInit))
-        {
-            addWeightSharingPointerField("unsigned int", "synRemap", backend.getDeviceVarPrefix() + "synRemap");
-        }
-    }
-    else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        addWeightSharingPointerField("uint32_t", "gp", backend.getDeviceVarPrefix() + "gp");
-    }
-
-    // If we're updating a group with procedural connectivity or initialising connectivity
-    if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) || (role == Role::ConnectivityInit)) {
-        // Add heterogeneous connectivity initialiser model parameters
-        addHeterogeneousParams<SynapseGroupMergedBase>(
-            getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
-            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
-            &SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous);
-
-
-        // Add heterogeneous connectivity initialiser derived parameters
-        addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
-            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
-            &SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous);
-
-        addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-                backend.getDeviceVarPrefix());
-    }
-
-    // If WU variables are global
-    const auto vars = wum->getVars();
-    const auto &varInit = getArchetype().getWUVarInitialisers();
-    if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-        // If this is an update role
-        // **NOTE **global variable values aren't useful during initialization
-        if(updateRole) {
-            for(size_t v = 0; v < vars.size(); v++) {
-                // If variable should be implemented heterogeneously, add scalar field
-                if(isWUGlobalVarHeterogeneous(v)) {
-                    addScalarField(vars[v].name,
-                                   [v](const SynapseGroupInternal &sg, size_t)
-                                   {
-                                       return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
-                                   });
-                }
-            }
-        }
-    }
-    // Otherwise (weights are individual or procedural)
     else {
-        const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
-        const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
-
-        // If synapse group has a kernel and we're either updating 
-        // with procedural weights or initialising individual weights
-        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
-            // Loop through kernel size dimensions
-            for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
-                // If this dimension has a heterogeneous size, add it to struct
-                if(isKernelSizeHeterogeneous(d)) {
-                    addField("unsigned int", "kernelSize" + std::to_string(d),
-                             [d](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getKernelSize().at(d)); });
-                }
-            }
-        }
-
-        // If weights are procedural or we're initializing individual variables
-        // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
-        if((proceduralWeights && updateRole) || (!updateRole && individualWeights)) {
-            // Add heterogeneous variable initialization parameters and derived parameters
-            addHeterogeneousVarInitParams<SynapseGroupMergedBase>(
-                wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                &SynapseGroupMergedBase::isWUVarInitParamHeterogeneous);
-
-            addHeterogeneousVarInitDerivedParams<SynapseGroupMergedBase>(
-                wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
-                &SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous);
-        }
-
-        // Loop through variables
-        for(size_t v = 0; v < vars.size(); v++) {
-            // Variable initialisation is required if we're performing connectivity init and var init snippet requires a kernel or
-            // We're performing some other sort of initialisation, the snippet DOESN'T require a kernel but has SOME code
-            const auto var = vars[v];
-            const auto *snippet = varInit.at(v).getSnippet();
-            const bool varInitRequired = ((connectInitRole && snippet->requiresKernel()) 
-                                          || (!updateRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
-
-            // If we're performing an update with individual weights; or this variable should be initialised
-            if((updateRole && individualWeights) || varInitRequired) {
-                addWeightSharingPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
-            }
-
-            // If we're performing a procedural update or this variable should be initialised, add any var init EGPs to structure
-            if((proceduralWeights && updateRole) || varInitRequired) {
-                const auto egps = snippet->getExtraGlobalParams();
-                for(const auto &e : egps) {
-                    const bool isPointer = Utils::isTypePointer(e.type);
-                    const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
-                    addField(e.type, e.name + var.name,
-                             [e, prefix, var](const SynapseGroupInternal &sg, size_t)
-                             {
-                                 if(sg.isWeightSharingSlave()) {
-                                     return prefix + e.name + var.name + sg.getWeightSharingMaster()->getName();
-                                 }
-                                 else {
-                                     return prefix + e.name + var.name + sg.getName();
-                                 }
-                             },
-                             isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
-                }
-            }
-        }
+        const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
+        return "((*" + getTrgSpikeQueuePointer() + " + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps) + ") % " + std::to_string(numTrgDelaySlots) + ")";
     }
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMergedBase::addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+std::string CodeGenerator::SynapseGroupMergedBase::getDendriticDelayOffset(const std::string &offset)
 {
-    assert(!Utils::isTypePointer(type));
-    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getPSModelTargetName(); });
+    assert(getArchetype().isDendriticDelayRequired());
+
+    if(offset.empty()) {
+        return "(*" + getDenDelayPtr() + " * " + getNumTrgNeurons() + ") + ";
+    }
+    else {
+        return "(((*" + getDenDelayPtr() + " + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * " + getNumTrgNeurons() + ") + ";
+    }
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMergedBase::addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+std::string CodeGenerator::SynapseGroupMergedBase::getWUParam(size_t index)
 {
-    assert(!Utils::isTypePointer(type));
-    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getSrcNeuronGroup()->getName(); });
+    return getParamField(index, getArchetype().getWUModel()->getParamNames(), "",
+                         [](const SynapseGroupInternal &sg) { return sg.getWUParams(); });
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMergedBase::addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+std::string CodeGenerator::SynapseGroupMergedBase::getWUDerivedParam(size_t index)
 {
-    assert(!Utils::isTypePointer(type));
-    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });
+    return getDerivedParamField(index, getArchetype().getWUModel()->getDerivedParams(), "",
+                                [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); });
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::SynapseGroupMergedBase::addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+std::string CodeGenerator::SynapseGroupMergedBase::getWUVar(const Models::Base::Var &var)
+{
+     return addWeightSharingPointerField(var.type, var.name, getBackend().getDeviceVarPrefix() + var.name);
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getWUGlobalVar(size_t varIndex)
+{
+    return getDerivedParamField(varIndex, getArchetype().getWUModel()->getVars(), "",
+                                [](const SynapseGroupInternal &sg) { return sg.getWUConstInitVals(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getWUVarInitParam(size_t varIndex, size_t paramIndex)
+{
+    const auto paramNames = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet()->getParamNames();
+    return getParamField(paramIndex, paramNames, getArchetype().getWUModel()->getVars().at(varIndex).name,
+                         [varIndex](const SynapseGroupInternal &sg) { return sg.getWUVarInitialisers().at(varIndex).getParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getWUVarInitDerivedParam(size_t varIndex, size_t paramIndex)
+{
+    const auto derivedParams = getArchetype().getWUVarInitialisers().at(varIndex).getSnippet()->getDerivedParams();
+    return getDerivedParamField(paramIndex, derivedParams, getArchetype().getWUModel()->getVars().at(varIndex).name,
+                                [varIndex](const SynapseGroupInternal &sg) { return sg.getWUVarInitialisers().at(varIndex).getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getWUVarInitEGP(size_t varIndex, const Snippet::Base::EGP &egp)
+{
+    const bool isPointer = Utils::isTypePointer(egp.type);
+    const auto &var = getArchetype().getWUModel()->getVars().at(varIndex);
+    const std::string prefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
+    return addField(egp.type, egp.name + var.name,
+                [egp, prefix, var](const SynapseGroupInternal &sg, size_t)
+                {
+                    if(sg.isWeightSharingSlave()) {
+                        return prefix + egp.name + var.name + sg.getWeightSharingMaster()->getName();
+                    }
+                    else {
+                        return prefix + egp.name + var.name + sg.getName();
+                    }
+                },
+                isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getConnectivityInitParam(size_t paramIndex)
+{
+    const auto paramNames = getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames();
+    return getParamField(paramIndex, paramNames, "",
+                         [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getConnectivityInitDerivedParam(size_t paramIndex)
+{
+    const auto derivedParams = getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams();
+    return getDerivedParamField(paramIndex, derivedParams, "",
+                                [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getConnectivityInitEGP(const Snippet::Base::EGP &egp)
+{
+    const bool isPointer = Utils::isTypePointer(egp.type);
+    const std::string prefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
+    return addField(egp.type, egp.name,
+                    [egp, prefix](const SynapseGroupInternal &sg, size_t)
+                    {
+                        if(sg.isWeightSharingSlave()) {
+                            return prefix + egp.name + sg.getWeightSharingMaster()->getName();
+                        }
+                        else {
+                            return prefix + egp.name + sg.getName();
+                        }
+                    },
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getRowLength()
+{
+    return addWeightSharingPointerField("unsigned int", "rowLength", getBackend().getDeviceVarPrefix() + "rowLength");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getInd()
+{
+    return addWeightSharingPointerField(getArchetype().getSparseIndType(), "ind", getBackend().getDeviceVarPrefix() + "ind");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getColLength()
+{
+     return addWeightSharingPointerField("unsigned int", "colLength", getBackend().getDeviceVarPrefix() + "colLength");
+           
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getRemap()
+{
+     return addWeightSharingPointerField("unsigned int", "remap", getBackend().getDeviceVarPrefix() + "remap");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSynRemap()
+{
+    return addWeightSharingPointerField("unsigned int", "synRemap", getBackend().getDeviceVarPrefix() + "synRemap");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getBitmask()
+{
+    return addWeightSharingPointerField("uint32_t", "gp", getBackend().getDeviceVarPrefix() + "gp");
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getKernelSize(size_t dimension)
+{
+    return getValueField("unsigned int", "kernelSize" + std::to_string(dimension),
+                         [dimension](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getKernelSize().at(dimension)); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix)
 {
     assert(!Utils::isTypePointer(type));
-    addField(type + "*", name,
-                   [prefix](const SynapseGroupInternal &sg, size_t)
-                   {
-                       if(sg.isWeightSharingSlave()) {
-                           return prefix + sg.getWeightSharingMaster()->getName();
-                       }
-                       else {
-                           return prefix + sg.getName();
-                       }
-                   });
+    return addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getPSModelTargetName(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+{
+    assert(!Utils::isTypePointer(type));
+    return addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getSrcNeuronGroup()->getName(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+{
+    assert(!Utils::isTypePointer(type));
+    return addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+{
+    assert(!Utils::isTypePointer(type));
+    return addField(type + "*", name,
+                    [prefix](const SynapseGroupInternal &sg, size_t)
+                    {
+                        if(sg.isWeightSharingSlave()) {
+                            return prefix + sg.getWeightSharingMaster()->getName();
+                        }
+                        else {
+                            return prefix + sg.getName();
+                        }
+                    });
 }
 
 //----------------------------------------------------------------------------

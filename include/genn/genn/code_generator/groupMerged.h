@@ -50,13 +50,6 @@ public:
     typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
 
-
-    GroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)),
-        m_Backend(backend), m_Precision(precision), m_TimePrecision(timePrecision)
-    {}
-
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -173,6 +166,12 @@ public:
     }
 
 protected:
+    GroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)),
+        m_Backend(backend), m_Precision(precision), m_TimePrecision(timePrecision)
+    {}
+
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
@@ -181,41 +180,6 @@ protected:
     const std::string &getPrecision() const{ return m_Precision; }
 
     const std::string &getTimePrecision() const{ return m_TimePrecision; }
-
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
-    {
-        // Get value of parameter in archetype group
-        const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
-
-        // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
-                           {
-                               return (getParamValuesFn(g).at(index) != archetypeValue);
-                           });
-    }
-
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(const std::vector<std::string> &codeStrings, const std::string &paramName,
-                                   size_t index, P getParamValuesFn) const
-    {
-        // If none of the code strings reference the parameter, return false
-        if(std::none_of(codeStrings.begin(), codeStrings.end(),
-                        [&paramName](const std::string &c) 
-                        { 
-                            return (c.find("$(" + paramName + ")") != std::string::npos); 
-                        }))
-        {
-            return false;
-        }
-        // Otherwise check if values are heterogeneous
-        else {
-            return isParamValueHeterogeneous<P>(index, getParamValuesFn);
-        }
-    }
 
     std::string getValueField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValueFn)
     {
@@ -274,8 +238,8 @@ protected:
     }
 
     //! Helper to test whether derived parameter values are heterogeneous within merged group
-    template<typename P>
-    std::string getDerivedParamField(size_t index, const Snippet::Base::DerivedParamVec &derivedParams, 
+    template<typename P, typename V>
+    std::string getDerivedParamField(size_t index, const std::vector<V> &derivedParams, 
                                      const std::string &suffix, P getDerivedParamValuesFn)
     {
         // Get value of parameter in archetype group
@@ -328,106 +292,6 @@ protected:
     {
         assert(!Utils::isTypePointer(type));
         return addField(type + "*", name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
-    }
-
-
-    void addVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
-    {
-        // Loop through variables
-        for(const auto &v : vars) {
-            addPointerField(v.type, v.name, arrayPrefix + v.name);
-        }
-    }
-
-    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
-    {
-        for(const auto &e : egps) {
-            const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string prefix = isPointer ? arrayPrefix : "";
-            addField(e.type, e.name + varName,
-                     [e, prefix, varName](const G &g, size_t) { return prefix + e.name + varName + g.getName(); },
-                     isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
-        }
-    }
-
-    template<typename T, typename P, typename H>
-    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
-                                P getParamValues, H isHeterogeneous)
-    {
-        // Loop through params
-        for(size_t p = 0; p < paramNames.size(); p++) {
-            // If parameters is heterogeneous
-            if((static_cast<const T*>(this)->*isHeterogeneous)(p)) {
-                // Add field
-                addScalarField(paramNames[p] + suffix,
-                               [p, getParamValues](const G &g, size_t)
-                               {
-                                   const auto &values = getParamValues(g);
-                                   return Utils::writePreciseString(values.at(p));
-                               });
-            }
-        }
-    }
-
-    template<typename T, typename D, typename H>
-    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &suffix,
-                                       D getDerivedParamValues, H isHeterogeneous)
-    {
-        // Loop through derived params
-        for(size_t p = 0; p < derivedParams.size(); p++) {
-            // If parameters isn't homogeneous
-            if((static_cast<const T*>(this)->*isHeterogeneous)(p)) {
-                // Add field
-                addScalarField(derivedParams[p].name + suffix,
-                               [p, getDerivedParamValues](const G &g, size_t)
-                               {
-                                   const auto &values = getDerivedParamValues(g);
-                                   return Utils::writePreciseString(values.at(p));
-                               });
-            }
-        }
-    }
-
-    template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
-    {
-        // Loop through weight update model variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
-            // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
-            for(size_t p = 0; p < varInit.getParams().size(); p++) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(v, p)) {
-                    addScalarField(varInit.getSnippet()->getParamNames()[p] + vars[v].name,
-                                   [p, v, getVarInitialisers](const G &g, size_t)
-                                   {
-                                       const auto &values = (g.*getVarInitialisers)()[v].getParams();
-                                       return Utils::writePreciseString(values.at(p));
-                                   });
-                }
-            }
-        }
-    }
-
-    template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitDerivedParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
-    {
-        // Loop through weight update model variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
-            // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
-            for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(v, d)) {
-                    addScalarField(varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
-                                   [d, v, getVarInitialisers](const G &g, size_t)
-                                   {
-                                       const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
-                                       return Utils::writePreciseString(values.at(d));
-                                   });
-                }
-            }
-        }
     }
 
     void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -941,13 +805,6 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
-
-    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
-
-    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
-
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -963,23 +820,51 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Get the expression to calculate the delay slot for accessing
-    //! Presynaptic neuron state variables, taking into account axonal delay
-    std::string getPresynapticAxonalDelaySlot() const;
+    std::string getRowStride();
 
-    //! Get the expression to calculate the delay slot for accessing
-    //! Postsynaptic neuron state variables, taking into account back propagation delay
-    std::string getPostsynapticBackPropDelaySlot() const;
+    std::string getColStride();
 
-    std::string getDendriticDelayOffset(const std::string &offset = "") const;
+    std::string getNumSrcNeurons();
+
+    std::string getNumTrgNeurons();
+
+     std::string getInSyn();
+
+    std::string getDenDelay();
+
+    std::string getDenDelayPtr();
+
+    std::string getSrcSpikes();
+
+    std::string getSrcNumSpikes();
+
+    std::string getSrcSpikeEvents();
+
+    std::string getSrcNumSpikeEvents();
+
+    std::string getSrcSpikeQueuePointer();
+
+    std::string getSrcSpikeTimes();
 
     //! Get code string for accessing source neuron parameter - may be a literal or 
     //! group structure member access, in which case, required field will be added
     std::string getSrcNeuronParam(size_t index);
 
+    std::string getSrcNeuronVar(const Models::Base::Var &var);
+
+    std::string getSrcNeuronEGP(const Snippet::Base::EGP &egp);
+
     //! Get code string for accessing source neuron derived parameter - may be a literal or 
     //! group structure member access, in which case, required field will be added
     std::string getSrcNeuronDerivedParam(size_t index);
+
+    std::string getTrgSpikes();
+
+    std::string getTrgNumSpikes();
+
+    std::string getTrgSpikeQueuePointer();
+
+    std::string getTrgSpikeTimes();
 
     //! Get code string for accessing target neuron parameter - may be a literal or 
     //! group structure member access, in which case, required field will be added
@@ -989,65 +874,74 @@ public:
     //! group structure member access, in which case, required field will be added
     std::string getTrgNeuronDerivedParam(size_t index);
 
-    //! Should the weight update model parameter be implemented heterogeneously?
-    bool isWUParamHeterogeneous(size_t paramIndex) const;
+    std::string getTrgNeuronVar(const Models::Base::Var &var);
 
-    //! Should the weight update model derived parameter be implemented heterogeneously?
-    bool isWUDerivedParamHeterogeneous(size_t paramIndex) const;
+    std::string getTrgNeuronEGP(const Snippet::Base::EGP &egp);
 
-    //! Should the GLOBALG weight update model variable be implemented heterogeneously?
-    bool isWUGlobalVarHeterogeneous(size_t varIndex) const;
+    //! Get the expression to calculate the delay slot for accessing
+    //! Presynaptic neuron state variables, taking into account axonal delay
+    std::string getPresynapticAxonalDelaySlot();
 
-    //! Should the weight update model variable initialization parameter be implemented heterogeneously?
-    bool isWUVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
-    
-    //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
-    bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+    //! Get the expression to calculate the delay slot for accessing
+    //! Postsynaptic neuron state variables, taking into account back propagation delay
+    std::string getPostsynapticBackPropDelaySlot();
 
-    //! Should the connectivity initialization parameter be implemented heterogeneously?
-    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
+    std::string getDendriticDelayOffset(const std::string &offset = "");
 
-    //! Should the connectivity initialization parameter be implemented heterogeneously?
-    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+    //! Get code string for accessing weight update model parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getWUParam(size_t index);
 
-    //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
+    //! Get code string for accessing weight update model derived parameter - may be a literal or 
+    //! group structure member access, in which case, required field will be added
+    std::string getWUDerivedParam(size_t index);
+
+    std::string getWUVar(const Models::Base::Var &var);
+
+    //! Get code string for accessing weight update model variables made constant with GLOBAL_G - may be a literal or
+    //! group structure member access, in which case, required field will be added
+    std::string getWUGlobalVar(size_t varIndex);
+
+    std::string getWUVarInitParam(size_t varIndex, size_t paramIndex);
+
+    std::string getWUVarInitDerivedParam(size_t varIndex, size_t paramIndex);
+
+    std::string getWUVarInitEGP(size_t varIndex, const Snippet::Base::EGP &egp);
+
+    std::string getConnectivityInitParam(size_t paramIndex);
+
+    std::string getConnectivityInitDerivedParam(size_t paramIndex);
+
+    std::string getConnectivityInitEGP(const Snippet::Base::EGP &egp);
+
+    std::string getRowLength();
+
+    std::string getInd();
+
+    std::string getColLength();
+
+    std::string getRemap();
+
+    std::string getSynRemap();
+
+    std::string getBitmask();
+
+    std::string getKernelSize(size_t dimension);
 
 protected:
-    //----------------------------------------------------------------------------
-    // Enumerations
-    //----------------------------------------------------------------------------
-    enum class Role
-    {
-        PresynapticUpdate,
-        PostsynapticUpdate,
-        SynapseDynamics,
-        DenseInit,
-        SparseInit,
-        ConnectivityInit,
-    };
-
     SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                           Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
-    //----------------------------------------------------------------------------
-    // Protected methods
-    //----------------------------------------------------------------------------
-    const std::string &getArchetypeCode() const { return m_ArchetypeCode; }
-
+                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   GroupMerged<SynapseGroupInternal>(index, precision, timePrecision, backend, groups)
+    {
+    }
 private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const std::string m_ArchetypeCode;
+    std::string addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    std::string addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    std::string addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    std::string addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
 };
 
 //----------------------------------------------------------------------------
@@ -1058,8 +952,7 @@ class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
 public:
     PresynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
-                               groups.front().get().getWUModel()->getSimCode() + groups.front().get().getWUModel()->getEventCode() + groups.front().get().getWUModel()->getEventThresholdConditionCode(), groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1084,8 +977,7 @@ class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
 public:
     PostsynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                   const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
-                               groups.front().get().getWUModel()->getLearnPostCode(), groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1110,8 +1002,7 @@ class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
 public:
     SynapseDynamicsGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
-                               groups.front().get().getWUModel()->getSynapseDynamicsCode(), groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1136,7 +1027,7 @@ class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMergedBase
 public:
     SynapseDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::DenseInit, "", groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1161,7 +1052,7 @@ class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 public:
     SynapseSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1187,7 +1078,7 @@ class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMerged
 public:
     SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
