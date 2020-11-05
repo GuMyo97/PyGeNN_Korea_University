@@ -515,4 +515,23 @@ std::string disambiguateNamespaceFunction(const std::string supportCode, const s
     }
     return newCode;
 }
+
+void genKernelIndex(std::ostream &os, const Substitutions &subs, SynapseGroupMergedBase &sg)
+{
+    // Loop through kernel dimensions to calculate array index
+    const auto &kernelSize = sg.getArchetype().getKernelSize();
+    for(size_t i = 0; i < kernelSize.size(); i++) {
+        os << "(" << subs["id_kernel_" + std::to_string(i)];
+        // Loop through remainining dimensions of kernel
+        for(size_t j = i + 1; j < kernelSize.size(); j++) {
+            os << " * " << sg.getKernelSize(j);
+        }
+        os << ")";
+
+        // If this isn't the last dimension, add +
+        if(i != (kernelSize.size() - 1)) {
+            os << " + ";
+        }
+    }
+}
 }   // namespace CodeGenerator

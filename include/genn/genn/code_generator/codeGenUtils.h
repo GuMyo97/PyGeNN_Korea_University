@@ -107,52 +107,37 @@ GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportC
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
-template<typename P, typename D>
-void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutions, const NeuronGroupInternal *archetypeNG, 
-                                       const std::string &offset, const std::string &delayOffset, const std::string &idx, 
-                                       const std::string &sourceSuffix, const std::string &destSuffix, 
-                                       const std::string &varPrefix, const std::string &varSuffix,
-                                       P getParamValueFn, D getDerivedParamValueFn)
+template<typename S, typename P, typename D, typename E, typename V>
+void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &subs, const NeuronGroupInternal *archetypeNG, 
+                                       const std::string &offset, const std::string &delayOffset, 
+                                       const std::string &idx, const std::string &sourceSuffix,
+                                       S getSpikeTimeFn, P getParamValueFn, D getDerivedParamValueFn, E getEGPFn, V getVarFn)
 {
-
     // Substitute spike times
-    substitutions.addVarSubstitution("sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
+    subs.addVarSubstitution("sT" + sourceSuffix, 
+                            [delayOffset, idx, offset, getSpikeTimeFn](){ return delayOffset + getSpikeTimeFn() + "[" + offset + idx + "]"; });
 
     // Substitute neuron variables
-    const auto *nm = archetypeNG->getNeuronModel();
-    for(const auto &v : nm->getVars()) {
-        const std::string varIdx = archetypeNG->isVarQueueRequired(v.name) ? offset + idx : idx;
+    subs.addVarNameSubstitution<Models::Base::Var>(archetypeNG->getNeuronModel()->getVars(), 
+                                                    [archetypeNG, getVarFn, idx, offset](const Models::Base::Var &var) 
+                                                    { 
+                                                        return getVarFn(var) + "[" + (archetypeNG->isVarQueueRequired(var.name) ? offset : "") + idx + "]";
+                                                    }, 
+                                                    sourceSuffix);
 
-        substitutions.addVarSubstitution(v.name + sourceSuffix,
-                                         varPrefix + "group->" + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
-    }
+    // Substitute neuron model parameters, derived parameters and extra global parameters
+    subs.addParamValueSubstitution(archetypeNG->getNeuronModel()->getParamNames(), 
+                                    [getParamValueFn](size_t i) { return getParamValueFn(i); }, 
+                                    sourceSuffix);
+    subs.addVarValueSubstitution(archetypeNG->getNeuronModel()->getDerivedParams(), 
+                                    [getDerivedParamValueFn](size_t i) { return getDerivedParamValueFn(i); }, 
+                                    sourceSuffix);
 
-    // Substitute (potentially heterogeneous) parameters and derived parameters from neuron model
-    substitutions.addParamValueSubstitution(nm->getParamNames(), getParamValueFn, sourceSuffix);
-    substitutions.addVarValueSubstitution(nm->getDerivedParams(), getDerivedParamValueFn, sourceSuffix);
-
-    // Substitute extra global parameters from neuron model
-    substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->", destSuffix);
+    subs.addVarNameSubstitution<Snippet::Base::EGP>(archetypeNG->getNeuronModel()->getExtraGlobalParams(), 
+                                                    [getEGPFn](const Snippet::Base::EGP &egp) { return getEGPFn(egp); },
+                                                    sourceSuffix);
 }
 
-template<typename G>
-void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs, G &sg)
-{
-    // Loop through kernel dimensions to calculate array index
-    const auto &kernelSize = sg.getArchetype().getKernelSize();
-    for(size_t i = 0; i < kernelSize.size(); i++) {
-        os << "(" << subs["id_kernel_" + std::to_string(i)];
-        // Loop through remainining dimensions of kernel
-        for(size_t j = i + 1; j < kernelSize.size(); j++) {
-            os << " * group->kernelSize" << sg.getKernelSize(j);
-        }
-        os << ")";
+GENN_EXPORT void genKernelIndex(std::ostream &os, const Substitutions &subs, SynapseGroupMergedBase &sg);
 
-        // If this isn't the last dimension, add +
-        if(i != (kernelSize.size() - 1)) {
-            os << " + ";
-        }
-    }
-}
 }   // namespace CodeGenerator

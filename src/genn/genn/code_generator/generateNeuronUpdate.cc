@@ -73,6 +73,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
                 os << subs["id"] << "];" << std::endl;
             }
 
+            // Substitute weight update model parameters, derived parameters and extra global parameters
             subs.addParamValueSubstitution(sg->getWUModel()->getParamNames(),
                                            [i, getParam, &ng](size_t p) { return (ng.*getParam)(i, p);  });
             subs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(),
@@ -82,9 +83,12 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
             subs.addVarNameSubstitution(vars, "", "l");
 
             const std::string offset = ng.getArchetype().isDelayRequired() ? "readDelayOffset + " : "";
-            neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, "", subs["id"], sourceSuffix, "", "", "",
+            neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, "", subs["id"], sourceSuffix,
+                                              [&ng]() { return ng.getSpikeTimes(); },
                                               [&ng](size_t paramIndex) { return ng.getNeuronParam(paramIndex); },
-                                              [&ng](size_t derivedParamIndex) { return ng.getNeuronDerivedParam(derivedParamIndex); });
+                                              [&ng](size_t derivedParamIndex) { return ng.getNeuronDerivedParam(derivedParamIndex); },
+                                              [&ng](const Snippet::Base::EGP &egp) { return ng.getEGPField(egp); },
+                                              [&ng](const Models::Base::Var &var) { return ng.getVarField(var); });
 
             // Perform standard substitutions
             std::string code = (sg->getWUModel()->*getCode)();
