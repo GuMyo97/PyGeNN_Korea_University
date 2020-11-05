@@ -80,7 +80,6 @@ public:
     }
 
 
-
     template<typename T>
     void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
                                  const std::string &sourceSuffix = "")
@@ -105,46 +104,6 @@ public:
     {
         for(size_t i = 0; i < paramNames.size(); i++) {
             addVarSubstitution(paramNames[i] + sourceSuffix, [getParamValFn, i]()->std::string { return getParamValFn(i); });
-        }
-    }
-
-    template<typename G>
-    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values, G isHeterogeneousFn,
-                                   const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
-    {
-        if(paramNames.size() != values.size()) {
-            throw std::runtime_error("Number of parameters does not match number of values");
-        }
-
-        for(size_t i = 0; i < paramNames.size(); i++) {
-            if(isHeterogeneousFn(i)) {
-                addVarSubstitution(paramNames[i] + sourceSuffix,
-                                   destPrefix + paramNames[i] + destSuffix);
-            }
-            else {
-                addVarSubstitution(paramNames[i] + sourceSuffix,
-                                   "(" + Utils::writePreciseString(values[i]) + ")");
-            }
-        }
-    }
-
-    template<typename T, typename G>
-    void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values, G isHeterogeneousFn,
-                                 const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
-    {
-        if(variables.size() != values.size()) {
-            throw std::runtime_error("Number of variables does not match number of values");
-        }
-
-        for(size_t i = 0; i < variables.size(); i++) {
-            if(isHeterogeneousFn(i)) {
-                addVarSubstitution(variables[i].name + sourceSuffix,
-                                   destPrefix + variables[i].name + destSuffix);
-            }
-            else {
-                addVarSubstitution(variables[i].name + sourceSuffix,
-                                   "(" + Utils::writePreciseString(values[i]) + ")");
-            }
         }
     }
 
