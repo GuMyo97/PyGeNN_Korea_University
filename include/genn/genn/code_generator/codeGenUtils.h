@@ -115,7 +115,7 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &subs, const
 {
     // Substitute spike times
     subs.addVarSubstitution("sT" + sourceSuffix, 
-                            [delayOffset, idx, offset, getSpikeTimeFn](){ return delayOffset + getSpikeTimeFn() + "[" + offset + idx + "]"; });
+                            [delayOffset, idx, offset, getSpikeTimeFn](){ return "(" + delayOffset + getSpikeTimeFn() + "[" + offset + idx + "])"; });
 
     // Substitute neuron variables
     subs.addVarNameSubstitution<Models::Base::Var>(archetypeNG->getNeuronModel()->getVars(), 
