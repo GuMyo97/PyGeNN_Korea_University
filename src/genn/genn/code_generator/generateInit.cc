@@ -361,7 +361,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         [&backend, &model](CodeStream &os, SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
         {
             // Loop through rows
-            os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+            os << "for(unsigned int i = 0; i < " << sg.getNumSrcNeurons() << "; i++)";
             {
                 CodeStream::Scope b(os);
                 popSubs.addVarSubstitution("id_pre", "i");

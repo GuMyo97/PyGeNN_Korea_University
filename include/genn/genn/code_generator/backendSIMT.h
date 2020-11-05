@@ -120,7 +120,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, SynapseGroupMergedBase &sg,
                                            const Substitutions &kernelSubs, Handler handler) const final;
 
 

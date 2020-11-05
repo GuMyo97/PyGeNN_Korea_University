@@ -785,9 +785,9 @@ std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronEGP(const Snippet
 {
     const bool isPointer = Utils::isTypePointer(egp.type);
     const std::string prefix = isPointer ? getBackend().getDeviceVarPrefix() : "";
-    addField(egp.type, egp.name + "Post",
-                [egp, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + egp.name + sg.getTrgNeuronGroup()->getName(); },
-                isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
+    return addField(egp.type, egp.name + "Post",
+                    [egp, prefix](const SynapseGroupInternal &sg, size_t) { return prefix + egp.name + sg.getTrgNeuronGroup()->getName(); },
+                    isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::SynapseGroupMergedBase::getTrgNeuronVar(const Models::Base::Var &var)

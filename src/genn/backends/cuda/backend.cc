@@ -355,7 +355,119 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Mem
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
-    // Generate struct definitions
+     // Create string stream to generate body into so it can be written after structures
+    std::ostringstream bodyStream;
+    CodeStream body(bodyStream);
+
+    // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
+    const ModelSpecInternal &model = modelMerged.getModel();
+    size_t idPreSynapseReset = 0;
+    if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
+        body << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
+        {
+            CodeStream::Scope b(body);
+
+            body << "const unsigned int id = " << getKernelBlockSize(KernelPreSynapseReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+            genPreSynapseResetKernel(body, modelMerged, idPreSynapseReset);
+        }
+        body << std::endl;
+    }
+
+    // If there are any presynaptic update groups
+    size_t idPresynapticStart = 0;
+    if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+        body << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(" << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+        {
+            CodeStream::Scope b(body);
+
+            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
+            body << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+            genPresynapticUpdateKernel(body, kernelSubs, modelMerged, wumThreshHandler, wumSimHandler, 
+                                       wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
+        }
+    }
+
+    // If any synapse groups require postsynaptic learning
+    size_t idPostsynapticStart = 0;
+    if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
+        body << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(" << model.getTimePrecision() << " t)" << std::endl;
+        {
+            CodeStream::Scope b(body);
+
+            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
+            body << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+            genPostsynapticUpdateKernel(body, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
+        }
+    }
+
+    size_t idSynapseDynamicsStart = 0;
+    if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
+        body << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(" << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
+        {
+            CodeStream::Scope b(body);
+            body << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+            kernelSubs.addVarSubstitution("t", "t");
+
+            genSynapseDynamicsKernel(body, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
+        }
+    }
+
+    body << "void updateSynapses(" << model.getTimePrecision() << " t)";
+    {
+        CodeStream::Scope b(body);
+
+        // Push any required EGPs
+        pushEGPHandler(body);
+
+        // Launch pre-synapse reset kernel if required
+        if(idPreSynapseReset > 0) {
+            CodeStream::Scope b(body);
+            genKernelDimensions(body, KernelPreSynapseReset, idPreSynapseReset);
+            body << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
+            body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+
+        // Launch synapse dynamics kernel if required
+        if(idSynapseDynamicsStart > 0) {
+            CodeStream::Scope b(body);
+            Timer t(body, "synapseDynamics", model.isTimingEnabled());
+
+            genKernelDimensions(body, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
+            body << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+
+        // Launch presynaptic update kernel
+        if(idPresynapticStart > 0) {
+            CodeStream::Scope b(body);
+            Timer t(body, "presynapticUpdate", model.isTimingEnabled());
+
+            genKernelDimensions(body, KernelPresynapticUpdate, idPresynapticStart);
+            body << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+
+        // Launch postsynaptic update kernel
+        if(idPostsynapticStart > 0) {
+            CodeStream::Scope b(body);
+            Timer t(body, "postsynapticUpdate", model.isTimingEnabled());
+
+            genKernelDimensions(body, KernelPostsynapticUpdate, idPostsynapticStart);
+            body << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            body << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+    }
+
+     // Now that data required in structure is determined, generate struct definitions
     modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
     modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
@@ -383,113 +495,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Mem
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelSynapseDynamicsUpdate), totalConstMem, modelMerged.getMergedSynapseDynamicsGroups(),
                                   [](const SynapseGroupInternal &sg){ return getNumSynapseDynamicsThreads(sg); });
 
-    // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
-    const ModelSpecInternal &model = modelMerged.getModel();
-    size_t idPreSynapseReset = 0;
-    if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
-        {
-            CodeStream::Scope b(os);
-
-            os << "const unsigned int id = " << getKernelBlockSize(KernelPreSynapseReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
-
-            genPreSynapseResetKernel(os, modelMerged, idPreSynapseReset);
-        }
-        os << std::endl;
-    }
-
-    // If there are any presynaptic update groups
-    size_t idPresynapticStart = 0;
-    if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelPresynapticUpdate] << "(" << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
-        {
-            CodeStream::Scope b(os);
-
-            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
-
-            os << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-
-            genPresynapticUpdateKernel(os, kernelSubs, modelMerged, wumThreshHandler, wumSimHandler, 
-                                       wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
-        }
-    }
-
-    // If any synapse groups require postsynaptic learning
-    size_t idPostsynapticStart = 0;
-    if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelPostsynapticUpdate] << "(" << model.getTimePrecision() << " t)" << std::endl;
-        {
-            CodeStream::Scope b(os);
-
-            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
-
-            os << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-
-            genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
-        }
-    }
-
-    size_t idSynapseDynamicsStart = 0;
-    if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(" << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
-        {
-            CodeStream::Scope b(os);
-            os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
-
-            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-            kernelSubs.addVarSubstitution("t", "t");
-
-            genSynapseDynamicsKernel(os, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
-        }
-    }
-
-    os << "void updateSynapses(" << model.getTimePrecision() << " t)";
-    {
-        CodeStream::Scope b(os);
-
-        // Push any required EGPs
-        pushEGPHandler(os);
-
-        // Launch pre-synapse reset kernel if required
-        if(idPreSynapseReset > 0) {
-            CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
-            os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-
-        // Launch synapse dynamics kernel if required
-        if(idSynapseDynamicsStart > 0) {
-            CodeStream::Scope b(os);
-            Timer t(os, "synapseDynamics", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
-            os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-
-        // Launch presynaptic update kernel
-        if(idPresynapticStart > 0) {
-            CodeStream::Scope b(os);
-            Timer t(os, "presynapticUpdate", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
-            os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-
-        // Launch postsynaptic update kernel
-        if(idPostsynapticStart > 0) {
-            CodeStream::Scope b(os);
-            Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
-
-            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
-            os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
-        }
-    }
+    // Write body back to stream
+    os << std::endl;
+    os << bodyStream.str();
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,

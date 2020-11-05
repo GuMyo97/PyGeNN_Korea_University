@@ -46,7 +46,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         const std::string idx = "[" + synapseSubs["id_syn"] + "]";
         synapseSubs.addVarNameSubstitution<Models::Base::Var>(wu->getVars(), 
-                                                              [idx, &sg](const Models::Base::Var &var) {return sg.getWUVar(var); });
+                                                              [idx, &sg](const Models::Base::Var &var) {return sg.getWUVar(var) + idx; });
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
@@ -169,9 +169,12 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             Substitutions synapseSubs(&baseSubs);
 
             // Make weight update model substitutions
-            synapseSubs.addParamValueSubstitution(sg.getArchetype().getWUModel()->getParamNames(), [&sg](size_t i) { return sg.getWUParam(i); });
-            synapseSubs.addVarValueSubstitution(sg.getArchetype().getWUModel()->getDerivedParams(), [&sg](size_t i) { return sg.getWUDerivedParam(i); });
-            synapseSubs.addVarNameSubstitution<Snippet::Base::EGP>(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "group->");
+            synapseSubs.addParamValueSubstitution(sg.getArchetype().getWUModel()->getParamNames(), 
+                                                  [&sg](size_t i) { return sg.getWUParam(i); });
+            synapseSubs.addVarValueSubstitution(sg.getArchetype().getWUModel()->getDerivedParams(), 
+                                                [&sg](size_t i) { return sg.getWUDerivedParam(i); });
+            synapseSubs.addVarNameSubstitution<Snippet::Base::EGP>(sg.getArchetype().getWUModel()->getExtraGlobalParams(),
+                                                                   [&sg](const Snippet::Base::EGP &egp) { return sg.getEGPField(egp); });
 
             // Get read offset if required and substitute in presynaptic neuron properties
             const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
