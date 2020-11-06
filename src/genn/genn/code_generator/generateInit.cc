@@ -159,7 +159,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 void genInitWUVarCode(CodeStream &os, const BackendBase &backend,
-                      const Substitutions &popSubs, SynapseGroupMergedBase &sg, const std::string &ftype)
+                      const Substitutions &popSubs, SynapseGroupMerged &sg, const std::string &ftype)
 {
     const auto vars = sg.getArchetype().getWUModel()->getVars();
     for (size_t k = 0; k < vars.size(); k++) {

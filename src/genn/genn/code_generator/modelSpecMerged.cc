@@ -18,32 +18,32 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
     m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
 {
     LOGD_CODE_GEN << "Merging neuron update groups:";
-    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
+    createMergedGroups(model, backend, "NeuronUpdate", model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
                        [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging presynaptic update groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,
+    createMergedGroups(model, backend, "PresynapticUpdate", model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,
                        [](const SynapseGroupInternal &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging postsynaptic update groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
+    createMergedGroups(model, backend, "PostsynapticUpdate", model.getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
                        [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging synapse dynamics update groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseDynamicsGroups,
+    createMergedGroups(model, backend, "SynapseDynamics", model.getSynapseGroups(), m_MergedSynapseDynamicsGroups,
                        [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging neuron initialization groups:";
-    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronInitGroups,
+    createMergedGroups(model, backend, "NeuronInit", model.getNeuronGroups(), m_MergedNeuronInitGroups,
                        [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
+    createMergedGroups(model, backend, "SynapseDenseInit", model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
                        [](const SynapseGroupInternal &sg)
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
@@ -51,12 +51,12 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging synapse connectivity initialisation groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
+    createMergedGroups(model, backend, "SynapseConnectivityInit", model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
                        [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canConnectivityInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging synapse sparse initialization groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
+    createMergedGroups(model, backend, "SynapseSparseInit", model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
                        [&backend](const SynapseGroupInternal &sg)
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
@@ -67,7 +67,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
-    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
+    createMergedGroups(model, backend, "NeuronSpikeQueueUpdate", model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
                        [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b)
                        {
@@ -86,14 +86,14 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
         }
     }
     LOGD_CODE_GEN << "Merging synapse groups which require their dendritic delay updating:";
-    createMergedGroups(model, backend, synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
+    createMergedGroups(model, backend, "SynapseDendriticDelayUpdate", synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b)
                        {
                            return (a.getMaxDendriticDelayTimesteps() == b.getMaxDendriticDelayTimesteps());
                        });
 
     LOGD_CODE_GEN << "Merging synapse groups which require host code to initialise their synaptic connectivity:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
+    createMergedGroups(model, backend, "SynapseConnectivityHostInit", model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
                        [](const SynapseGroupInternal &sg)
                        { 
                            return (!sg.isWeightSharingSlave() && !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty()); 

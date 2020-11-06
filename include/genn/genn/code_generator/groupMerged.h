@@ -55,6 +55,8 @@ public:
     //------------------------------------------------------------------------
     size_t getIndex() const { return m_Index; }
 
+    const std::string &getName() const { return m_Name; }
+
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
     const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
 
@@ -83,10 +85,9 @@ public:
     }
 
     //! Generate declaration of struct to hold this merged group
-    void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name,
-                        bool host = false) const
+    void generateStruct(CodeStream &os, const BackendBase &backend, bool host = false) const
     {
-        os << "struct Merged" << name << "Group" << getIndex() << std::endl;
+        os << "struct Merged" << getName() << "Group" << getIndex() << std::endl;
         {
             // Loop through fields and write to structure
             CodeStream::Scope b(os);
@@ -166,9 +167,9 @@ public:
     }
 
 protected:
-    GroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    GroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                 const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)),
+    :   m_Index(index), m_Name(name), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)),
         m_Backend(backend), m_Precision(precision), m_TimePrecision(timePrecision)
     {}
 
@@ -297,7 +298,7 @@ protected:
     void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
                             CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                             CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                            const std::string &name, bool host = false) const
+                            bool host = false) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
@@ -305,7 +306,7 @@ protected:
 
         // If this isn't a host merged structure, generate definition for function to push group
         if(!host) {
-            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
+            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << getName() << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
             generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend);
             definitionsInternalFunc << ");" << std::endl;
         }
@@ -314,7 +315,7 @@ protected:
         for(const auto &f : sortedFields) {
             // If this field is for a pointer EGP, also declare function to push it
             if(std::get<3>(f) == FieldType::PointerEGP) {
-                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
+                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << getName() << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
 
@@ -326,26 +327,26 @@ protected:
         if(host) {
             // Generate struct directly into internal definitions
             // **NOTE** we ignore any backend prefix as we're generating this struct for use on the host
-            generateStruct(definitionsInternal, backend, name, true);
+            generateStruct(definitionsInternal, backend, true);
 
             // Declare array of these structs containing individual neuron group pointers etc
-            runnerVarDecl << "Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
+            runnerVarDecl << "Merged" << getName() << "Group" << getIndex() << " merged" << getName() << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
 
             // Export it
-            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "]; " << std::endl;
+            definitionsInternalVar << "EXPORT_VAR Merged" << getName() << "Group" << getIndex() << " merged" << getName() << "Group" << getIndex() << "[" << getGroups().size() << "]; " << std::endl;
         }
 
         // Loop through groups
         for(size_t groupIndex = 0; groupIndex < getGroups().size(); groupIndex++) {
             // If this is a merged group used on the host, directly set array entry
             if(host) {
-                runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
+                runnerMergedStructAlloc << "merged" << getName() << "Group" << getIndex() << "[" << groupIndex << "] = {";
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << "};" << std::endl;
             }
             // Otherwise, call function to push to device
             else {
-                runnerMergedStructAlloc << "pushMerged" << name << "Group" << getIndex() << "ToDevice(" << groupIndex << ", ";
+                runnerMergedStructAlloc << "pushMerged" << getName() << "Group" << getIndex() << "ToDevice(" << groupIndex << ", ";
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << ");" << std::endl;
             }
@@ -377,6 +378,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     const size_t m_Index;
+    const std::string m_Name;
     const std::string m_LiteralSuffix;
     std::map<std::string, Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
@@ -391,7 +393,7 @@ private:
 class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
+    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
                                       const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -402,15 +404,10 @@ public:
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
 
     void genMergedGroupSpikeCountReset(CodeStream &os) const;
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -419,6 +416,9 @@ public:
 class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
 {
 public:
+    NeuronGroupMergedBase(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                          bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
@@ -472,9 +472,6 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                          bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
-
     template<typename T, typename V, typename C>
     void orderNeuronGroupChildren(const std::vector<T> &archetypeChildren,
                                   std::vector<std::vector<T>> &sortedGroupChildren,
@@ -594,7 +591,7 @@ private:
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronUpdateGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -673,13 +670,8 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-    
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -688,7 +680,7 @@ public:
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronInitGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //! Get code string for accessing neuron var init parameter - may be a literal or 
@@ -751,13 +743,8 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -766,7 +753,7 @@ public:
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
 
     //------------------------------------------------------------------------
@@ -777,13 +764,8 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 // ----------------------------------------------------------------------------
@@ -792,7 +774,7 @@ public:
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -803,18 +785,14 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+                           runnerVarDecl, runnerMergedStructAlloc, true);
     }
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseGroupMergedBase
+// CodeGenerator::SynapseGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
     //------------------------------------------------------------------------
@@ -929,9 +907,9 @@ public:
     std::string getKernelSize(size_t dimension);
 
 protected:
-    SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   GroupMerged<SynapseGroupInternal>(index, precision, timePrecision, backend, groups)
+    :   GroupMerged<SynapseGroupInternal>(index, name, precision, timePrecision, backend, groups)
     {
     }
 
@@ -948,12 +926,12 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::PresynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMerged
 {
 public:
-    PresynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    PresynapticUpdateGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
+    :   SynapseGroupMerged(index, name, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -961,24 +939,19 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
 // CodeGenerator::PostsynapticUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMerged
 {
 public:
-    PostsynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    PostsynapticUpdateGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                   const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
+    :   SynapseGroupMerged(index, name, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -986,24 +959,19 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseDynamicsGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMerged
 {
 public:
-    SynapseDynamicsGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseDynamicsGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
+    :   SynapseGroupMerged(index, name, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1011,24 +979,19 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseDenseInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMerged
 {
 public:
-    SynapseDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseDenseInitGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
+    :   SynapseGroupMerged(index, name, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1036,24 +999,19 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseSparseInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMerged
 {
 public:
-    SynapseSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseSparseInitGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
+    :   SynapseGroupMerged(index, name, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1061,25 +1019,20 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 
 
 // ----------------------------------------------------------------------------
 // SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMerged
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseConnectivityInitGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, groups)
+    :   SynapseGroupMerged(index, name, precision, timePrecision, backend, groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -1087,12 +1040,7 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc);
     }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
 };
 }   // namespace CodeGenerator

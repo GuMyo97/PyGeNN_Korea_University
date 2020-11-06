@@ -516,7 +516,7 @@ std::string disambiguateNamespaceFunction(const std::string supportCode, const s
     return newCode;
 }
 
-void genKernelIndex(std::ostream &os, const Substitutions &subs, SynapseGroupMergedBase &sg)
+void genKernelIndex(std::ostream &os, const Substitutions &subs, SynapseGroupMerged &sg)
 {
     // Loop through kernel dimensions to calculate array index
     const auto &kernelSize = sg.getArchetype().getKernelSize();

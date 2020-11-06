@@ -79,7 +79,7 @@ void BackendSIMT::genVariableInit(CodeStream &os, const std::string &, const std
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseVariableRowInit(CodeStream &os, SynapseGroupMergedBase &sg,
+void BackendSIMT::genSynapseVariableRowInit(CodeStream &os, SynapseGroupMerged &sg,
                                             const Substitutions &kernelSubs, Handler handler) const
 {
     // Pre and postsynaptic ID should already be provided via parallelism

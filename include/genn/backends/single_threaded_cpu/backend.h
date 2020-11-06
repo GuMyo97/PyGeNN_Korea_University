@@ -93,7 +93,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged &sg,
                                            const Substitutions &kernelSubs, Handler handler) const override;
 
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;

@@ -28,7 +28,7 @@ namespace CodeGenerator
     class NeuronInitGroupMerged;
     class NeuronUpdateGroupMerged;
     class Substitutions;
-    class SynapseGroupMergedBase;
+    class SynapseGroupMerged;
     class PresynapticUpdateGroupMerged;
     class PostsynapticUpdateGroupMerged;
     class SynapseDynamicsGroupMerged;
@@ -258,7 +258,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genSynapseVariableRowInit(CodeStream &os, SynapseGroupMergedBase &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, SynapseGroupMerged &sg,
                                            const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'

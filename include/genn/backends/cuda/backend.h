@@ -275,7 +275,7 @@ private:
                 // If there is space in this memory space for group
                 if(m.second > groupBytes) {
                     // Implement merged group array in this memory space
-                    os << m.first << " Merged" << T::name << "Group" << g.getIndex() << " d_merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
+                    os << m.first << " Merged" << g.getName() << "Group" << g.getIndex() << " d_merged" << g.getName() << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
 
                     // Set flag
                     memorySpaceFound = true;
@@ -291,14 +291,14 @@ private:
             assert(memorySpaceFound);
 
             // Write function to update
-            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+            os << "void pushMerged" << g.getName() << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
             g.generateStructFieldArgumentDefinitions(os, *this);
             os << ")";
             {
                 CodeStream::Scope b(os);
 
                 // Loop through sorted fields and build struct on the stack
-                os << "Merged" << T::name << "Group" << g.getIndex() << " group = {";
+                os << "Merged" << g.getName() << "Group" << g.getIndex() << " group = {";
                 const auto sortedFields = g.getSortedFields(*this);
                 for(const auto &f : sortedFields) {
                     os << std::get<1>(f) << ", ";
@@ -306,8 +306,8 @@ private:
                 os << "};" << std::endl;
 
                 // Push to device
-                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << T::name << "Group" << g.getIndex() << ", &group, ";
-                os << "sizeof(Merged" << T::name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << T::name << "Group" << g.getIndex() << ")));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << g.getName() << "Group" << g.getIndex() << ", &group, ";
+                os << "sizeof(Merged" << g.getName() << "Group" << g.getIndex() << "), idx * sizeof(Merged" << g.getName() << "Group" << g.getIndex() << ")));" << std::endl;
             }
         }
     }

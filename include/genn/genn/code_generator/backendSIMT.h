@@ -120,7 +120,7 @@ public:
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genSynapseVariableRowInit(CodeStream &os, SynapseGroupMergedBase &sg,
+    virtual void genSynapseVariableRowInit(CodeStream &os, SynapseGroupMerged &sg,
                                            const Substitutions &kernelSubs, Handler handler) const final;
 
 
@@ -230,8 +230,8 @@ private:
                 Substitutions popSubs(&kernelSubs);
 
                 if(gMerge.getGroups().size() == 1) {
-                    os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                    os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
+                    os << getPointerPrefix() << "struct Merged" << gMerge.getName() << "Group" << gMerge.getIndex() << " *group";
+                    os << " = &d_merged" << gMerge.getName() << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
 
                     // Use the starting thread ID of the whole merged group as group_start_id
@@ -246,7 +246,7 @@ private:
                         CodeStream::Scope b(os);
                         os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                        os << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                        os << "if(id < d_merged" << gMerge.getName() << "GroupStartID" << gMerge.getIndex() << "[mid])";
                         {
                             CodeStream::Scope b(os);
                             os << "hi = mid;" << std::endl;
@@ -259,11 +259,11 @@ private:
                     }
 
                     // Use this to get reference to merged group structure
-                    os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                    os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+                    os << getPointerPrefix() << "struct Merged" << gMerge.getName()<< "Group" << gMerge.getIndex() << " *group";
+                    os << " = &d_merged" << gMerge.getName() << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
                     // Get group start thread ID and use as group_start_id
-                    os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                    os << "const unsigned int groupStartID = d_merged" << gMerge.getName() << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
                     popSubs.addVarSubstitution("group_start_id", "groupStartID");
 
                     // Use this to calculate local id within group

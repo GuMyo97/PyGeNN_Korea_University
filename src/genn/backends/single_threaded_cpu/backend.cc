@@ -862,7 +862,7 @@ void Backend::genVariableInit(CodeStream &os, const std::string &count, const st
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg, 
+void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged &sg, 
                                         const Substitutions &kernelSubs, Handler handler) const
 {
     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {

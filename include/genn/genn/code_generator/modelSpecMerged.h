@@ -181,14 +181,13 @@ public:
     void genScalarEGPPush(CodeStream &os, const std::string &suffix, const BackendBase &backend) const;
 
     // Get set of unique fields referenced in a merged group
-    template<typename T>
-    std::set<EGPField> getMergedGroupFields() const
+    std::set<EGPField> getMergedGroupFields(const std::string &name) const
     {
         // Loop through all EGPs
         std::set<EGPField> mergedGroupFields;
         for(const auto &e : m_MergedEGPs) {
             // Get all destinations in this type of group
-            const auto groupEGPs = e.second.equal_range(T::name);
+            const auto groupEGPs = e.second.equal_range(name);
 
             // Copy them all into set
             std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
@@ -208,7 +207,8 @@ public:
 
         if(!groups.empty()) {
             // Get set of unique fields referenced in a merged group
-            const auto mergedGroupFields = getMergedGroupFields<T>();
+            const std::string &name = groups.front().getName();
+            const auto mergedGroupFields = getMergedGroupFields(name);
             
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// merged extra global parameter functions" << std::endl;
@@ -218,10 +218,10 @@ public:
                 // If EGP is a pointer
                 // **NOTE** this is common to all references!
                 if(Utils::isTypePointer(f.type)) {
-                    os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostType(f.type) << " value)";
+                    os << "void pushMerged" << name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostType(f.type) << " value)";
                     {
                         CodeStream::Scope b(os);
-                        backend.genMergedExtraGlobalParamPush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");
+                        backend.genMergedExtraGlobalParamPush(os, name, f.mergedGroupIndex, "idx", f.fieldName, "value");
                     }
                     os << std::endl;
                 }
@@ -238,12 +238,12 @@ private:
     {
         // Loop through all merged groups and generate struct
         for(const auto &g : mergedGroups) {
-            g.generateStruct(os, backend, T::name);
+            g.generateStruct(os, backend);
         }
     }
 
     template<typename Group, typename MergedGroup, typename M>
-    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend,
+    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend, const std::string &name, 
                             std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
                             std::vector<MergedGroup> &mergedGroups, M canMerge)
     {
@@ -284,7 +284,7 @@ private:
         // Loop through resultant merged groups
         for(size_t i = 0; i < protoMergedGroups.size(); i++) {
             // Add group to vector, moving vectors of groups into data structure to avoid copying
-            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend,
+            mergedGroups.emplace_back(i, name, model.getPrecision(), model.getTimePrecision(), backend,
                                       std::move(protoMergedGroups[i]));
      
             // Loop through fields
@@ -298,7 +298,7 @@ private:
                         // Add reference to this group's variable to data structure
                         m_MergedEGPs[std::get<2>(f.second)(g, groupIndex)].emplace(
                             std::piecewise_construct,
-                            std::forward_as_tuple(MergedGroup::name),
+                            std::forward_as_tuple(name),
                             std::forward_as_tuple(i, groupIndex, std::get<0>(f.second), std::get<1>(f.second)));
                     }
                 }
@@ -307,7 +307,7 @@ private:
     }
     
     template<typename Group, typename MergedGroup, typename F, typename M>
-    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend,
+    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend, const std::string &name,
                             const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
                             F filter, M canMerge)
     {
@@ -320,7 +320,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroups(model, backend, unmergedGroups, mergedGroups, canMerge);
+        createMergedGroups(model, backend, name, unmergedGroups, mergedGroups, canMerge);
     }
 
     //--------------------------------------------------------------------------

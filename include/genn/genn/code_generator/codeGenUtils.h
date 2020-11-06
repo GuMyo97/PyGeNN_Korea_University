@@ -138,6 +138,6 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &subs, const
                                                     sourceSuffix);
 }
 
-GENN_EXPORT void genKernelIndex(std::ostream &os, const Substitutions &subs, SynapseGroupMergedBase &sg);
+GENN_EXPORT void genKernelIndex(std::ostream &os, const Substitutions &subs, SynapseGroupMerged &sg);
 
 }   // namespace CodeGenerator

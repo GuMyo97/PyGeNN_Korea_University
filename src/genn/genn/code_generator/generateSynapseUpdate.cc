@@ -19,7 +19,7 @@ using namespace CodeGenerator;
 namespace
 {
 void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorContext,
-                               SynapseGroupMergedBase &sg, const Substitutions &baseSubs,
+                               SynapseGroupMerged &sg, const Substitutions &baseSubs,
                                const ModelSpecMerged &modelMerged, const bool backendSupportsNamespace)
 {
     const ModelSpecInternal &model = modelMerged.getModel();

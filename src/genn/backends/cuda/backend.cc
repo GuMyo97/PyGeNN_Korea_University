@@ -108,7 +108,7 @@ void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem, si
         }
 
         // Declare array of starting thread indices for each neuron group
-        os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
+        os << "unsigned int d_merged" << m.getName() << "GroupStartID" << m.getIndex() << "[] = {";
         for(const auto &ng : m.getGroups()) {
             os << idStart << ", ";
             idStart += padSize(getNumThreads(ng.get()), blockSize);
