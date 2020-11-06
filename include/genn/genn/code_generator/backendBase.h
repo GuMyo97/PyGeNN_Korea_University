@@ -29,12 +29,12 @@ namespace CodeGenerator
     class NeuronUpdateGroupMerged;
     class Substitutions;
     class SynapseGroupMerged;
-    class PresynapticUpdateGroupMerged;
-    class PostsynapticUpdateGroupMerged;
-    class SynapseDynamicsGroupMerged;
-    class SynapseConnectivityInitGroupMerged;
-    class SynapseDenseInitGroupMerged;
-    class SynapseSparseInitGroupMerged;
+    class SynapseGroupMerged;
+    class SynapseGroupMerged;
+    class SynapseGroupMerged;
+    class SynapseGroupMerged;
+    class SynapseGroupMerged;
+    class SynapseGroupMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -142,12 +142,7 @@ public:
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
     typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
     typedef GroupHandler<NeuronUpdateGroupMerged> NeuronUpdateGroupMergedHandler;
-    typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
-    typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
-    typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
-    typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
-    typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
-    typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
+    typedef GroupHandler<SynapseGroupMerged> SynapseGroupMergedHandler;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
@@ -191,9 +186,9 @@ public:
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.*/
     virtual void genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                                  HostHandler preambleHandler, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
+                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
@@ -206,9 +201,9 @@ public:
                                             dense connectivity depending on parallelism strategy, "id_pre" or "id_post" variables may be provided to 
                                             to callback via Substitutions.*/
     virtual void genInit(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
-                         SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
+                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
+                         SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgKernelInitHandler, 
+                         SynapseGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;

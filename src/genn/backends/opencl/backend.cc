@@ -410,9 +410,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                               HostHandler preambleHandler, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                               SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
+                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
@@ -672,9 +672,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      SynapseGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();

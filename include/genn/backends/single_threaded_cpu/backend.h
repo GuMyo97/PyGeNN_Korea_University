@@ -47,15 +47,15 @@ public:
                                  HostHandler pushEGPHandler) const override;
 
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                                  HostHandler preambleHandler, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                                  SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
+                                  SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
                          SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
-                         SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
+                         SynapseGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
@@ -154,8 +154,8 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,
-                              bool trueSpike, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler) const;
+    void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
+                              bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const;
 
     void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike, bool recordingEnabled) const;
 

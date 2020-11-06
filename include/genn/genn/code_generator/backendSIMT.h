@@ -169,20 +169,20 @@ protected:
 
     void genPreSynapseResetKernel(CodeStream &os, ModelSpecMerged &modelMerged, size_t &idStart) const;
     void genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
-                                    PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                    PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const;
+                                    SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                                    SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const;
     void genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
-                                     PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const;
+                                     SynapseGroupMergedHandler postLearnHandler, size_t &idStart) const;
     void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
-                                  SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
+                                  SynapseGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
-                             NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
-                             SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, 
-                             SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
+                             NeuronInitGroupMergedHandler neuronInitHandler, SynapseGroupMergedHandler synapseDenseInitHandler,
+                             SynapseGroupMergedHandler synapseConnectivityInitHandler, 
+                             SynapseGroupMergedHandler sgKernelInitHandler, size_t &idStart) const;
    
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, ModelSpecMerged &modelMerged,
-                                   SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
+                                   SynapseGroupMergedHandler synapseSparseInitHandler, 
                                    size_t numInitializeThreads, size_t &idStart) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set

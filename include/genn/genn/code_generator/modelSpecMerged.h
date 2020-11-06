@@ -98,32 +98,32 @@ public:
     std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups(){ return m_MergedNeuronUpdateGroups; }
 
     //! Get merged synapse groups which require presynaptic updates
-    const std::vector<PresynapticUpdateGroupMerged> &getMergedPresynapticUpdateGroups() const{ return m_MergedPresynapticUpdateGroups; }
-    std::vector<PresynapticUpdateGroupMerged> &getMergedPresynapticUpdateGroups(){ return m_MergedPresynapticUpdateGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedPresynapticUpdateGroups() const{ return m_MergedPresynapticUpdateGroups; }
+    std::vector<SynapseGroupMerged> &getMergedPresynapticUpdateGroups(){ return m_MergedPresynapticUpdateGroups; }
 
     //! Get merged synapse groups which require postsynaptic updates
-    const std::vector<PostsynapticUpdateGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
-    std::vector<PostsynapticUpdateGroupMerged> &getMergedPostsynapticUpdateGroups(){ return m_MergedPostsynapticUpdateGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedPostsynapticUpdateGroups() const{ return m_MergedPostsynapticUpdateGroups; }
+    std::vector<SynapseGroupMerged> &getMergedPostsynapticUpdateGroups(){ return m_MergedPostsynapticUpdateGroups; }
 
     //! Get merged synapse groups which require synapse dynamics
-    const std::vector<SynapseDynamicsGroupMerged> &getMergedSynapseDynamicsGroups() const{ return m_MergedSynapseDynamicsGroups; }
-    std::vector<SynapseDynamicsGroupMerged> &getMergedSynapseDynamicsGroups(){ return m_MergedSynapseDynamicsGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedSynapseDynamicsGroups() const{ return m_MergedSynapseDynamicsGroups; }
+    std::vector<SynapseGroupMerged> &getMergedSynapseDynamicsGroups(){ return m_MergedSynapseDynamicsGroups; }
 
     //! Get merged neuron groups which require initialisation
     const std::vector<NeuronInitGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
     std::vector<NeuronInitGroupMerged> &getMergedNeuronInitGroups(){ return m_MergedNeuronInitGroups; }
 
     //! Get merged synapse groups with dense connectivity which require initialisation
-    const std::vector<SynapseDenseInitGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
-    std::vector<SynapseDenseInitGroupMerged> &getMergedSynapseDenseInitGroups(){ return m_MergedSynapseDenseInitGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
+    std::vector<SynapseGroupMerged> &getMergedSynapseDenseInitGroups(){ return m_MergedSynapseDenseInitGroups; }
 
     //! Get merged synapse groups which require connectivity initialisation
-    const std::vector<SynapseConnectivityInitGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
-    std::vector<SynapseConnectivityInitGroupMerged> &getMergedSynapseConnectivityInitGroups(){ return m_MergedSynapseConnectivityInitGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
+    std::vector<SynapseGroupMerged> &getMergedSynapseConnectivityInitGroups(){ return m_MergedSynapseConnectivityInitGroups; }
 
     //! Get merged synapse groups with sparse connectivity which require initialisation
-    const std::vector<SynapseSparseInitGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
-    std::vector<SynapseSparseInitGroupMerged> &getMergedSynapseSparseInitGroups(){ return m_MergedSynapseSparseInitGroups; }
+    const std::vector<SynapseGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
+    std::vector<SynapseGroupMerged> &getMergedSynapseSparseInitGroups(){ return m_MergedSynapseSparseInitGroups; }
 
     //! Get merged neuron groups which require their spike queues updating
     const std::vector<NeuronSpikeQueueUpdateGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
@@ -333,25 +333,25 @@ private:
     std::vector<NeuronUpdateGroupMerged> m_MergedNeuronUpdateGroups;
 
     //! Merged synapse groups which require presynaptic updates
-    std::vector<PresynapticUpdateGroupMerged> m_MergedPresynapticUpdateGroups;
+    std::vector<SynapseGroupMerged> m_MergedPresynapticUpdateGroups;
 
     //! Merged synapse groups which require postsynaptic updates
-    std::vector<PostsynapticUpdateGroupMerged> m_MergedPostsynapticUpdateGroups;
+    std::vector<SynapseGroupMerged> m_MergedPostsynapticUpdateGroups;
 
     //! Merged synapse groups which require synapse dynamics update
-    std::vector<SynapseDynamicsGroupMerged> m_MergedSynapseDynamicsGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseDynamicsGroups;
 
     //! Merged neuron groups which require initialisation
     std::vector<NeuronInitGroupMerged> m_MergedNeuronInitGroups;
 
     //! Merged synapse groups with dense connectivity which require initialisation
-    std::vector<SynapseDenseInitGroupMerged> m_MergedSynapseDenseInitGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseDenseInitGroups;
 
     //! Merged synapse groups which require connectivity initialisation
-    std::vector<SynapseConnectivityInitGroupMerged> m_MergedSynapseConnectivityInitGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseConnectivityInitGroups;
 
     //! Merged synapse groups with sparse connectivity which require initialisation
-    std::vector<SynapseSparseInitGroupMerged> m_MergedSynapseSparseInitGroups;
+    std::vector<SynapseGroupMerged> m_MergedSynapseSparseInitGroups;
 
     //! Merged neuron groups which require their spike queues updating
     std::vector<NeuronSpikeQueueUpdateGroupMerged> m_MergedNeuronSpikeQueueUpdateGroups;

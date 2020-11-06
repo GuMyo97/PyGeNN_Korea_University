@@ -593,7 +593,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // Loop through merged synapse connectivity host initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedStructAlloc, true);
     }
 
     // Loop through merged synapse connectivity host init groups and generate host init code

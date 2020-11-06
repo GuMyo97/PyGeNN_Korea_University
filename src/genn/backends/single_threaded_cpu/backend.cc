@@ -198,9 +198,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                               HostHandler preambleHandler, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                               SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler,
+                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
     // Generate struct definitions
@@ -419,9 +419,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      SynapseGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -1063,8 +1063,8 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
     return {{"", std::numeric_limits<size_t>::max()}};
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,
-                                   bool trueSpike, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler) const
+void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const SynapseGroupMerged &sg, const Substitutions &popSubs,
+                                   bool trueSpike, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";

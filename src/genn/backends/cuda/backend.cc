@@ -350,9 +350,9 @@ void Backend::genNeuronUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Memo
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                               HostHandler preambleHandler, SynapseGroupMergedHandler wumThreshHandler, SynapseGroupMergedHandler wumSimHandler,
+                               SynapseGroupMergedHandler wumEventHandler, SynapseGroupMergedHandler wumProceduralConnectHandler,
+                               SynapseGroupMergedHandler postLearnHandler, SynapseGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
      // Create string stream to generate body into so it can be written after structures
@@ -501,9 +501,9 @@ void Backend::genSynapseUpdate(CodeStream &os, ModelSpecMerged &modelMerged, Mem
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                      SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseGroupMergedHandler sgDenseInitHandler,
+                      SynapseGroupMergedHandler sgSparseConnectHandler, SynapseGroupMergedHandler sgKernelInitHandler, 
+                      SynapseGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 

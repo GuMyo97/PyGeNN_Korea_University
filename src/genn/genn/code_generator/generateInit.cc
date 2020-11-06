@@ -358,7 +358,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             }
         },
         // Dense syanptic matrix variable initialisation
-        [&backend, &model](CodeStream &os, SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, SynapseGroupMerged &sg, Substitutions &popSubs)
         {
             // Loop through rows
             os << "for(unsigned int i = 0; i < " << sg.getNumSrcNeurons() << "; i++)";
@@ -370,7 +370,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             }
         },
         // Sparse synaptic matrix connectivity initialisation
-        [&model](CodeStream &os, SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
+        [&model](CodeStream &os, SynapseGroupMerged &sg, Substitutions &popSubs)
         {
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
 
@@ -408,7 +408,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             }
         },
         // Kernel matrix var initialisation
-        [&backend, &model](CodeStream &os, SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, SynapseGroupMerged &sg, Substitutions &popSubs)
         {
             // Generate kernel index and add to substitutions
             os << "const unsigned int kernelInd = ";
@@ -443,7 +443,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             }
         },
         // Sparse synaptic matrix var initialisation
-        [&backend, &model](CodeStream &os, SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)
+        [&backend, &model](CodeStream &os, SynapseGroupMerged &sg, Substitutions &popSubs)
         {
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         },
