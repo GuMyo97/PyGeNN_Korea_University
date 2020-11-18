@@ -575,20 +575,6 @@ std::string CodeGenerator::NeuronInitGroupMerged::getOutSynPreVarInitEGP(size_t 
                     isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
 }
 
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
-//----------------------------------------------------------------------------
-CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                       const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    : GroupMerged<SynapseGroupInternal>(index, name, precision, timePrecision, backend, groups)
-{
-    addField("unsigned int*", "denDelayPtr", 
-             [&backend](const SynapseGroupInternal &sg, size_t) 
-             {
-                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getPSModelTargetName(); 
-             });
-}
-
 // ----------------------------------------------------------------------------
 // CodeGenerator::SynapseConnectivityHostInitGroupMerged
 //------------------------------------------------------------------------

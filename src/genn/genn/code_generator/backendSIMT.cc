@@ -425,7 +425,7 @@ void BackendSIMT::genPreSynapseResetKernel(CodeStream &os, ModelSpecMerged &mode
 {
     // Loop through merged synapse groups
     idStart = 0;
-    for(const auto &n : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
+    for(auto &n : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
         os << "// merged" << n.getIndex() << std::endl;
         if(idStart == 0) {
             os << "if(id < " << n.getGroups().size() << ")";
@@ -439,7 +439,7 @@ void BackendSIMT::genPreSynapseResetKernel(CodeStream &os, ModelSpecMerged &mode
             // Use this to get reference to merged group structure
             os << getPointerPrefix() << "struct MergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
 
-            os << "*group->denDelayPtr = (*group->denDelayPtr + 1) % " << n.getArchetype().getMaxDendriticDelayTimesteps() << ";" << std::endl;
+            os << "*" << n.getDenDelayPtr() << " = (" << n.getDenDelayPtr() << " + 1) % " << n.getArchetype().getMaxDendriticDelayTimesteps() << ";" << std::endl;
         }
         idStart += n.getGroups().size();
     }

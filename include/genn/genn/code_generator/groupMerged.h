@@ -723,17 +723,6 @@ public:
     std::string getOutSynPreVarInitEGP(size_t childIndex, size_t varIndex, const Models::Base::EGP &egp);
 };
 
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
-{
-public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &name, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
-
-};
-
 // ----------------------------------------------------------------------------
 // SynapseConnectivityHostInitGroupMerged
 //----------------------------------------------------------------------------
