@@ -303,13 +303,13 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                         // Run 'next-generation' warning plugin on results
                         if("mac" in nodeLabel) {
-                            recordIssues enabledForFailure: true, tool: clang(pattern: uniqueMsg);
+                            recordIssues enabledForFailure: true, tool: clang(pattern: uniqueMsg, id: "clang_" + env.NODE_NAME);
                         }
                         else if("windows" in nodeLabel){
-                            recordIssues enabledForFailure: true, tool: msBuild(pattern: uniqueMsg);
+                            recordIssues enabledForFailure: true, tool: msBuild(pattern: uniqueMsg, id: "msbuild_" + env.NODE_NAME);
                         }
                         else {
-                            recordIssues enabledForFailure: true, tool: gcc4(pattern: uniqueMsg);
+                            recordIssues enabledForFailure: true, tool: gcc(pattern: uniqueMsg, id: "gcc_" + env.NODE_NAME);
                         }
 
                     }
