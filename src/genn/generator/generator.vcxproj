@@ -108,7 +108,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>genn_Debug.lib;genn_cuda_backend_Debug.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>genn_Debug.lib;genn_cuda_backend_Debug.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\lib;$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -158,7 +158,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>genn_Release.lib;genn_cuda_backend_Release.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>genn_Release.lib;genn_cuda_backend_Release.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\lib;$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>

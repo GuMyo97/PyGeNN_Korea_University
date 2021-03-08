@@ -100,7 +100,7 @@ if cuda_installed:
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("cuda", "CUDA",
-                     {"libraries": ["cuda", "cudart"],
+                     {"libraries": ["cuda"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
                       "library_dirs": [cuda_library_dir],
                       "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if mac_os_x else []}))
