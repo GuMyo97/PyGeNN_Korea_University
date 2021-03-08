@@ -13,7 +13,6 @@
 
 // CUDA includes
 #include <cuda.h>
-#include <cuda_runtime.h>
 
 // GeNN includes
 #include "backendExport.h"
@@ -105,7 +104,9 @@ class BACKEND_EXPORT Backend : public BackendSIMT
 {
 public:
     Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
-            const std::string &scalarType, int device);
+            const std::string &scalarType, int deviceID);
+
+    virtual ~Backend();
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
@@ -247,7 +248,7 @@ public:
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
 
     //! How many bytes of memory does 'device' have
-    virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
+    virtual size_t getDeviceMemoryBytes() const override;
 
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
@@ -259,9 +260,9 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    const cudaDeviceProp &getChosenCUDADevice() const{ return m_ChosenDevice; }
-    int getChosenDeviceID() const{ return m_ChosenDeviceID; }
-    int getRuntimeVersion() const{ return m_RuntimeVersion; }
+    CUdevice getDevice() const { return m_Device; }
+    CUcontext getContext() const { return m_Context; }
+    int getRuntimeVersion() const { return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
 
 private:
@@ -321,10 +322,7 @@ private:
 
 
     //! Get the safe amount of constant cache we can use
-    size_t getChosenDeviceSafeConstMemBytes() const
-    {
-        return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
-    }
+    size_t getChosenDeviceSafeConstMemBytes() const;
 
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
@@ -334,9 +332,12 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    const int m_ChosenDeviceID;
-    cudaDeviceProp m_ChosenDevice;
+    const int m_DeviceID;
+    CUdevice m_Device;
+    CUcontext m_Context;
     int m_RuntimeVersion;
+    int m_MajorComputeCapability;
+    int m_MinorComputeCapability;
 };
 }   // CUDA
 }   // CodeGenerator

@@ -11,7 +11,6 @@
 
 // CUDA includes
 #include <cuda.h>
-#include <cuda_runtime.h>
 
 // PLOG includes
 #include <plog/Log.h>
@@ -40,53 +39,54 @@ namespace
 {
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
 
-void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &warpAllocGran, size_t &regAllocGran,
+void getDeviceArchitectureProperties(int majorComputeVersion, int minorComputeVersion, 
+                                     size_t &warpAllocGran, size_t &regAllocGran,
                                      size_t &smemAllocGran, size_t &maxBlocksPerSM)
 {
-    if(deviceProps.major == 1) {
+    if(majorComputeVersion == 1) {
         smemAllocGran = 512;
         warpAllocGran = 2;
-        regAllocGran = (deviceProps.minor < 2) ? 256 : 512;
+        regAllocGran = (minorComputeVersion < 2) ? 256 : 512;
         maxBlocksPerSM = 8;
     }
-    else if(deviceProps.major == 2) {
+    else if(majorComputeVersion == 2) {
         smemAllocGran = 128;
         warpAllocGran = 2;
         regAllocGran = 64;
         maxBlocksPerSM = 8;
     }
-    else if(deviceProps.major == 3) {
+    else if(majorComputeVersion == 3) {
         smemAllocGran = 256;
         warpAllocGran = 4;
         regAllocGran = 256;
         maxBlocksPerSM = 16;
     }
-    else if(deviceProps.major == 5) {
+    else if(majorComputeVersion == 5) {
         smemAllocGran = 256;
         warpAllocGran = 4;
         regAllocGran = 256;
         maxBlocksPerSM = 32;
     }
-    else if(deviceProps.major == 6) {
+    else if(majorComputeVersion == 6) {
         smemAllocGran = 256;
-        warpAllocGran = (deviceProps.minor == 0) ? 2 : 4;
+        warpAllocGran = (minorComputeVersion == 0) ? 2 : 4;
         regAllocGran = 256;
         maxBlocksPerSM = 32;
     }
-    else if(deviceProps.major == 7) {
+    else if(majorComputeVersion == 7) {
         smemAllocGran = 256;
         warpAllocGran = 4;
         regAllocGran = 256;
-        maxBlocksPerSM = (deviceProps.minor == 0) ? 32 : 16;
+        maxBlocksPerSM = (minorComputeVersion == 0) ? 32 : 16;
     }
     else {
         smemAllocGran = 128;
         warpAllocGran = 4;
         regAllocGran = 256;
-        maxBlocksPerSM = (deviceProps.minor == 0) ? 32 : 16;
+        maxBlocksPerSM = (majorComputeVersion == 0) ? 32 : 16;
 
-        if(deviceProps.major > 8) {
-            LOGW_BACKEND << "Unsupported CUDA device major version: " << deviceProps.major;
+        if(majorComputeVersion > 8) {
+            LOGW_BACKEND << "Unsupported CUDA device major version: " << majorComputeVersion;
             LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
             LOGW_BACKEND << "Falling back to next latest SM version parameters.";
         }
@@ -152,22 +152,13 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
+KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal &model,
                                            KernelBlockSize &blockSize, const Preferences &preferences,
                                            const filesystem::path &sharePath, const filesystem::path &outputPath)
 {
-    // Select device
-    cudaSetDevice(deviceID);
-
     // Calculate model group sizes
     std::vector<size_t> groupSizes[KernelMax];
     calcGroupSizes(preferences, model, groupSizes);
-
-    // Create CUDA drive API device and context for accessing kernel attributes
-    CUdevice cuDevice;
-    CUcontext cuContext;
-    CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
-    CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
     // Bitset to mark which kernels are present and array of their attributes for each repetition
     int krnlSharedSizeBytes[2][KernelMax];
@@ -203,10 +194,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
         // Generate code
         const auto moduleNames = generateAll(model, backend, sharePath, outputPath, true).first;
-
-        // Set context
-        // **NOTE** CUDA calls in code generation seem to lose driver context
-        CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
 
         // Loop through generated modules
         for(const auto &m : moduleNames) {
@@ -259,15 +246,33 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         }
     }
 
-    // Destroy context
-    CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
+    // Get device
+    CUdevice device;
+    CHECK_CU_ERRORS(cuDeviceGet(&device, deviceID));
+    
+    // Get required device properties
+    int majorComputeVersion = 0;
+    int minorComputeVersion = 0;
+    int maxThreadsPerBlock = 0;
+    int maxRegistersPerBlock = 0;
+    int maxThreadsPerMultiProcessor = 0;
+    int sharedMemPerMultiprocessor = 0;
+    int multiProcessorCount = 0;
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&majorComputeVersion, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, device));
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&minorComputeVersion, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, device));
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxThreadsPerBlock, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK, device));
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxRegistersPerBlock, CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK, device));
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxThreadsPerMultiProcessor, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR, device));
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&sharedMemPerMultiprocessor, CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_MULTIPROCESSOR, device));
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, device));
 
     // Get properties of device architecture
     size_t warpAllocGran;
     size_t regAllocGran;
     size_t smemAllocGran;
     size_t maxBlocksPerSM;
-    getDeviceArchitectureProperties(deviceProps, warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM);
+    getDeviceArchitectureProperties(majorComputeVersion, minorComputeVersion, 
+                                    warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM);
 
     // Zero block sizes
     std::fill(blockSize.begin(), blockSize.end(), 0);
@@ -286,7 +291,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         const size_t reqSharedMemBytesB = reqSharedMemBytes[0] - (reqSharedMemBytesA * repBlockSizes[0]);
 
         // Loop through possible
-        const size_t maxBlockWarps = deviceProps.maxThreadsPerBlock / warpSize;
+        const size_t maxBlockWarps = maxThreadsPerBlock / warpSize;
         for(size_t blockWarps = 1; blockWarps < maxBlockWarps; blockWarps++) {
             const size_t blockThreads = blockWarps * warpSize;
             LOGD_BACKEND << "\tCandidate block size:" << blockThreads;
@@ -304,14 +309,14 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             LOGD_BACKEND << "\t\tBlocks required (according to padded sum):" << reqBlocks;
 
             // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
-            size_t smBlockLimit = deviceProps.maxThreadsPerMultiProcessor / blockThreads;
+            size_t smBlockLimit = maxThreadsPerMultiProcessor / blockThreads;
             LOGD_BACKEND << "\t\tSM block limit due to maxThreadsPerMultiProcessor:" << smBlockLimit;
 
             smBlockLimit = std::min(smBlockLimit, maxBlocksPerSM);
             LOGD_BACKEND << "\t\tSM block limit corrected for maxBlocksPerSM:" << smBlockLimit;
 
             // If register allocation is per-block
-            if (deviceProps.major == 1) {
+            if (majorComputeVersion == 1) {
                 // Pad size of block based on warp allocation granularity
                 const size_t paddedNumBlockWarps = padSize(blockWarps, warpAllocGran);
 
@@ -319,7 +324,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                 const size_t paddedNumRegPerBlock = padSize(paddedNumBlockWarps * reqNumRegs * warpSize, regAllocGran);
 
                 // Update limit based on maximum registers available on SM
-                smBlockLimit = std::min(smBlockLimit, deviceProps.regsPerBlock / paddedNumRegPerBlock);
+                smBlockLimit = std::min(smBlockLimit, maxRegistersPerBlock / paddedNumRegPerBlock);
             }
             // Otherwise, if register allocation is per-warp
             else {
@@ -327,7 +332,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                 const size_t paddedNumRegPerWarp = padSize(reqNumRegs * warpSize, regAllocGran);
 
                 // Determine how many warps can therefore be simultaneously run on SM
-                const size_t paddedNumWarpsPerSM = padSize(deviceProps.regsPerBlock / paddedNumRegPerWarp, warpAllocGran);
+                const size_t paddedNumWarpsPerSM = padSize(maxRegistersPerBlock / paddedNumRegPerWarp, warpAllocGran);
 
                 // Update limit based on the number of warps required
                 smBlockLimit = std::min(smBlockLimit, paddedNumWarpsPerSM / blockWarps);
@@ -337,15 +342,15 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // If this kernel requires any shared memory, update limit to reflect shared memory available in each multiprocessor
             // **NOTE** this used to be sharedMemPerBlock but that seems incorrect
             if(reqSharedMemBytes != 0) {
-                smBlockLimit = std::min(smBlockLimit, deviceProps.sharedMemPerMultiprocessor / reqSharedMemBytes);
+                smBlockLimit = std::min(smBlockLimit, sharedMemPerMultiprocessor / reqSharedMemBytes);
                 LOGD_BACKEND << "\t\tSM block limit corrected for shared memory:" << smBlockLimit;
             }
 
             // Calculate occupancy
-            const size_t newOccupancy = blockWarps * smBlockLimit * deviceProps.multiProcessorCount;
+            const size_t newOccupancy = blockWarps * smBlockLimit * multiProcessorCount;
 
             // Use a small block size if it allows all groups to occupy the device concurrently
-            if (reqBlocks <= (smBlockLimit * deviceProps.multiProcessorCount)) {
+            if (reqBlocks <= (smBlockLimit * multiProcessorCount)) {
                 blockSize[k.first] = blockThreads;
                 k.second.second = newOccupancy;
                 k.second.first = true;
@@ -378,7 +383,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
 {
     // Get number of devices
     int deviceCount;
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+    CHECK_CU_ERRORS(cuDeviceGetCount(&deviceCount));
     if(deviceCount == 0) {
         throw std::runtime_error("No CUDA devices found");
     }
@@ -388,14 +393,10 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
     std::vector<Device> devices;
     devices.reserve(deviceCount);
     for(int d = 0; d < deviceCount; d++) {
-        // Get properties
-        cudaDeviceProp deviceProps;
-        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
-        const int smVersion = (deviceProps.major * 10) + deviceProps.minor;
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences,
+        const auto kernels = optimizeBlockSize(d, model, optimalBlockSize, preferences,
                                                sharePath, outputPath);
 
         // Sum up occupancy of each kernel
@@ -411,6 +412,17 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
                                                             {
                                                                 return acc + (kernel.second.first ? 1 : 0);
                                                             });
+
+        // Get device
+        CUdevice cuDevice;
+        CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, d));
+
+        // Get device version
+        int deviceMajor = 0;;
+        int deviceMinor = 0;
+        CHECK_CU_ERRORS(cuDeviceGetAttribute(&deviceMajor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cuDevice));
+        CHECK_CU_ERRORS(cuDeviceGetAttribute(&deviceMinor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cuDevice));
+        const int smVersion = (deviceMajor * 10) + deviceMinor;
 
         LOGD_BACKEND << "Device " << d << " - total occupancy:" << totalOccupancy << ", number of small models:" << numSmallModelKernels << ", SM version:" << smVersion;
         devices.emplace_back(smVersion, totalOccupancy, numSmallModelKernels, optimalBlockSize);
@@ -465,7 +477,7 @@ int chooseDeviceWithMostGlobalMemory()
 {
     // Get number of devices
     int deviceCount;
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+    CHECK_CU_ERRORS(cuDeviceGetCount(&deviceCount));
     if(deviceCount == 0) {
         throw std::runtime_error("No CUDA devices found");
     }
@@ -474,13 +486,17 @@ int chooseDeviceWithMostGlobalMemory()
     size_t mostGlobalMemory = 0;
     int bestDevice = -1;
     for(int d = 0; d < deviceCount; d++) {
-        // Get properties
-        cudaDeviceProp deviceProps;
-        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
+        // Get device
+        CUdevice cuDevice;
+        CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, d));
+
+        // Get total memory size
+        size_t totalGlobalMem = 0;
+        CHECK_CU_ERRORS(cuDeviceTotalMem(&totalGlobalMem, cuDevice));
 
         // If this device improves on previous best
-        if(deviceProps.totalGlobalMem > mostGlobalMemory) {
-            mostGlobalMemory = deviceProps.totalGlobalMem;
+        if(totalGlobalMem > mostGlobalMemory) {
+            mostGlobalMemory = totalGlobalMem;
             bestDevice = d;
         }
     }
@@ -509,6 +525,8 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
         plog::get<Logging::CHANNEL_BACKEND>()->setMaxSeverity(backendLevel);
     }
 
+    // Initialize driver API
+    CHECK_CU_ERRORS(cuInit(0));
 
     // If optimal device should be chosen
     if(preferences.deviceSelectMethod == DeviceSelect::OPTIMAL) {
@@ -531,13 +549,9 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
         // If we should pick kernel block sizes based on occupancy
         if(preferences.blockSizeSelectMethod == BlockSizeSelect::OCCUPANCY) {
-            // Get properties
-            cudaDeviceProp deviceProps;
-            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
-
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences,
+            optimizeBlockSize(deviceID, model, cudaBlockSize, preferences,
                               sharePath, outputPath);
 
             // Create backend
