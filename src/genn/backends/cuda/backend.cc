@@ -186,8 +186,8 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 
     // Get CUDA runtime version and; major and minor compute version
     CHECK_CU_ERRORS(cuDriverGetVersion(&m_RuntimeVersion));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&m_MajorComputeCapability, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, m_Device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&m_MinorComputeCapability, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, m_Device));
+    m_MajorComputeCapability = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR);
+    m_MinorComputeCapability = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR);
     
     // Give a warning if automatic copy is used on pre-Pascal devices
     if(getPreferences().automaticCopy && m_MajorComputeCapability < 6) {
@@ -207,12 +207,9 @@ Backend::~Backend()
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
 {
-    int deviceMajor = 0;
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&deviceMajor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, m_Device));
-
     // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
-    return (deviceMajor < 5);
+    return (m_MajorComputeCapability < 5);
 }
 //--------------------------------------------------------------------------
 std::string Backend::getThreadID(unsigned int axis) const
@@ -1154,8 +1151,7 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     // If the model requires zero-copy
     if(modelMerged.getModel().zeroCopyInUse()) {
         // If device doesn't support mapping host memory error
-        int canMapHostMemory = 0;
-        CHECK_CU_ERRORS(cuDeviceGetAttribute(&canMapHostMemory, CU_DEVICE_ATTRIBUTE_CAN_MAP_HOST_MEMORY, m_Device));
+        const int canMapHostMemory = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_CAN_MAP_HOST_MEMORY);
         if(canMapHostMemory == 0) {
             throw std::runtime_error("Device does not support mapping CPU host memory!");
         }
@@ -1748,8 +1744,7 @@ std::string Backend::getNVCCFlags() const
 //--------------------------------------------------------------------------
 size_t Backend::getChosenDeviceSafeConstMemBytes() const
 {
-    int totalConstMem = 0;
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&totalConstMem, CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY, m_Device));
+    const int totalConstMem = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY);
     return totalConstMem- getPreferences<Preferences>().constantCacheOverhead;
 }
 //--------------------------------------------------------------------------
@@ -1910,11 +1905,9 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
 //--------------------------------------------------------------------------
 void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY) const
 {
-    int maxGridDimX = 0;
-    int maxBlockDimY = 0;
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxGridDimX, CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X, m_Device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxBlockDimY, CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y, m_Device));
-
+    // Get device limits
+    const int maxGridDimX = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_X);
+    const int maxBlockDimY = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y);
     
     // Calculate grid size
     const size_t gridSize = ceilDivide(numThreadsX, getKernelBlockSize(kernel));
@@ -1922,18 +1915,26 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
     assert(numBlockThreadsY < (size_t)maxBlockDimY);
 
     os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", " << numBlockThreadsY << ");" << std::endl;
+
+    // If we're using a 2D block size we should use a 3D grid
     if(numBlockThreadsY > 1) {
-        int maxGridDimZ = 0;
-        CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxGridDimZ, CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Z, m_Device));
+        const int maxGridDimZ = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Z);
         assert(batchSize < (size_t)maxGridDimZ);
         os << "const dim3 grid(" << gridSize << ", 1, " << batchSize << ");" << std::endl;
     }
+    // Otherwise, we should use a 2D grid
     else {
-        int maxGridDimY = 0;
-        CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxGridDimY, CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Y, m_Device));
+        const int maxGridDimY = getDeviceAttribute(CU_DEVICE_ATTRIBUTE_MAX_GRID_DIM_Y);
         assert(batchSize < (size_t)maxGridDimY);
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+int Backend::getDeviceAttribute(CUdevice_attribute attribute) const
+{
+    int value = 0;
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&value, attribute, m_Device));
+    return value;
 }
 }   // namespace CUDA
 }   // namespace CodeGenerator

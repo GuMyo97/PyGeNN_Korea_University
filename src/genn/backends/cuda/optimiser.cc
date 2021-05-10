@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <numeric>
+#include <tuple>
 
 // Standard C includes
 #include <cstdlib>
@@ -39,6 +40,13 @@ namespace
 {
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
 
+int getDeviceAttribute(CUdevice device, CUdevice_attribute attribute)
+{
+    int value = 0;
+    CHECK_CU_ERRORS(cuDeviceGetAttribute(&value, attribute, device));
+    return value;
+}
+//--------------------------------------------------------------------------
 bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
 {
     // If function is found
@@ -60,57 +68,34 @@ bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int 
     }
 }
 //--------------------------------------------------------------------------
-void getDeviceArchitectureProperties(int majorComputeVersion, int minorComputeVersion,
-                                     size_t &warpAllocGran, size_t &regAllocGran,
-                                     size_t &smemAllocGran, size_t &maxBlocksPerSM)
+std::tuple<size_t, size_t, size_t, size_t> getDeviceArchitectureProperties(int majorComputeVersion, int minorComputeVersion)
 {
     if(majorComputeVersion == 1) {
-        smemAllocGran = 512;
-        warpAllocGran = 2;
-        regAllocGran = (minorComputeVersion < 2) ? 256 : 512;
-        maxBlocksPerSM = 8;
+        return std::make_tuple(512, 2, (minorComputeVersion < 2) ? 256 : 512, 8);
     }
     else if(majorComputeVersion == 2) {
-        smemAllocGran = 128;
-        warpAllocGran = 2;
-        regAllocGran = 64;
-        maxBlocksPerSM = 8;
+        return std::make_tuple(128, 2, 64, 8);
     }
     else if(majorComputeVersion == 3) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 16;
+        return std::make_tuple(256, 4, 256, 16);
     }
     else if(majorComputeVersion == 5) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
+        return std::make_tuple(256, 4, 256, 32);
     }
     else if(majorComputeVersion == 6) {
-        smemAllocGran = 256;
-        warpAllocGran = (minorComputeVersion == 0) ? 2 : 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = 32;
+        return std::make_tuple(256, (minorComputeVersion == 0) ? 2 : 4, 256, 32);
     }
     else if(majorComputeVersion == 7) {
-        smemAllocGran = 256;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = (minorComputeVersion == 0) ? 32 : 16;
+        return std::make_tuple(256, 4, 256, (minorComputeVersion == 0) ? 32 : 16);
     }
     else {
-        smemAllocGran = 128;
-        warpAllocGran = 4;
-        regAllocGran = 256;
-        maxBlocksPerSM = (majorComputeVersion == 0) ? 32 : 16;
-
         if(majorComputeVersion > 8) {
             LOGW_BACKEND << "Unsupported CUDA device major version: " << majorComputeVersion;
             LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
             LOGW_BACKEND << "Falling back to next latest SM version parameters.";
         }
+
+        return std::make_tuple(128, 4, 256, (majorComputeVersion == 0) ? 32 : 16);
     }
 }
 //--------------------------------------------------------------------------
@@ -313,28 +298,21 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const ModelSpecInternal
     CHECK_CU_ERRORS(cuDeviceGet(&device, deviceID));
     
     // Get required device properties
-    int majorComputeVersion = 0;
-    int minorComputeVersion = 0;
-    int maxThreadsPerBlock = 0;
-    int maxRegistersPerBlock = 0;
-    int maxThreadsPerMultiProcessor = 0;
-    int sharedMemPerMultiprocessor = 0;
-    int multiProcessorCount = 0;
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&majorComputeVersion, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&minorComputeVersion, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxThreadsPerBlock, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK, device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxRegistersPerBlock, CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK, device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&maxThreadsPerMultiProcessor, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR, device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&sharedMemPerMultiprocessor, CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_MULTIPROCESSOR, device));
-    CHECK_CU_ERRORS(cuDeviceGetAttribute(&multiProcessorCount, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, device));
-
+    const int majorComputeVersion = getDeviceAttribute(device, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR);
+    const int minorComputeVersion = getDeviceAttribute(device, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR);
+    const int maxThreadsPerBlock = getDeviceAttribute(device, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK);
+    const int maxRegistersPerBlock = getDeviceAttribute(device, CU_DEVICE_ATTRIBUTE_MAX_REGISTERS_PER_BLOCK);
+    const int maxThreadsPerMultiProcessor = getDeviceAttribute(device, CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_MULTIPROCESSOR);
+    const int sharedMemPerMultiprocessor = getDeviceAttribute(device, CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_MULTIPROCESSOR);
+    const int multiProcessorCount = getDeviceAttribute(device, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT);
+   
     // Get properties of device architecture
+    size_t smemAllocGran;
     size_t warpAllocGran;
     size_t regAllocGran;
-    size_t smemAllocGran;
     size_t maxBlocksPerSM;
-    getDeviceArchitectureProperties(majorComputeVersion, minorComputeVersion, 
-                                    warpAllocGran, regAllocGran, smemAllocGran, maxBlocksPerSM);
+    std::tie(smemAllocGran, warpAllocGran, 
+             regAllocGran, maxBlocksPerSM) = getDeviceArchitectureProperties(majorComputeVersion, minorComputeVersion);
 
     // Zero block sizes
     std::fill(blockSize.begin(), blockSize.end(), 0);
@@ -480,10 +458,8 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
         CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, d));
 
         // Get device version
-        int deviceMajor = 0;;
-        int deviceMinor = 0;
-        CHECK_CU_ERRORS(cuDeviceGetAttribute(&deviceMajor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR, cuDevice));
-        CHECK_CU_ERRORS(cuDeviceGetAttribute(&deviceMinor, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR, cuDevice));
+        const int deviceMajor = getDeviceAttribute(cuDevice, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR);
+        const int deviceMinor = getDeviceAttribute(cuDevice, CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR);
         const int smVersion = (deviceMajor * 10) + deviceMinor;
 
         LOGD_BACKEND << "Device " << d << " - total occupancy:" << totalOccupancy << ", number of small models:" << numSmallModelKernels << ", SM version:" << smVersion;

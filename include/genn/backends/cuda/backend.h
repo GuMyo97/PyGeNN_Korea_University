@@ -337,6 +337,8 @@ private:
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 
+    int getDeviceAttribute(CUdevice_attribute attribute) const;
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
