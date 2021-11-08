@@ -286,7 +286,13 @@ class Group(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            if egp_data.is_scalar:
+            if egp_data.values is None:
+                cname = self.__class__.__name__
+                mname = self.name
+                raise Exception(f"Extra global parameter {egp_name} "
+                                f"for {mname} ({cname}) can not be set "
+                                f"to None, it should be {egp_data.type}")
+            elif egp_data.is_scalar:
                 # Assign view
                 egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
                                                             egp_data.type)
@@ -1163,7 +1169,7 @@ class SynapseGroup(Group):
                             ind[i:i + r] = self.ind[syn:syn + r]
                             syn += r
                     elif self.connectivity_initialiser is None:
-                        raise Exception("For sparse projections, the connections"
+                        raise Exception("For sparse projections, the connections "
                                         "must be set before loading a model")
                 # Otherwise, if connectivity isn't located on host, 
                 # give error if user tries to manually configure it
