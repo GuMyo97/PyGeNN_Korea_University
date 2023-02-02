@@ -88,7 +88,7 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
         addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
     }
 
-    if(getArchetype().isDelayRequired() || ((getArchetype().isPrevSpikeTimeRequired() || getArchetype().isPrevSpikeEventTimeRequired()) && getArchetype().isBatched())) {
+    if(getArchetype().isDelayRequired() || (getArchetype().isPrevSpikeTimeRequired() || getArchetype().isPrevSpikeEventTimeRequired())) {
         addField("unsigned int", "numNeurons",
                  [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
     }
